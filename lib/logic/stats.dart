@@ -1,0 +1,176 @@
+// Ana ekrandaki tüm hesaplamalar.
+//
+// Buradaki fonksiyonlar "saf" (pure) fonksiyonlardır: aynı girdiye her zaman
+// aynı sonucu verirler, ekranla ya da kayıtla uğraşmazlar. Şu anki zamanı
+// bile parametre olarak ([now]) alırlar. Bu sayede test etmeleri çok kolay
+// (bkz. test/stats_test.dart).
+
+import '../models/smoking_event.dart';
+import '../models/user_profile.dart';
+
+// ---------- Kaynaklı sabitler ----------
+
+/// Bir sigaranın ortalama yaşam süresi etkisi (dakika).
+///
+/// Kaynak: Jackson SE, Jarvis MJ, West R. "The price of a cigarette:
+/// 20 minutes of life?" Addiction, 2024 (University College London).
+/// doi:10.1111/add.16757
+/// Bu yazıya göre bir sigara ortalama olarak erkeklerde ~17 dk, kadınlarda
+/// ~22 dk yaşam süresine mal oluyor; genel ortalama ~20 dk. Bu kişiye özel
+/// değil, ORTALAMA bir tahmindir; ekranda da böyle yazmalıyız.
+int lifeMinutesPerCigarette(Gender? gender) {
+  return switch (gender) {
+    Gender.male => 17,
+    Gender.female => 22,
+    // Belirtilmemişse genel ortalama:
+    Gender.unspecified || null => 20,
+  };
+}
+
+/// Bir sigarayı içmenin kaç dakika sürdüğü (VARSAYIM).
+///
+/// Bu kaynaklı bir sayı değil, yaklaşık bir varsayımdır (bir sigara
+/// genelde 5–7 dakikada içilir). Ekranda "varsayım" olduğu yazıyor.
+/// İleride kullanıcının kendisinin ayarlaması sağlanabilir.
+const int minutesPerCigarette = 6;
+
+// ---------- Tarih yardımcıları ----------
+
+/// Verilen anın gece yarısı (00:00).
+DateTime startOfDay(DateTime time) => DateTime(time.year, time.month, time.day);
+
+/// [days] gün önceki/sonraki aynı saat. (Duration(days:) yerine takvim
+/// günüyle hesaplıyoruz ki yaz saati uygulanan ülkelerde de doğru çalışsın.)
+DateTime addDays(DateTime time, int days) => DateTime(
+  time.year,
+  time.month,
+  time.day + days,
+  time.hour,
+  time.minute,
+  time.second,
+  time.millisecond,
+);
+
+// ---------- Sayma ----------
+
+/// [from] (dahil) ile [to] (hariç) arasındaki sigara sayısı.
+int countBetween(List<SmokingEvent> events, DateTime from, DateTime to) {
+  return events
+      .where((e) => !e.time.isBefore(from) && e.time.isBefore(to))
+      .length;
+}
+
+/// [now] anını da kapsayan bitiş zamanı. (countBetween'de bitiş hariç
+/// olduğu için, tam şu ana denk gelen kaydı da saymak için 1 sn ekliyoruz.)
+DateTime _untilNow(DateTime now) => now.add(const Duration(seconds: 1));
+
+/// Kayıtlar verilen andan önce başlamış mı?
+/// Karşılaştırmanın anlamlı olması için gerekli: kullanıcı uygulamayı
+/// 3 gün önce kurduysa "geçen hafta 0 sigara" demek yanlış olur.
+bool hasDataSince(List<SmokingEvent> events, DateTime time) =>
+    events.isNotEmpty && !events.first.time.isAfter(time);
+
+/// Bugün (gece yarısından şu ana kadar) içilen sigara sayısı.
+int countToday(List<SmokingEvent> events, DateTime now) =>
+    countBetween(events, startOfDay(now), _untilNow(now));
+
+/// Son [days] günde (şu andan geriye days×24 saat) içilen sigara sayısı.
+int countLastDays(List<SmokingEvent> events, DateTime now, int days) =>
+    countBetween(events, addDays(now, -days), _untilNow(now));
+
+/// Geçen haftanın aynı gününde, aynı saate kadar içilen sigara sayısı.
+/// Örn. bugün cumartesi 15:00 ise: geçen cumartesi 00:00–15:00.
+/// (Yarım günü tam günle karşılaştırmak haksız olurdu.)
+int countSameDayLastWeek(List<SmokingEvent> events, DateTime now) {
+  final weekAgo = addDays(now, -7);
+  return countBetween(events, startOfDay(weekAgo), weekAgo);
+}
+
+/// Son 7 gün ile ondan önceki 7 günün karşılaştırması.
+class WeekComparison {
+  const WeekComparison({required this.thisWeek, required this.lastWeek});
+
+  /// Son 7 gün (şu andan geriye 7×24 saat).
+  final int thisWeek;
+
+  /// Ondan önceki 7 gün.
+  final int lastWeek;
+
+  /// Yüzde değişim. Negatifse azalma var demektir.
+  /// Önceki haftanın verisi yoksa hesaplanamaz → null.
+  double? get changePercent {
+    if (lastWeek == 0) return null;
+    return (thisWeek - lastWeek) / lastWeek * 100;
+  }
+}
+
+WeekComparison compareWeeks(List<SmokingEvent> events, DateTime now) {
+  final weekAgo = addDays(now, -7);
+  final twoWeeksAgo = addDays(now, -14);
+  return WeekComparison(
+    thisWeek: countBetween(events, weekAgo, _untilNow(now)),
+    lastWeek: countBetween(events, twoWeeksAgo, weekAgo),
+  );
+}
+
+/// Bir günün sigara sayısı (grafik için).
+class DayCount {
+  const DayCount(this.day, this.count);
+  final DateTime day;
+  final int count;
+}
+
+/// Bugün dahil son [days] günün günlük sayıları, eskiden yeniye.
+List<DayCount> dailyCounts(
+  List<SmokingEvent> events,
+  DateTime now, {
+  int days = 7,
+}) {
+  final today = startOfDay(now);
+  return [
+    for (var i = days - 1; i >= 0; i--)
+      DayCount(
+        addDays(today, -i),
+        countBetween(events, addDays(today, -i), addDays(today, -i + 1)),
+      ),
+  ];
+}
+
+/// Verilen günün saat saat sigara sayısı (24 elemanlı liste).
+List<int> hourlyCounts(List<SmokingEvent> events, DateTime day) {
+  final counts = List<int>.filled(24, 0);
+  final start = startOfDay(day);
+  final end = addDays(start, 1);
+  for (final e in events) {
+    if (!e.time.isBefore(start) && e.time.isBefore(end)) {
+      counts[e.time.hour]++;
+    }
+  }
+  return counts;
+}
+
+/// Verilen günün ilk sigarası (yoksa null).
+DateTime? firstEventOfDay(List<SmokingEvent> events, DateTime day) {
+  final start = startOfDay(day);
+  final end = addDays(start, 1);
+  for (final e in events) {
+    // Liste sıralı olduğu için ilk bulduğumuz en erken olandır.
+    if (!e.time.isBefore(start) && e.time.isBefore(end)) return e.time;
+  }
+  return null;
+}
+
+// ---------- Para, süre, yaşam ----------
+
+/// [count] sigaranın tutarı (₺). Paket fiyatı bilinmiyorsa null.
+double? moneyFor(int count, UserProfile profile) {
+  final price = profile.pricePerCigarette;
+  return price == null ? null : count * price;
+}
+
+/// [count] sigaraya harcanan tahmini süre (dakika).
+int smokingMinutesFor(int count) => count * minutesPerCigarette;
+
+/// [count] sigaranın tahmini yaşam süresi etkisi (dakika).
+int lifeMinutesFor(int count, Gender? gender) =>
+    count * lifeMinutesPerCigarette(gender);
