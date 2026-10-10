@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 
-/// Uygulamanın renk paleti.
+/// Uygulamanın renk paleti: "Nane" teması.
 ///
-/// Duolingo'dan ilham alan canlı, düz (gölgesiz, geçişsiz) renkler.
+/// Duolingo'dan ilham alan canlı, düz (gölgesiz, geçişsiz) renkler; ama
+/// Duolingo'nun limon yeşili yerine kendi renklerimiz var:
+/// - Nane (turkuaz): ana renk. Yeşil ile mavinin ortası; temiz havayı,
+///   "Nefes"i ve söndürülmüş ateşi ("Unlit") anlatır.
+/// - Mavi: ikinci renk (seçim, erteleme).
+/// - Yaprak yeşili: sadece büyümeyi anlatan yerlerde (seri, maskotun filizi).
+///
 /// Her rengin bir de "koyu" eşi var: tok butonların alt kenarı
 /// (3 boyutlu görünen gölge) bu koyu renkle çizilir.
 ///
-/// Kullanım: `final colors = AppColors.of(context);` → `colors.green`
+/// Kullanım: `final colors = AppColors.of(context);` → `colors.mint`
 class AppColors {
   const AppColors({
-    required this.green,
-    required this.greenButton,
-    required this.greenShadow,
-    required this.greenLight,
-    required this.greenText,
+    required this.mint,
+    required this.mintButton,
+    required this.mintShadow,
+    required this.mintLight,
+    required this.mintText,
     required this.blue,
     required this.blueShadow,
     required this.blueLight,
@@ -21,8 +27,8 @@ class AppColors {
     required this.gold,
     required this.goldShadow,
     required this.goldLight,
-    required this.orange,
-    required this.orangeLight,
+    required this.leaf,
+    required this.leafLight,
     required this.purple,
     required this.purpleLight,
     required this.red,
@@ -37,16 +43,16 @@ class AppColors {
     required this.disabledText,
   });
 
-  /// Parlak yeşil: ilerleme çubukları, ikonlar, maskot.
-  final Color green;
+  /// Parlak nane (turkuaz): ilerleme çubukları, ikonlar.
+  final Color mint;
 
-  /// Buton yeşili: üstündeki beyaz yazı okunsun diye biraz daha koyu.
-  final Color greenButton;
-  final Color greenShadow;
-  final Color greenLight;
+  /// Buton nanesi: üstündeki beyaz yazı okunsun diye biraz daha koyu.
+  final Color mintButton;
+  final Color mintShadow;
+  final Color mintLight;
 
-  /// Beyaz zemin üstünde yeşil YAZI için (okunaklı koyu yeşil).
-  final Color greenText;
+  /// Açık zemin üstünde nane rengi YAZI için (okunaklı koyu turkuaz).
+  final Color mintText;
 
   /// Mavi: seçili seçenekler, erteleme, bilgi.
   final Color blue;
@@ -59,9 +65,9 @@ class AppColors {
   final Color goldShadow;
   final Color goldLight;
 
-  /// Turuncu: seri (alev).
-  final Color orange;
-  final Color orangeLight;
+  /// Yaprak yeşili: seri (yaprak ikonu). Büyümeyi anlatır.
+  final Color leaf;
+  final Color leafLight;
 
   /// Mor: rozetler, özel anlar.
   final Color purple;
@@ -72,6 +78,8 @@ class AppColors {
   final Color red;
   final Color redShadow;
 
+  /// Sayfa zemini (çok hafif nane tonlu). Kartlar bunun üstünde beyaz
+  /// ([surface]) durur, böylece öne çıkarlar.
   final Color background;
   final Color surface;
   final Color surfaceAlt;
@@ -82,61 +90,62 @@ class AppColors {
   final Color disabledText;
 
   static const light = AppColors(
-    green: Color(0xFF58C41A),
-    greenButton: Color(0xFF46A302),
-    greenShadow: Color(0xFF357C01),
-    greenLight: Color(0xFFE3F7D3),
-    greenText: Color(0xFF2E7A05),
-    blue: Color(0xFF1CB0F6),
-    blueShadow: Color(0xFF1278B0),
-    blueLight: Color(0xFFDDF4FF),
-    blueText: Color(0xFF1477B0),
+    mint: Color(0xFF19C3AD),
+    mintButton: Color(0xFF0E9A8A),
+    mintShadow: Color(0xFF0A7366),
+    mintLight: Color(0xFFD7F6F0),
+    mintText: Color(0xFF0B7A6D),
+    blue: Color(0xFF3D7BF7),
+    blueShadow: Color(0xFF2457D6),
+    blueLight: Color(0xFFE2ECFF),
+    blueText: Color(0xFF2152CC),
     gold: Color(0xFFFFC21A),
     goldShadow: Color(0xFFE09B00),
     goldLight: Color(0xFFFFF4D1),
-    orange: Color(0xFFFF9600),
-    orangeLight: Color(0xFFFFEBD1),
+    leaf: Color(0xFF4FB52C),
+    leafLight: Color(0xFFE3F5D8),
     purple: Color(0xFFB27CF7),
     purpleLight: Color(0xFFF1E6FF),
     red: Color(0xFFE5484D),
     redShadow: Color(0xFFB8353A),
-    background: Color(0xFFFFFFFF),
+    background: Color(0xFFF3F9F8),
     surface: Color(0xFFFFFFFF),
-    surfaceAlt: Color(0xFFF7F7F7),
-    border: Color(0xFFE5E5E5),
-    text: Color(0xFF4B4B4B),
-    textMuted: Color(0xFF6F6F6F),
-    disabled: Color(0xFFE5E5E5),
-    disabledText: Color(0xFFAFAFAF),
+    surfaceAlt: Color(0xFFEAF3F2),
+    border: Color(0xFFD9E6E4),
+    text: Color(0xFF263A3D),
+    textMuted: Color(0xFF5E7275),
+    disabled: Color(0xFFDCE6E5),
+    disabledText: Color(0xFF9AABAD),
   );
 
+  /// Koyu tema: lacivert zemin (gece gökyüzü).
   static const dark = AppColors(
-    green: Color(0xFF79D63C),
-    greenButton: Color(0xFF58A700),
-    greenShadow: Color(0xFF3E7A00),
-    greenLight: Color(0xFF1F3A1A),
-    greenText: Color(0xFF8FE05A),
-    blue: Color(0xFF49C0F8),
-    blueShadow: Color(0xFF1A7DB5),
-    blueLight: Color(0xFF16313F),
-    blueText: Color(0xFF7DD3FB),
+    mint: Color(0xFF3DD9C1),
+    mintButton: Color(0xFF0E9A8A),
+    mintShadow: Color(0xFF0A6A5E),
+    mintLight: Color(0xFF10332F),
+    mintText: Color(0xFF5FE3CF),
+    blue: Color(0xFF6E9BFF),
+    blueShadow: Color(0xFF3D6FE0),
+    blueLight: Color(0xFF182A4D),
+    blueText: Color(0xFF9DBBFF),
     gold: Color(0xFFFFC83D),
     goldShadow: Color(0xFFC79200),
     goldLight: Color(0xFF3A3218),
-    orange: Color(0xFFFFA534),
-    orangeLight: Color(0xFF3D2A14),
+    leaf: Color(0xFF7BD957),
+    leafLight: Color(0xFF1E3518),
     purple: Color(0xFFC9A2FF),
     purpleLight: Color(0xFF2E2440),
     red: Color(0xFFFF6B70),
     redShadow: Color(0xFFB8353A),
-    background: Color(0xFF131F24),
-    surface: Color(0xFF131F24),
-    surfaceAlt: Color(0xFF202F36),
-    border: Color(0xFF37464F),
-    text: Color(0xFFF1F7FB),
-    textMuted: Color(0xFFA9BAC3),
-    disabled: Color(0xFF37464F),
-    disabledText: Color(0xFF6B7F88),
+    background: Color(0xFF0E1A2B),
+    surface: Color(0xFF0E1A2B),
+    surfaceAlt: Color(0xFF17263A),
+    border: Color(0xFF2A3B55),
+    text: Color(0xFFEEF4FA),
+    textMuted: Color(0xFF9FB0C6),
+    disabled: Color(0xFF2A3B55),
+    disabledText: Color(0xFF61738C),
   );
 
   /// Telefonun açık/koyu moduna uygun paleti verir.
@@ -148,13 +157,19 @@ class AppColors {
 /// Dosyaları assets/fonts/ içinde; internetten indirilmez (gizlilik).
 const String appFontFamily = 'Nunito';
 
+/// Seri ikonu: yaprak (her gün biraz büyüyen bir filiz).
+/// Alev bilerek kullanılmıyor: hem Duolingo'nun simgesi, hem de sigarayı
+/// bırakmaya çalışan birine "ateş" göstermek uygulamanın adına ("Unlit",
+/// yanmayan) ters düşer.
+const IconData streakIcon = Icons.eco;
+
 /// Açık veya koyu tema oluşturur (telefonun ayarına göre seçilir).
 ThemeData buildTheme(Brightness brightness) {
   final c = brightness == Brightness.dark ? AppColors.dark : AppColors.light;
 
-  final scheme =
-      ColorScheme.fromSeed(seedColor: c.green, brightness: brightness).copyWith(
-        primary: c.greenButton,
+  final scheme = ColorScheme.fromSeed(seedColor: c.mint, brightness: brightness)
+      .copyWith(
+        primary: c.mintButton,
         onPrimary: Colors.white,
         secondary: c.blue,
         surface: c.surface,
@@ -216,15 +231,12 @@ ThemeData buildTheme(Brightness brightness) {
       centerTitle: true,
       titleTextStyle: textTheme.titleLarge?.copyWith(color: c.text),
     ),
-    // Alt menü: seçili sekmenin etrafında mavi çerçeve (Duolingo gibi).
+    // Alt menü: seçili sekmenin arkasında yumuşak, nane renkli bir kapsül.
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: c.background,
       surfaceTintColor: Colors.transparent,
-      indicatorColor: c.blueLight,
-      indicatorShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: c.blue, width: 2),
-      ),
+      indicatorColor: c.mintLight,
+      indicatorShape: const StadiumBorder(),
       labelTextStyle: WidgetStatePropertyAll(
         textTheme.labelMedium?.copyWith(color: c.textMuted),
       ),

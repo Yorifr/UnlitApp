@@ -1,6 +1,6 @@
 // Uygulamanın maskotu: "Nefes".
 //
-// Başında küçük bir filiz olan yuvarlak, yeşil bir karakter. Resim dosyası
+// Başında küçük, yeşil bir filiz olan yuvarlak, nane renkli bir karakter. Resim dosyası
 // yok; tamamen kodla (CustomPainter) çiziliyor, bu yüzden her boyutta net.
 //
 // Kural: Nefes ASLA üzgün, kızgın ya da hayal kırıklığına uğramış
@@ -93,10 +93,13 @@ class _MascotPainter extends CustomPainter {
     final s = size.width; // Tüm ölçüler boyuta göre oranlı
     Paint fill(Color color) => Paint()..color = color;
 
-    const body = Color(0xFF58C41A);
-    const bodyDark = Color(0xFF46A302);
-    const belly = Color(0xFFB8EC8C);
-    const ink = Color(0xFF2B3A2E);
+    // Maskotun kendi renkleri (açık ve koyu temada aynı).
+    const body = Color(0xFF2EC4B6); // Nane gövde
+    const bodyDark = Color(0xFF1A9C90);
+    const belly = Color(0xFFC9F3EC);
+    const sprout = Color(0xFF6BCB3B); // Filiz yeşili: büyümeyi anlatır
+    const sproutDark = Color(0xFF4AA32A);
+    const ink = Color(0xFF233A3A);
 
     // Yerdeki gölge
     canvas.drawOval(
@@ -154,18 +157,18 @@ class _MascotPainter extends CustomPainter {
 
     // Başındaki filiz: sap + iki yaprak
     final stem = Paint()
-      ..color = bodyDark
+      ..color = sproutDark
       ..strokeWidth = s * 0.03
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
     canvas.drawLine(Offset(s * 0.5, s * 0.28), Offset(s * 0.5, s * 0.17), stem);
-    _leaf(canvas, Offset(s * 0.5, s * 0.18), s * 0.15, -0.6, fill(body));
+    _leaf(canvas, Offset(s * 0.5, s * 0.18), s * 0.15, -0.6, fill(sprout));
     _leaf(
       canvas,
       Offset(s * 0.5, s * 0.20),
       s * 0.12,
       pi + 0.5,
-      fill(bodyDark),
+      fill(sproutDark),
     );
 
     // Yanaklar

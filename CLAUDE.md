@@ -81,7 +81,12 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 
 ## Tasarım dili (Duolingo tarzı)
 - Renkler için her zaman `AppColors.of(context)` kullan (açık/koyu tema
-  otomatik). Kırmızı (`red`) sadece silme gibi tehlikeli işlemlerde.
+  otomatik). Tema **"Nane"**: `mint` ana renk (ilerleme, ana buton),
+  `blue` ikinci renk, `leaf` sadece seri/filiz (büyüme). Kırmızı (`red`)
+  sadece silme gibi tehlikeli işlemlerde.
+- **Duolingo'yu andırsın, kopyası olmasın:** Duolingo'nun renklerini
+  (limon yeşili, onların mavisi/turuncusu), alev seri ikonunu ya da yeşil
+  maskotu geri getirme. Seri ikonu `streakIcon` (yaprak).
 - Ana eylemler `ChunkyButton` (yazısı BÜYÜK HARF, elle yazılmış: "DEVAM",
   "İLERİ"); kartlar `ChunkyCard`; ilerleme `ChunkyProgressBar`.
 - Maskotla konuşma: `MascotSpeech(text:, mood:)`. Cümle seçimi

@@ -116,7 +116,7 @@ class StreakInfo {
   /// Şimdiye kadarki en uzun seri.
   final int best;
 
-  /// Bugün en az bir şey kazanıldı mı? (Değilse alev gri görünür;
+  /// Bugün en az bir şey kazanıldı mı? (Değilse seri yaprağı gri görünür;
   /// ama seri BOZULMAZ, gün bitene kadar vakit var.)
   final bool activeToday;
 }

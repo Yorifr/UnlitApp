@@ -49,7 +49,7 @@ class _ConfettiBurstState extends State<ConfettiBurst>
       return const SizedBox.shrink();
     }
     final c = AppColors.of(context);
-    final palette = [c.green, c.blue, c.gold, c.orange, c.purple];
+    final palette = [c.mint, c.blue, c.gold, c.leaf, c.purple];
     return IgnorePointer(
       child: RepaintBoundary(
         child: CustomPaint(

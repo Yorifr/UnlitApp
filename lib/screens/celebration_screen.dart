@@ -10,8 +10,8 @@ import '../widgets/mascot.dart';
 
 /// Bir şey başarıldığında açılan tam ekran kutlama.
 ///
-/// Konfeti yağar, maskot sevinir, XP sayarak artar ve seri uzadıysa alev
-/// gösterilir. Bu, Duolingo'daki "ders bitti!" anının karşılığı: küçük ama
+/// Konfeti yağar, maskot sevinir, XP sayarak artar ve seri uzadıysa seri
+/// yaprağı gösterilir. Bu, Duolingo'daki "ders bitti!" anının karşılığı: küçük ama
 /// gerçek bir "başardım" hissi.
 ///
 /// [calm] true ise konfeti yok, maskot sakin: zor anlarda (ör. erteleme
@@ -141,7 +141,7 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
                               _title,
                               textAlign: TextAlign.center,
                               style: theme.textTheme.headlineMedium?.copyWith(
-                                color: widget.calm ? c.blueText : c.greenText,
+                                color: widget.calm ? c.blueText : c.mintText,
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -182,8 +182,8 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
                                   Expanded(
                                     child: _RewardTile(
                                       label: 'SERİ',
-                                      color: c.orange,
-                                      icon: Icons.local_fire_department,
+                                      color: c.leaf,
+                                      icon: streakIcon,
                                       child: Text('${reward.streak} gün'),
                                     ),
                                   ),

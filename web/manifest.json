@@ -3,7 +3,7 @@
     "short_name": "Unlit",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#F5FBF8",
+    "background_color": "#F3F9F8",
     "theme_color": "#2F7D6D",
     "description": "Akıllı sigara kılıfı için takip uygulaması",
     "orientation": "portrait-primary",

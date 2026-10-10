@@ -5,7 +5,8 @@
 > durum" ile "Sürüm geçmişi" bölümlerini güncelleyin.**
 
 Son güncelleme: 10 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
-oyunlaştırma), ses/titreşim efektleri ve tarihli paket fiyatı tamamlandı.
+oyunlaştırma), ses/titreşim efektleri, tarihli paket fiyatı ve kendi renk
+teması ("Nane") tamamlandı.
 
 ---
 
@@ -56,7 +57,7 @@ suçluluk duymasın**.
 
 ### Duolingo'dan aldıklarımız
 - **Günlük görevler** (her gün 3 küçük, yapılabilir görev)
-- **XP** (puan) ve **seri** (alev ikonu)
+- **XP** (puan) ve **seri** (bizde alev değil yaprak ikonu; bkz. Bölüm 8)
 - **Kutlama ekranı:** konfeti, sevinen maskot, sayarak artan XP, seri
   kutucuğu, "DEVAM" butonu
 - **Maskot** ("Nefes") konuşma balonlarıyla yol gösterir
@@ -81,7 +82,7 @@ suçluluk duymasın**.
 1. **XP sadece artar.** Sigara içmek XP götürmez, seriyi bozmaz, mesaj
    göstermez.
 2. **Seri = en az bir görev yapılan (XP kazanılan) ardışık günler.**
-   - Bugün henüz bir şey yapılmadıysa seri bozulmaz; alev gri görünür.
+   - Bugün henüz bir şey yapılmadıysa seri bozulmaz; seri yaprağı gri görünür.
    - **Dinlenme günü:** Haftada (7 günde) 1 kaçırılan gün otomatik
      affedilir; seri korunur ama artmaz.
    - Seri sıfırlanırsa dil olumlu: "Bugün bir görev yap, serin başlasın!"
@@ -157,7 +158,7 @@ suçluluk duymasın**.
 - Bugünkü sigara sayısı (+ bugünkü ilk sigara saati, son sigaradan geçen süre)
 - Geçen haftayla karşılaştırma:
   - Bugün ↔ geçen haftanın aynı günü, **aynı saate kadar**
-  - Son 7 gün ↔ önceki 7 gün (yüzde değişim; azalma varsa kart yeşil)
+  - Son 7 gün ↔ önceki 7 gün (yüzde değişim; azalma varsa kart nane renkli)
   - Yeterli kayıt yoksa karşılaştırma gösterilmez (yanıltmasın diye).
 - Grafik: son 7 gün (günlük) / bugün (saatlik)
 - Harcanan para, sigaraya giden süre, tahmini kaybedilen yaşam süresi
@@ -379,15 +380,31 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 
 ## 8. Görsel dil
 
-- **Renkler** (`AppColors`): parlak yeşil (ilerleme, maskot), buton yeşili
-  (beyaz yazı okunsun diye biraz koyu), mavi (seçim, erteleme), altın (XP),
-  turuncu (seri), mor (rozet, neden etiketleri), kırmızı (sadece silme).
-  Açık ve koyu tema.
+- **Renk teması "Nane"** (`AppColors`, `lib/theme.dart`): Duolingo'yu
+  *andırsın* ama aynısı olmasın diye kendi paletimiz var.
+  - `mint` (nane/turkuaz): ana renk — ilerleme, ana butonlar
+    (`mintButton`, beyaz yazı okunsun diye biraz koyu), maskotun gövdesi.
+  - `blue`: ikinci renk — seçim, erteleme, bilgi.
+  - `leaf` (yaprak yeşili): sadece büyümeyi anlatan yerlerde — seri,
+    maskotun başındaki filiz.
+  - `gold` (XP), `purple` (rozet, neden etiketleri), `red` (sadece silme).
+  - Açık temada zemin çok hafif nane tonlu, kartlar beyaz; koyu temada
+    lacivert zemin.
+  - **Neden nane?** Yeşil ile mavinin ortası; temiz havayı, maskot
+    "Nefes"i ve söndürülmüş ateşi ("Unlit" = yanmayan) anlatır. Turuncu/
+    mercan gibi sıcak renkler ateş ve kor çağrıştırdığı için ana renk
+    yapılmadı.
+- **Duolingo'dan bilerek farklı tuttuklarımız:** limon yeşili yerine nane,
+  yeşil maskot yerine nane renkli maskot (yeşil filizli), alev yerine
+  yaprak seri ikonu (`streakIcon`), alt menüde mavi çerçeveli kare yerine
+  yumuşak nane kapsül, bembeyaz yerine hafif tonlu zemin, kendi koyu
+  temamız. Tok butonlar, Nunito, konfeti ve konuşan maskot "Duolingo
+  havası" için korundu.
 - **Butonlar:** `ChunkyButton` — 4 px'lik koyu alt kenar; basınca iner.
   Yazılar BÜYÜK HARFLE ve elle yazılır (`toUpperCase()` Türkçe "i"yi bozar).
 - **Kartlar:** `ChunkyCard` — 2 px gri çerçeve + 3 px alt kenar.
-- **Erişilebilirlik:** Butonlarda beyaz yazı/yeşil zemin kontrastı ~3,2:1
-  (kalın, büyük yazı). Büyük yazı boyutunda (%130) ve dar ekranda (360 px)
+- **Erişilebilirlik:** Butonlarda beyaz yazı/nane zemin kontrastı ~3,5:1
+  (kalın, büyük yazı); gri yardımcı yazılar zeminde ~4,7:1. Büyük yazı boyutunda (%130) ve dar ekranda (360 px)
   tüm sekmelerde, onboarding'de, kutlama ve erteleme ekranlarında taşma
   olmadığı testle kontrol ediliyor. "Animasyonları azalt" açıksa konfeti gösterilmez.
 
@@ -548,3 +565,4 @@ birebir doğrulayın):
 | 0.2.0 | Nefes ile oyunlaştırma | Duolingo tarzı tasarım (Nunito, tok butonlar, canlı renkler), maskot "Nefes", günlük görevler, XP, affedici seri, erteleme, nefes egzersizi, ruh hali, sigara nedenleri, konfetili kutlamalar, Bugün/İstatistik/Profil sekmeleri |
 | 0.3.0 | Ses ve titreşim | Sıfırdan sentezlenmiş 6 ses efekti (ding-ding, fanfar, sakin çan, nefes al/ver, zil), kutlama/nefes/erteleme titreşimleri, Ayarlar'da aç/kapat; telefonda sessiz moda uyar ve müziği durdurmaz; web'de iPhone uyumlu Web Audio |
 | 0.4.0 | Tarihli paket fiyatı | Fiyatın kendi yeri (İstatistik'te kart + pencere, Ayarlar'da kısayol), her sigara kendi tarihindeki fiyatla hesaplanır, fiyat geçmişi, "yanlış girmiştim" düzeltmesi, 90 günde bir "hâlâ aynı mı?", onboarding'de sadece fiyat (paket varsayılan 20), eski sürümden otomatik taşıma; fiyat internetten çekilmez |
+| 0.5.0 | Nane teması | Duolingo'nun birebir renkleri yerine kendi paletimiz: nane (turkuaz) ana renk, mavi ikinci renk, yaprak yeşili seri; nane renkli, yeşil filizli maskot; seri ikonu alev yerine yaprak; alt menüde yumuşak kapsül; hafif nane tonlu zemin, lacivert koyu tema; buton kontrastı ~3,2'den ~3,5'e çıktı |

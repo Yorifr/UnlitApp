@@ -25,24 +25,24 @@
 
   <style>
     /* Flutter yüklenene kadar gösterilen basit "Yükleniyor" ekranı */
-    body { margin: 0; background: #F5FBF8; }
+    body { margin: 0; background: #F3F9F8; }
     #yukleniyor {
       position: fixed; inset: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      color: #2F7D6D;
+      color: #0B7A6D;
     }
     #yukleniyor .daire {
       width: 40px; height: 40px; border-radius: 50%;
-      border: 4px solid #CDE8DF; border-top-color: #2F7D6D;
+      border: 4px solid #D7F6F0; border-top-color: #0E9A8A;
       animation: don 0.9s linear infinite;
     }
     #yukleniyor p { margin-top: 16px; font-size: 15px; }
     @keyframes don { to { transform: rotate(360deg); } }
     @media (prefers-color-scheme: dark) {
-      body { background: #0F1513; }
-      #yukleniyor { color: #8ED5C0; }
-      #yukleniyor .daire { border-color: #23413A; border-top-color: #8ED5C0; }
+      body { background: #0E1A2B; }
+      #yukleniyor { color: #5FE3CF; }
+      #yukleniyor .daire { border-color: #10332F; border-top-color: #3DD9C1; }
     }
   </style>
 </head>
