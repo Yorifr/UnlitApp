@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../logic/rewards.dart';
 import '../models/user_profile.dart';
+import '../services/effects.dart';
 import '../theme.dart';
 import '../widgets/chunky.dart';
 import '../widgets/confetti.dart';
@@ -92,6 +93,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _goTo(int index) {
     FocusScope.of(context).unfocus(); // Açık klavyeyi kapat.
     setState(() => _index = index);
+    // "Hazırsın!" sayfasına gelince konfetiyle birlikte fanfar çalsın.
+    if (_steps[index] == OnboardingStep.done) Effects.celebrate(big: true);
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),

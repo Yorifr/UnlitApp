@@ -122,6 +122,12 @@ class StorageService {
 
   Future<void> setDemoSeed(int seed) => _prefs.setInt(_kDemoSeed, seed);
 
+  // ---------- Küçük ayarlar (ses açık mı vb.) ----------
+
+  bool? readBool(String key) => _prefs.getBool(key);
+
+  Future<void> writeBool(String key, bool value) => _prefs.setBool(key, value);
+
   // ---------- Hepsini sil ----------
 
   /// Bu uygulamanın sakladığı her şeyi siler.

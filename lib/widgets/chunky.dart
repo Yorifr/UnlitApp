@@ -5,8 +5,8 @@
 // gerçek bir tuşa basıyormuş gibi hissettirir.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../services/effects.dart';
 import '../theme.dart';
 
 /// Buton renk türleri.
@@ -135,7 +135,7 @@ class _ChunkyButtonState extends State<ChunkyButton> {
         onTapCancel: () => _setPressed(false),
         onTap: enabled
             ? () {
-                HapticFeedback.lightImpact(); // Telefonda hafif titreşim
+                Effects.tap(); // Telefonda hafif titreşim
                 widget.onPressed!();
               }
             : null,

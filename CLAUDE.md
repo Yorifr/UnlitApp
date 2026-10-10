@@ -67,7 +67,8 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
   `tagEvent`, `finishDelay`, `logBreathing`...) bir `Reward` döndürür;
   ekran `CelebrationScreen.show(context, reward)` ile kutlar.
 - `lib/services/`: `DeviceService` (arayüz), `DemoDeviceService`,
-  `demo_day_planner.dart`, `demo_activity.dart`, `StorageService`.
+  `demo_day_planner.dart`, `demo_activity.dart`, `StorageService`,
+  `effects.dart` (ses + titreşim) ve ses oynatıcılar (`sound_player*.dart`).
 - `lib/logic/`: **saf** hesap fonksiyonları (`stats.dart`, `quests.dart`,
   `rewards.dart`, `mascot_messages.dart`); `now`'ı parametre olarak alır →
   kolay test. Yeni hesapları buraya koy ve test yaz. XP miktarları
@@ -88,12 +89,19 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 - Bir şey başarıldığında `CelebrationScreen.show(...)`; zor anlarda
   `calm: true` (konfetisiz, destekleyici).
 - Yazı tipi Nunito (`assets/fonts/`, gömülü). Ağırlıklar: 500/700/800/900.
+- **Ses ve titreşim** sadece `Effects` üzerinden (`Effects.tap()`,
+  `Effects.select()`, `Effects.celebrate()`, `Effects.breath()`,
+  `Effects.timerDone()`). `HapticFeedback`'i doğrudan çağırma; yoksa
+  Ayarlar'daki "Titreşim kapalı" seçeneği çalışmaz. Ses sadece güzel
+  anlarda; sigara içmek asla ses/titreşim tetiklemez. Yeni ses gerekiyorsa
+  `tool/make_sounds.py`'ye ekle, `Sfx` listesine yaz.
 - Testler `test/` altında; demo ve hesaplar için sahte saat (`clock:`)
   kullanılır.
 
 ## Paket kuralları
 "Az ama sağlam paket." Şu an: `shared_preferences`, `flutter_localizations`
-(SDK). Yeni paket eklemeden önce: (1) gerçekten gerekli mi, birkaç satır
+(SDK), `audioplayers` (telefonda ses), `web` (web'de ses; Dart ekibinin
+resmi paketi). Yeni paket eklemeden önce: (1) gerçekten gerekli mi, birkaç satır
 kodla çözülmüyor mu? (2) web dahil tüm platformları destekliyor mu?
 (3) iyi bakılıyor mu (pub.dev puanı, son güncelleme)? (4) internete veri
 gönderiyor mu? (göndermemeli). Eklersen SPEC.md'ye nedenini yaz.
@@ -119,6 +127,13 @@ paketsiz yazıldı.
   yazılar gerçekte olduğundan geniş görünür. Bir `Row` taşıyorsa uzun
   yazıyı `Expanded`/`Flexible` içine al (bu, küçük telefonlarda da işe
   yarar).
+- **Testlerde ses:** `Effects.player` varsayılan olarak sessizdir; testler
+  gerçek ses çalmaz. Hangi sesin çaldığını kontrol etmek için
+  `test/test_helpers.dart` → `RecordingPlayer`.
+- **Web'de ses izni:** Tarayıcılar (özellikle iPhone) sese ancak dokunuş
+  anında izin verir. Bu yüzden ilk sesten önce mutlaka bir dokunuş olur
+  (uygulama kökündeki `Listener` → `Effects.unlock()`). Dokunuşsuz,
+  kendiliğinden çalan bir ses ekleme.
 - **Sürüm:** `pubspec.yaml` `version` ile `lib/app_info.dart` `appVersion`
   aynı olmalı.
 

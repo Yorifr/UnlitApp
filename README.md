@@ -32,6 +32,9 @@ suçlamaz:
   haftada bir kaçırılan gün affedilir.
 - **İstatistik:** bugünkü sayı, geçen haftayla karşılaştırma, grafik,
   harcanan para, sigaraya giden süre, tahmini yaşam süresi etkisi.
+- **Ses ve titreşim:** görev "ding-ding"i, büyük başarıda fanfar, nefes
+  egzersizinde ipucu sesleri, erteleme bitince zil. Ayarlar'dan
+  kapatılabilir. Telefonda sessiz moda uyar ve müziği durdurmaz.
 
 ---
 
@@ -50,10 +53,14 @@ suçlamaz:
 
 1. Safari'de **https://yorifr.github.io/UnlitApp/** adresini aç.
 2. **Paylaş** → **Ana Ekrana Ekle**. Uygulama gibi tam ekran açılır.
-3. Veriler **o tarayıcıda** saklanır. Safari geçmişini/verilerini temizlersen
+3. **Ses için** iPhone sessiz modda olmamalı (yan tuş "zil" konumunda);
+   sessiz moddayken sesler bilerek çalmaz. Ses, ekrana ilk dokunuştan
+   sonra açılır. iPhone tarayıcısı titreşimi desteklemez (uygulamada
+   çalışır).
+4. Veriler **o tarayıcıda** saklanır. Safari geçmişini/verilerini temizlersen
    kayıtlar silinir. Safari, uzun süre açılmayan sitelerin verilerini
    silebildiği için ana ekrandan açmak daha güvenli.
-4. Demo modunda uygulama kapalıyken geçen sürenin "sigaraları" da açılınca
+5. Demo modunda uygulama kapalıyken geçen sürenin "sigaraları" da açılınca
    eklenir; yani günlerce takip ettikçe veri gerçek bir kullanıcınınki gibi
    birikir. Ayarlar → **Demo verisi üret** ile son iki haftayı anında
    doldurabilirsin.
@@ -87,6 +94,7 @@ lib/
 ├── screens/               Onboarding, Bugün, İstatistik, Profil, ...
 └── widgets/               Tok butonlar, maskot, konfeti, grafik
 assets/fonts/              Nunito yazı tipi (uygulamanın içinde)
+assets/sounds/             Ses efektleri (tool/make_sounds.py ile üretildi)
 test/                      Otomatik testler
 docs/SPEC.md               Şartname + aşama planı
 ```
