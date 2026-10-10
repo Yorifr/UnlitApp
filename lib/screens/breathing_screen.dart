@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../services/effects.dart';
 import '../theme.dart';
 import '../widgets/chunky.dart';
 import '../widgets/mascot.dart';
@@ -25,12 +26,29 @@ class _BreathingScreenState extends State<BreathingScreen>
   static const int rounds = 6;
   static const int secondsPerHalf = 4; // 4 sn al + 4 sn ver
 
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: rounds * secondsPerHalf * 2),
-  )..addStatusListener(_onStatus);
+  late final AnimationController _controller =
+      AnimationController(
+          vsync: this,
+          duration: const Duration(seconds: rounds * secondsPerHalf * 2),
+        )
+        ..addStatusListener(_onStatus)
+        ..addListener(_onTick);
 
   bool _started = false;
+
+  /// Şu ana kadar kaç "yarım tur" (al ya da ver) başladı.
+  int _halvesStarted = 0;
+
+  /// Her "Nefes al" / "Nefes ver" başında yumuşak bir ses + titreşim.
+  /// Böylece gözler kapalıyken de egzersiz takip edilebilir.
+  void _onTick() {
+    final elapsed = _controller.value * rounds * secondsPerHalf * 2;
+    final half = elapsed ~/ secondsPerHalf; // 0, 1, 2, ...
+    if (half >= _halvesStarted && half < rounds * 2) {
+      _halvesStarted = half + 1;
+      Effects.breath(inhale: half.isEven);
+    }
+  }
 
   @override
   void dispose() {

@@ -7,6 +7,7 @@ import '../app_state.dart';
 import '../logic/quests.dart';
 import '../models/activity_log.dart';
 import '../models/user_profile.dart';
+import '../services/effects.dart';
 import '../theme.dart';
 import '../widgets/chunky.dart';
 import '../widgets/mascot.dart';
@@ -36,6 +37,9 @@ class _DelayScreenState extends State<DelayScreen> {
   int _tipIndex = 0;
   bool _finishing = false;
 
+  /// "Süre doldu" zili çaldı mı? (Bir kez çalsın.)
+  bool _bellRung = false;
+
   AppState get state => widget.state;
 
   @override
@@ -44,16 +48,28 @@ class _DelayScreenState extends State<DelayScreen> {
     if (state.activeDelayStart == null) state.startDelay();
     _tipIndex = Random().nextInt(_tips(state.profile).length);
     // Her saniye ekranı yenile (geri sayım için).
-    _ticker = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) => setState(() {}),
-    );
+    // Ekran açıldığında süre zaten dolmuşsa zil tekrar çalmasın.
+    _bellRung = _timeIsUp();
+    // Her saniye ekranı yenile (geri sayım için); süre dolunca zil çal.
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!_bellRung && _timeIsUp()) {
+        _bellRung = true;
+        Effects.timerDone();
+      }
+      setState(() {});
+    });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
     super.dispose();
+  }
+
+  /// 10 dakika doldu mu?
+  bool _timeIsUp() {
+    final start = state.activeDelayStart ?? state.now;
+    return state.now.difference(start) >= const Duration(minutes: delayMinutes);
   }
 
   Future<void> _finish(DelayOutcome outcome) async {

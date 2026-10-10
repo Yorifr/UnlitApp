@@ -5,6 +5,7 @@ import '../app_state.dart';
 import '../services/demo_activity.dart';
 import '../services/demo_device_service.dart';
 import '../services/device_service.dart';
+import '../services/effects.dart';
 import '../widgets/privacy_banner.dart';
 import 'onboarding_screen.dart';
 
@@ -83,6 +84,8 @@ class SettingsScreen extends StatelessWidget {
                   onTap: () => _resetEvents(context),
                 ),
               ],
+              const _SectionTitle('Ses ve titreşim'),
+              const _EffectsSettings(),
               const _SectionTitle('Bilgilerim'),
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
@@ -208,6 +211,7 @@ class SettingsScreen extends StatelessWidget {
     );
     if (!ok) return;
     await state.deleteAllData();
+    Effects.resetSettings();
     // Uygulama ilk açılış haline döndü; karşılama ekranına geri dön.
     if (context.mounted) {
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -263,6 +267,53 @@ class _SectionTitle extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+    );
+  }
+}
+
+/// Ses efektleri ve titreşim anahtarları.
+class _EffectsSettings extends StatefulWidget {
+  const _EffectsSettings();
+
+  @override
+  State<_EffectsSettings> createState() => _EffectsSettingsState();
+}
+
+class _EffectsSettingsState extends State<_EffectsSettings> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SwitchListTile(
+          secondary: const Icon(Icons.volume_up_outlined),
+          title: const Text('Ses efektleri'),
+          subtitle: const Text(
+            'Görev ve kutlama sesleri. Telefonda sessiz moda uyar, çalan '
+            'müziği durdurmaz.',
+          ),
+          value: Effects.soundOn,
+          onChanged: (value) async {
+            await Effects.setSoundOn(value);
+            setState(() {});
+            // Açınca nasıl duyulduğunu hemen dinlet.
+            if (value) Effects.play(Sfx.success);
+          },
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.vibration),
+          title: const Text('Titreşim'),
+          subtitle: const Text(
+            'Butonlara basınca ve kutlamalarda hafif titreşim. (iPhone '
+            'tarayıcısında desteklenmez; uygulamada çalışır.)',
+          ),
+          value: Effects.hapticsOn,
+          onChanged: (value) async {
+            await Effects.setHapticsOn(value);
+            setState(() {});
+            if (value) Effects.tap();
+          },
+        ),
+      ],
     );
   }
 }

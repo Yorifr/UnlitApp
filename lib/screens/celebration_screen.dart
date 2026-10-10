@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../logic/rewards.dart';
 import '../models/activity_log.dart';
+import '../services/effects.dart';
 import '../theme.dart';
 import '../widgets/chunky.dart';
 import '../widgets/confetti.dart';
@@ -69,7 +69,13 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
   @override
   void initState() {
     super.initState();
-    HapticFeedback.mediumImpact(); // Telefonda "tık" hissi
+    // Ses + titreşim: büyük başarıda "fanfar", görevde "ding-ding",
+    // zor anlarda yumuşak bir çan.
+    final big =
+        reward.has(XpReason.allQuests) ||
+        reward.has(XpReason.delaySuccess) ||
+        reward.has(XpReason.welcome);
+    Effects.celebrate(big: big, calm: widget.calm);
   }
 
   Reward get reward => widget.reward;

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/activity_log.dart';
 import '../models/smoking_event.dart';
 import '../models/user_profile.dart';
+import '../services/effects.dart';
 import '../theme.dart';
 import '../utils/format.dart';
 import 'chunky.dart';
@@ -34,7 +35,10 @@ class MoodRow extends StatelessWidget {
                   label: mood.label,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(14),
-                    onTap: () => onSelected(mood),
+                    onTap: () {
+                      Effects.select();
+                      onSelected(mood);
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
@@ -149,8 +153,10 @@ Future<TriggerChoice?> showTriggerSheet(
                       labelStyle: theme.textTheme.labelLarge?.copyWith(
                         color: event.trigger == t ? c.blueText : c.text,
                       ),
-                      onSelected: (_) =>
-                          Navigator.of(context).pop(TriggerChoice(t)),
+                      onSelected: (_) {
+                        Effects.select();
+                        Navigator.of(context).pop(TriggerChoice(t));
+                      },
                     ),
                 ],
               ),

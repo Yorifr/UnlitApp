@@ -5,7 +5,13 @@ import 'package:unlit/app.dart';
 import 'package:unlit/app_state.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/services/demo_device_service.dart';
+import 'package:unlit/services/effects.dart';
 import 'package:unlit/services/storage_service.dart';
+
+import 'test_helpers.dart';
+
+/// Testlerde çalınan sesleri kaydeden sahte oynatıcı.
+late RecordingPlayer sounds;
 
 /// Uygulamayı boş bir hafızayla, telefon boyutunda başlatıp [body]'yi
 /// çalıştıran test. Sonunda demo kılıfın zamanlayıcısını durdurur (yoksa
@@ -24,6 +30,8 @@ void testApp(
     final storage = await StorageService.create();
     final demo = DemoDeviceService(storage: storage);
     final state = AppState(storage: storage, device: demo);
+    sounds = RecordingPlayer();
+    Effects.init(storage, sounds);
     await state.start();
     await tester.pumpWidget(UnlitApp(state: state));
 
@@ -126,6 +134,7 @@ void main() {
 
     expect(find.text('Görev tamamlandı!'), findsOneWidget);
     expect(state.totalXp, xpBefore + 10);
+    expect(sounds.played.last, Sfx.success.asset); // "ding-ding"
 
     await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
@@ -146,8 +155,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Başardın!'), findsOneWidget);
+    expect(sounds.played.last, Sfx.fanfare.asset); // büyük kutlama
     expect(state.successfulDelays, 1);
     expect(state.activeDelayStart, isNull);
+  });
+
+  testApp('nefes egzersizi "al" ve "ver" anlarında ses verir', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    await scrollAndTap(tester, find.text('Nefes molası'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('BAŞLA'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(sounds.played.last, Sfx.breathIn.asset);
+    await tester.pump(const Duration(seconds: 4));
+    expect(sounds.played.last, Sfx.breathOut.asset);
+
+    // Yarıda bırakmak serbest: kapat, ceza yok.
+    await tester.tap(find.byTooltip('Kapat'));
+    await tester.pumpAndSettle();
+    expect(find.text('Günlük görevler'), findsOneWidget);
   });
 
   testApp('demo verisi üretilince her yer dolar', (tester, state) async {
@@ -155,6 +185,17 @@ void main() {
 
     await scrollAndTap(tester, find.text('DEMO VERİSİ ÜRET'));
     await tester.pumpAndSettle();
+
+    // Sigara kaydı (kılıftan "+1") hiçbir ses ya da kutlama tetiklemez.
+    final soundsBefore = sounds.played.length;
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 3000), // en üste kaydır
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('+1 sigara'));
+    await tester.pumpAndSettle();
+    expect(sounds.played.length, soundsBefore);
 
     expect(state.events.length, greaterThan(100));
     expect(state.streak.current, greaterThan(5));

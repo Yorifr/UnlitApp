@@ -5,7 +5,7 @@
 > durum" ile "Sürüm geçmişi" bölümlerini güncelleyin.**
 
 Son güncelleme: 10 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
-oyunlaştırma) tamamlandı.
+oyunlaştırma) ve ses/titreşim efektleri tamamlandı.
 
 ---
 
@@ -117,6 +117,26 @@ suçluluk duymasın**.
    erteleme önerir; ölçüm haftasında karşılaştırma yapmaz.
 8. **Renkler:** Kırmızı sadece "tümünü sil" gibi tehlikeli işlemlerde.
    Kullanıcının sigara davranışı asla kırmızıyla gösterilmez.
+9. **Ses ve titreşim** (`lib/services/effects.dart`):
+   - Ses **sadece güzel anlarda** çalar; "hata/ceza" sesi yoktur. Sigara
+     içmek (kılıftan gelen olay) **hiçbir ses ya da titreşim tetiklemez**.
+
+     | An | Ses | Titreşim |
+     |---|---|---|
+     | Görev tamamlandı | `success` ("ding-ding") | başarı titreşimi |
+     | Büyük kutlama (günün görevleri, başarılı erteleme, "Hazırsın!") | `fanfare` | başarı titreşimi |
+     | Sakin an (zor gün, "yine de içeceğim") | `calm` (yumuşak çan) | hafif |
+     | Nefes egzersizi: al / ver | `breath_in` / `breath_out` | hafif |
+     | Erteleme süresi doldu | `bell` | güçlü |
+     | Butona basma / seçim yapma | — | hafif / en hafif |
+
+   - Sesler `tool/make_sounds.py` ile **sıfırdan sentezlendi** (başka
+     uygulamaların sesleri telif nedeniyle kullanılmaz).
+   - Telefonda sesler **sessiz moda uyar** ve **çalan müziği durdurmaz**
+     (iOS "ambient", Android "sonification", ses odağı almaz).
+   - Ses ve titreşim **Ayarlar'dan ayrı ayrı kapatılabilir**. (Toplum
+     içinde sesli bir sigara uygulaması gizliliği bozabilir; kapatmak kolay
+     olmalı.)
 
 ## 4. Özellikler (tam vizyon)
 
@@ -217,7 +237,11 @@ lib/
 │   ├── demo_device_service.dart   Sanal kılıf
 │   ├── demo_day_planner.dart  Gerçekçi bir günün sigara saatleri
 │   ├── demo_activity.dart     Demo için geçmiş görev/XP/neden üretimi
-│   └── storage_service.dart   Yerel kayıt (shared_preferences)
+│   ├── storage_service.dart   Yerel kayıt (shared_preferences)
+│   ├── effects.dart           Ses + titreşim (Effects.celebrate() vb.)
+│   ├── sound_player.dart      Platforma göre ses oynatıcı seçimi
+│   ├── sound_player_native.dart  Telefonda: audioplayers
+│   └── sound_player_web.dart  Web'de: tarayıcının Web Audio motoru
 ├── logic/                     Saf (test edilebilir) hesaplar
 │   ├── stats.dart             Sayılar, para, süre, yaşam tahmini
 │   ├── quests.dart            Günlük görevler, ölçüm haftası
@@ -242,6 +266,8 @@ lib/
     ├── onboarding_inputs.dart Seçenek kutuları, sayı seçici, ölçek
     ├── bar_chart.dart, stat_tile.dart, privacy_banner.dart
 assets/fonts/                  Nunito (SIL OFL), uygulamaya gömülü
+assets/sounds/                 Ses efektleri (sentez, telif yok)
+tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 ```
 
 - **Durum yönetimi:** Tek bir `AppState` (`ChangeNotifier`). Ekranlar
@@ -265,9 +291,23 @@ assets/fonts/                  Nunito (SIL OFL), uygulamaya gömülü
   (bugün boş kalır; 10. gün bilerek boş: dinlenme gününü gösterir).
 - **Kayıt:** `shared_preferences` (Android/iOS yerel dosya, web'de
   localStorage). Anahtarlar: `profile`, `onboarding_done`, `events`,
-  `activity`, `tracking_started_at`, `demo_last_sync`, `demo_seed`.
-- **Paketler:** `shared_preferences`, `flutter_localizations` (SDK). Grafik,
-  konfeti ve maskot kendi yazdığımız bileşenler.
+  `activity`, `tracking_started_at`, `demo_last_sync`, `demo_seed`,
+  `sound_on`, `haptics_on`.
+- **Paketler:** `shared_preferences`, `flutter_localizations` (SDK),
+  `audioplayers` (telefonda ses), `web` (Dart ekibinin resmi paketi; web'de
+  ses). Grafik, konfeti ve maskot kendi yazdığımız bileşenler.
+- **Ses mimarisi:** `Effects` (statik) → `SoundPlayer` arayüzü.
+  - Telefonda `AudioplayersSoundPlayer`.
+  - Web'de `WebAudioSoundPlayer`: iPhone Safari sese ancak bir DOKUNUŞ
+    anında izin verir. Uygulamanın kökündeki `Listener` her dokunuşta
+    `Effects.unlock()` çağırır; tek bir Web Audio bağlamı açılır, sonraki
+    tüm sesler gecikmesiz çalar. Web Audio, iPhone'un sessiz moduna uyar.
+  - Testlerde varsayılan `SilentSoundPlayer` (ses yok); testler
+    `RecordingPlayer` ile hangi sesin çaldığını kontrol eder.
+  - Ses dosyaları: `assets/sounds/*.wav` (22050 Hz, mono, toplam ~230 KB),
+    uygulamanın kendi sitesinden yüklenir (dış istek yok).
+- **Titreşim:** Flutter'ın `HapticFeedback`'i. Web'de Android Chrome'da
+  çalışır; **iPhone tarayıcısı titreşimi desteklemez** (uygulamada çalışır).
 - **Font:** Nunito (Medium 500, Bold 700, ExtraBold 800, Black 900), Latin +
   Türkçe harflere küçültülmüş (~48 KB/dosya), `assets/fonts/`.
 - **Web:** `--no-web-resources-cdn` ile derlenir; arayüzde fontta olmayan
@@ -339,6 +379,7 @@ assets/fonts/                  Nunito (SIL OFL), uygulamaya gömülü
 | ALO 171 Sigara Bırakma Danışma Hattı | T.C. Sağlık Bakanlığı | Aşama 3 (Bırakma günü) |
 | Sigara bırakma poliklinikleri (MHRS randevu) | T.C. Sağlık Bakanlığı | Aşama 3 (Bırakma günü) |
 | Nunito yazı tipi | The Nunito Project Authors, SIL Open Font License 1.1 (`assets/fonts/OFL.txt`) | Tüm arayüz |
+| Ses efektleri | Ekip tarafından sentezlendi (`tool/make_sounds.py`), telif yok | Kutlamalar, nefes, erteleme |
 
 **WHO iyileşme takvimi** (Aşama 3'te eklemeden önce metni WHO sayfasından
 birebir doğrulayın):
@@ -394,6 +435,9 @@ birebir doğrulayın):
 - [x] Demo: geçmiş görev/XP/neden üretimi
 - [x] Testler: görev/ödül/seri kuralları, AppState, arayüz akışları,
       büyük yazı boyutu; web'de dış istek yok (Playwright)
+- [x] Ses efektleri (6 sentez ses) ve titreşim; Ayarlar'da aç/kapat;
+      telefonda sessiz moda uyar, müziği durdurmaz; web'de iPhone uyumlu
+      Web Audio
 
 ### Aşama 3 — Süreç aşamaları (sıradaki)
 - [ ] Aşama modeli ve kaydı (hangi aşamada, ne zaman başladı)
@@ -443,8 +487,12 @@ birebir doğrulayın):
 - **Maskotun adı ve görünüşü:** Şimdilik "Nefes" (`lib/widgets/mascot.dart`
   → `mascotName`). Ekip isterse değiştirebilir. Duolingo'nun adı, logosu
   veya baykuşu kullanılmaz; sadece tarzından ilham alınır.
-- **Ses efektleri:** Duolingo hissinin önemli parçası, ama bir ses paketi ve
-  ses dosyaları gerektirir. Gerekirse Aşama 4'te değerlendirilir.
+- **Seslerin iPhone'da denenmesi:** Web Audio'nun iPhone Safari'de ilk
+  dokunuşla açılması tasarlandı ve Chrome'da doğrulandı, ama gerçek bir
+  iPhone'da denenmeli. iPhone sessiz moddaysa web'de ses duyulmaz (bilerek).
+- **Sesler zevke göre:** Sesler basit sentezlerdir. Ekip beğenmezse
+  `tool/make_sounds.py`'deki notalar/süreler değiştirilip yeniden
+  üretilebilir.
 - **Oyunlaştırma ve ölçüm:** "Canım sigara istiyor" butonu ölçüm haftasında
   da açık; bu, başlangıç ölçümünü biraz etkileyebilir. Kullanıcının kendi
   istediği yardımı engellemek etik olmadığı için bilerek açık bırakıldı.
@@ -463,3 +511,4 @@ birebir doğrulayın):
 |---|---|---|
 | 0.1.0 | Temel ve demo kılıf | Proje iskeleti, demo kılıf, onboarding, ana ekran, ayarlar, testler, GitHub Pages yayını |
 | 0.2.0 | Nefes ile oyunlaştırma | Duolingo tarzı tasarım (Nunito, tok butonlar, canlı renkler), maskot "Nefes", günlük görevler, XP, affedici seri, erteleme, nefes egzersizi, ruh hali, sigara nedenleri, konfetili kutlamalar, Bugün/İstatistik/Profil sekmeleri |
+| 0.3.0 | Ses ve titreşim | Sıfırdan sentezlenmiş 6 ses efekti (ding-ding, fanfar, sakin çan, nefes al/ver, zil), kutlama/nefes/erteleme titreşimleri, Ayarlar'da aç/kapat; telefonda sessiz moda uyar ve müziği durdurmaz; web'de iPhone uyumlu Web Audio |

@@ -5,6 +5,7 @@ import 'app_info.dart';
 import 'app_state.dart';
 import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/effects.dart';
 import 'theme.dart';
 
 /// Uygulamanın kök bileşeni: tema, dil ve ilk ekran burada ayarlanır.
@@ -29,6 +30,10 @@ class UnlitApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // Her dokunuşta sesi "açmayı" dene. (iPhone tarayıcısı sese ancak
+      // dokunuş anında izin verir; bkz. services/sound_player_web.dart)
+      builder: (context, child) =>
+          Listener(onPointerUp: (_) => Effects.unlock(), child: child),
       home: _RootScreen(state: state),
     );
   }

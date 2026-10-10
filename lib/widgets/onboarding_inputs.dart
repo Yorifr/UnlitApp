@@ -5,8 +5,8 @@
 // uydurmayız.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../services/effects.dart';
 import '../theme.dart';
 
 /// "Neden soruyoruz?" bağlantısı; dokununca açıklama açılır.
@@ -82,7 +82,7 @@ class SelectableBox extends StatelessWidget {
       selected: selected,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Effects.select(); // en hafif "tık" titreşimi
           onTap();
         },
         child: AnimatedContainer(
