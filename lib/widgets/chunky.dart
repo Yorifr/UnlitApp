@@ -11,7 +11,7 @@ import '../theme.dart';
 
 /// Buton renk türleri.
 enum ChunkyVariant {
-  /// Yeşil: ana eylem ("DEVAM").
+  /// Nane: ana eylem ("DEVAM").
   primary,
 
   /// Beyaz, gri çerçeveli: ikincil eylem ("ŞİMDİLİK GEÇ").
@@ -75,8 +75,8 @@ class _ChunkyButtonState extends State<ChunkyButton> {
         ? (c.disabled, c.disabled, c.disabledText, null)
         : switch (widget.variant) {
             ChunkyVariant.primary => (
-              c.greenButton,
-              c.greenShadow,
+              c.mintButton,
+              c.mintShadow,
               Colors.white,
               null,
             ),
@@ -88,7 +88,7 @@ class _ChunkyButtonState extends State<ChunkyButton> {
             ),
             ChunkyVariant.blue => (
               c.blueShadow,
-              const Color(0xFF0B5A85),
+              const Color(0xFF173C99),
               Colors.white,
               null,
             ),
@@ -234,7 +234,7 @@ class ChunkyProgressBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final fill = color ?? c.green;
+    final fill = color ?? c.mint;
     final radius = BorderRadius.circular(height / 2);
 
     return Container(
@@ -275,7 +275,7 @@ class ChunkyProgressBar extends StatelessWidget {
   }
 }
 
-/// Üst çubuktaki küçük sayaç: ikon + sayı (ör. alev + 5).
+/// Üst çubuktaki küçük sayaç: ikon + sayı (ör. yaprak + 5).
 class StatPill extends StatelessWidget {
   const StatPill({
     super.key,

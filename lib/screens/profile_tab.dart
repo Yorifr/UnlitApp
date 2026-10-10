@@ -61,8 +61,8 @@ class ProfileTab extends StatelessWidget {
             // boyutunda da taşmaz (sabit oranlı ızgara yerine).
             _StatRow(
               left: _StatBox(
-                icon: Icons.local_fire_department,
-                color: c.orange,
+                icon: streakIcon,
+                color: c.leaf,
                 value: '${streak.current}',
                 label: 'Günlük seri',
               ),
@@ -90,12 +90,12 @@ class ProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ChunkyCard(
-              color: c.orangeLight,
-              borderColor: c.orange,
+              color: c.leafLight,
+              borderColor: c.leaf,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.local_fire_department, color: c.orange, size: 28),
+                  Icon(streakIcon, color: c.leaf, size: 28),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(

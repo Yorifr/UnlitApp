@@ -545,7 +545,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 'Hazırsın!',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineMedium?.copyWith(
-                  color: c.greenText,
+                  color: c.mintText,
                 ),
               ),
               const SizedBox(height: 12),

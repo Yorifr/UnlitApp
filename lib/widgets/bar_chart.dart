@@ -89,8 +89,8 @@ class SimpleBarChart extends StatelessWidget {
                               height: max(3, barArea * item.value / maxValue),
                               decoration: BoxDecoration(
                                 color: item.highlight
-                                    ? c.green
-                                    : c.green.withValues(alpha: 0.35),
+                                    ? c.mint
+                                    : c.mint.withValues(alpha: 0.35),
                                 borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(8),
                                   bottom: Radius.circular(2),
@@ -104,7 +104,7 @@ class SimpleBarChart extends StatelessWidget {
                                 item.label,
                                 item.highlight
                                     ? textStyle?.copyWith(
-                                        color: c.greenText,
+                                        color: c.mintText,
                                         fontWeight: FontWeight.w700,
                                       )
                                     : textStyle,

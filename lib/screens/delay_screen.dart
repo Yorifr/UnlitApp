@@ -160,7 +160,7 @@ class _DelayScreenState extends State<DelayScreen> {
                       painter: _RingPainter(
                         progress: progress,
                         track: c.disabled,
-                        fill: done ? c.green : c.blue,
+                        fill: done ? c.mint : c.blue,
                       ),
                       child: Center(
                         child: Column(
@@ -170,7 +170,7 @@ class _DelayScreenState extends State<DelayScreen> {
                               done ? 'Tamam!' : '$minutesText:$secondsText',
                               style: theme.textTheme.displaySmall?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: done ? c.greenText : c.blueText,
+                                color: done ? c.mintText : c.blueText,
                               ),
                             ),
                             if (!done)

@@ -216,15 +216,15 @@ class _TopBar extends StatelessWidget {
                 : Text(
                     'Unlit',
                     style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(color: c.greenText),
+                        ?.copyWith(color: c.mintText),
                   ),
           ),
         ),
         const SizedBox(width: 12),
         StatPill(
-          icon: Icons.local_fire_department,
-          // Bugün henüz bir şey yapılmadıysa alev gri (ama seri bozulmaz).
-          color: streak.activeToday ? c.orange : c.disabledText,
+          icon: streakIcon,
+          // Bugün henüz bir şey yapılmadıysa yaprak gri (ama seri bozulmaz).
+          color: streak.activeToday ? c.leaf : c.disabledText,
           value: '${streak.current}',
           tooltip: 'Seri: ${streak.current} gün',
         ),
@@ -351,7 +351,7 @@ class _QuestsCard extends StatelessWidget {
             Text(
               '$done / ${quests.length}',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: done == quests.length ? c.greenText : c.textMuted,
+                color: done == quests.length ? c.mintText : c.textMuted,
               ),
             ),
           ],
@@ -374,7 +374,7 @@ class _QuestsCard extends StatelessWidget {
             'Hepsi tamam! Yeni görevler gece yarısı gelecek. '
             '+$xpAllQuestsBonus XP bonus kazandın.',
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(color: c.greenText),
+            style: theme.textTheme.bodyMedium?.copyWith(color: c.mintText),
           ),
         ],
       ],
@@ -403,12 +403,12 @@ class _QuestRow extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: quest.done ? c.greenLight : c.goldLight,
+                color: quest.done ? c.mintLight : c.goldLight,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 quest.done ? Icons.check_rounded : type.icon,
-                color: quest.done ? c.greenText : c.goldShadow,
+                color: quest.done ? c.mintText : c.goldShadow,
                 size: 28,
               ),
             ),
@@ -437,7 +437,7 @@ class _QuestRow extends StatelessWidget {
             Text(
               quest.done ? 'Tamam' : '+$xpPerQuest XP',
               style: theme.textTheme.labelMedium?.copyWith(
-                color: quest.done ? c.greenText : c.goldShadow,
+                color: quest.done ? c.mintText : c.goldShadow,
               ),
             ),
           ],

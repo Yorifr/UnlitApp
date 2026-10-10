@@ -19,12 +19,12 @@ class PrivacyBanner extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: compact ? 6 : 10),
       decoration: BoxDecoration(
-        color: c.greenLight,
+        color: c.mintLight,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(Icons.lock_outline, size: compact ? 16 : 20, color: c.greenText),
+          Icon(Icons.lock_outline, size: compact ? 16 : 20, color: c.mintText),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -34,7 +34,7 @@ class PrivacyBanner extends StatelessWidget {
                           ? theme.textTheme.bodySmall
                           : theme.textTheme.bodyMedium)
                       ?.copyWith(
-                        color: c.greenText,
+                        color: c.mintText,
                         fontWeight: FontWeight.w700,
                       ),
             ),

@@ -126,7 +126,7 @@ class _StatsTabState extends State<StatsTab> {
         const SizedBox(height: 12),
         StatTile(
           icon: Icons.payments_outlined,
-          color: c.green,
+          color: c.mint,
           title: 'Harcanan para',
           value: money == null ? '—' : formatMoney(money),
           footnote: currentPrice == null
@@ -236,7 +236,7 @@ class _TodayCard extends StatelessWidget {
               Text(
                 '$today',
                 style: theme.textTheme.displayLarge?.copyWith(
-                  color: c.greenText,
+                  color: c.mintText,
                   height: 1.0,
                 ),
               ),
@@ -287,7 +287,7 @@ class _TodayCard extends StatelessWidget {
   }
 }
 
-/// Fark rozeti: "2 az" (yeşil) / "3 fazla" (nötr gri) / "aynı".
+/// Fark rozeti: "2 az" (nane) / "3 fazla" (nötr gri) / "aynı".
 ///
 /// Bilerek kırmızı/uyarı rengi kullanmıyoruz: artış olduğunda kullanıcıyı
 /// suçlamak değil, sadece bilgi vermek istiyoruz.
@@ -307,8 +307,8 @@ class ChangeChip extends StatelessWidget {
       < 0 => (
         Icons.south,
         text ?? '${-difference} az',
-        c.greenLight,
-        c.greenText,
+        c.mintLight,
+        c.mintText,
       ),
       > 0 => (
         Icons.north,
@@ -362,9 +362,9 @@ class _WeekCard extends StatelessWidget {
 
     return ChunkyCard(
       padding: const EdgeInsets.all(20),
-      // Azalma varsa kart yeşil bir kutlama havasına bürünür.
-      color: less ? c.greenLight : null,
-      borderColor: less ? c.green : null,
+      // Azalma varsa kart nane renkli bir kutlama havasına bürünür.
+      color: less ? c.mintLight : null,
+      borderColor: less ? c.mint : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -554,7 +554,7 @@ class _PriceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.sell_outlined, color: c.green, size: 26),
+              Icon(Icons.sell_outlined, color: c.mint, size: 26),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
