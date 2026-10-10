@@ -5,7 +5,7 @@
 > durum" ile "Sürüm geçmişi" bölümlerini güncelleyin.**
 
 Son güncelleme: 10 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
-oyunlaştırma) ve ses/titreşim efektleri tamamlandı.
+oyunlaştırma), ses/titreşim efektleri ve tarihli paket fiyatı tamamlandı.
 
 ---
 
@@ -165,6 +165,21 @@ suçluluk duymasın**.
   - Yaşam süresi: sigara başına erkek ~17 dk, kadın ~22 dk, belirtilmemişse
     ~20 dk (UCL 2024). **"Ortalama tahmin"** olduğu açıkça yazar.
   - Sigaraya giden süre: sigara başına ~6 dk **varsayımı**.
+- **Paket fiyatı (tarihli):** Fiyat profilin parçası değil; kendi yeri
+  İstatistik → "Paket fiyatı" kartı (ve Ayarlar'da kısayol).
+  - Her fiyat "ne zamandan beri geçerli" bilgisiyle saklanır. **Her sigara
+    kendi tarihindeki fiyatla** hesaplanır: zam gelip fiyat güncellenince
+    eski günlerin harcaması değişmez.
+  - Yeni fiyat **bugünden** geçerli olur; aynı gün tekrar değiştirilirse
+    bugünkü kayıt düzeltilir. "Yanlış girmiştim" seçeneği tüm geçmişi yeni
+    fiyatla hesaplar.
+  - İlk fiyattan önceki kayıtlar ilk fiyatla hesaplanır (en iyi tahmin).
+  - Pakette varsayılan 20 sigara; farklıysa "Paketin 20’li değil mi?" ile
+    değiştirilir.
+  - Fiyat 90 gün değişmediyse kartta nazikçe "Paket fiyatın hâlâ X ₺ mı?"
+    sorulur ("AYNI" deyince bir süre sorulmaz). Açılır pencere ya da
+    bildirim değildir.
+  - Fiyat **internetten çekilmez** (bkz. Bölüm 11).
 
 ### Özellik 2b — Oyunlaştırma ✅ Aşama 2
 Bölüm 3'teki her şey: "Bugün" sekmesi (maskot, "CANIM SİGARA İSTİYOR",
@@ -205,7 +220,9 @@ asla "serini kaybedeceksin!").
 ### Özellik 5 — Para kumbarası ⏳ Aşama 5
 Kullanıcı bir hedef ödül belirler (ör. "kulaklık, 2.000 ₺"); ölçüm haftası
 ortalamasına göre **içilmeyen** sigaraların parası kumbarada birikir ve
-hedefe ilerleme gösterilir (kutlama ekranıyla).
+hedefe ilerleme gösterilir (kutlama ekranıyla). Biriken para her gün
+**o günün fiyatıyla** hesaplanmalı (`PriceHistory.at`), yoksa zam gelince
+geçmişte biriken para değişir.
 
 ### Özellik 6 — Karakter ⏳ Aşama 6 (maskot Aşama 2'de geldi)
 Maskot **"Nefes"** Aşama 2'de görsel olarak eklendi. Bu aşamada: ödül
@@ -231,6 +248,7 @@ lib/
 ├── models/
 │   ├── smoking_event.dart     Sigara alma olayı (zaman, kaynak, neden)
 │   ├── user_profile.dart      Onboarding cevapları + seçenek listeleri
+│   ├── pack_price.dart        Tarihli paket fiyatı (PackPrice, PriceHistory)
 │   └── activity_log.dart      Ruh hali, erteleme, nefes, XP kayıtları
 ├── services/
 │   ├── device_service.dart    Kılıf arayüzü (abstract class)
@@ -263,6 +281,7 @@ lib/
     ├── mascot.dart            Maskot "Nefes" (kodla çizilir)
     ├── confetti.dart          Konfeti animasyonu
     ├── pickers.dart           Ruh hali ve "neden?" pencereleri
+    ├── price_sheet.dart       "Paket fiyatı" penceresi (fiyatın tek yeri)
     ├── onboarding_inputs.dart Seçenek kutuları, sayı seçici, ölçek
     ├── bar_chart.dart, stat_tile.dart, privacy_banner.dart
 assets/fonts/                  Nunito (SIL OFL), uygulamaya gömülü
@@ -292,7 +311,10 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 - **Kayıt:** `shared_preferences` (Android/iOS yerel dosya, web'de
   localStorage). Anahtarlar: `profile`, `onboarding_done`, `events`,
   `activity`, `tracking_started_at`, `demo_last_sync`, `demo_seed`,
-  `sound_on`, `haptics_on`.
+  `sound_on`, `haptics_on`, `prices`, `price_confirmed_at`.
+  - Taşıma: 0.3.0 ve öncesinde fiyat profilin içindeydi (`packPrice`,
+    `cigarettesPerPack`). Açılışta bir kez, takip başlangıcından geçerli tek
+    bir fiyata taşınır ve profilden silinir.
 - **Paketler:** `shared_preferences`, `flutter_localizations` (SDK),
   `audioplayers` (telefonda ses), `web` (Dart ekibinin resmi paketi; web'de
   ses). Grafik, konfeti ve maskot kendi yazdığımız bileşenler.
@@ -327,26 +349,28 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 
 - `SmokingEvent { time, source: demo | device, trigger? }`
 - `UserProfile` (hepsi isteğe bağlı): `cigarettesPerDay`, `yearsSmoking`,
-  `firstCigarette` (4 seçenek), `packPrice`, `cigarettesPerPack` (vars. 20),
-  `triggers`, `goal`, `quitDesire` (1–10), `ageRange`, `gender`,
+  `firstCigarette` (4 seçenek), `triggers`, `goal`, `quitDesire` (1–10), `ageRange`, `gender`,
   `motivators`, `activities`.
 - `ActivityLog { moods[], delays[], breaths[], xp[], activeDelayStart? }`
   - `MoodEntry { time, mood }` (Harika / İyi / İdare eder / Zor / Çok zor)
   - `DelayAttempt { start, end, outcome: success | gaveIn }`
   - `XpEntry { time, amount, reason }` — XP'nin "defteri"; toplam ve seri
     buradan hesaplanır.
+- `PriceHistory { entries: PackPrice { since, price, perPack (vars. 20) } }`
+  — `at(zaman)` o andaki geçerli fiyatı verir.
 - `tracking_started_at`: ölçüm haftasının başlangıcı (onboarding bitince).
 
 ## 7. Ekranlar (Aşama 2 itibarıyla)
 
 - **Onboarding:** Karşılama ("Merhaba! Ben Nefes.") → 11 tek-soruluk ekran
   → konfetili "Hazırsın!". Sağ üstte "ATLA" (o ana kadarki cevaplar
-  kaydedilir). Profil/Ayarlar'dan düzenleme modunda tekrar açılır.
+  kaydedilir). Profil/Ayarlar'dan düzenleme modunda tekrar açılır;
+  düzenleme modunda paket fiyatı sorusu YOKTUR (fiyatın kendi yeri var).
 - **Bugün:** ölçüm rozeti + seri + XP; demo uyarısı (+1 sigara); maskot
   cümlesi; "CANIM SİGARA İSTİYOR"; günlük görevler; ruh hali check-in'i;
   bugünkü sigaralar ve "Neden?" etiketleri.
-- **İstatistik:** bugün kartı, haftalık karşılaştırma, grafik, maliyet
-  kartları.
+- **İstatistik:** bugün kartı, haftalık karşılaştırma, grafik, paket fiyatı
+  kartı (DEĞİŞTİR → fiyat penceresi, fiyat geçmişi), maliyet kartları.
 - **Profil:** maskot, seri, en uzun seri, toplam XP, ertelenen istekler,
   "Seri nasıl işler?", bilgilerimi düzenle, ayarlar.
 - **Erteleme / Nefes / Kutlama:** tam ekran akışlar.
@@ -438,6 +462,9 @@ birebir doğrulayın):
 - [x] Ses efektleri (6 sentez ses) ve titreşim; Ayarlar'da aç/kapat;
       telefonda sessiz moda uyar, müziği durdurmaz; web'de iPhone uyumlu
       Web Audio
+- [x] Tarihli paket fiyatı: fiyat kartı + pencere, fiyat geçmişi, "yanlış
+      girmiştim", 90 günde bir "hâlâ aynı mı?", onboarding'de sadece fiyat
+      (paket varsayılan 20), eski sürümden otomatik taşıma
 
 ### Aşama 3 — Süreç aşamaları (sıradaki)
 - [ ] Aşama modeli ve kaydı (hangi aşamada, ne zaman başladı)
@@ -481,6 +508,14 @@ birebir doğrulayın):
 
 ## 11. Açık sorular / kararlar
 
+- **Karar — fiyat internetten çekilmez:** Resmî, herkese açık bir sigara
+  fiyatı API'si bulunamadı (fiyatlar firma grubu bazında, farklı tarihlerde
+  haberlerle duyuruluyor). Bir liste tutmak ekibin sürekli güncellemesini
+  gerektirir, proje bitince eskir; doğru fiyat için marka sormak gerekir;
+  ve uygulamanın "hiç internete çıkmaz" vaadi bozulur. Kullanıcının kendi
+  ödediği fiyatı yazması daha doğru ve 3 saniye sürüyor. Bunun yerine
+  tarihli fiyat geçmişi + 90 günde bir nazik "hâlâ aynı mı?" sorusu var.
+
 - **Yaş sınırı ve etik:** Yaş aralıkları 18+ ile başlıyor. Pilotta reşit
   olmayan katılımcı olacaksa etik kurul/veli izni gerekir — ekip ve danışman
   öğretmen karar vermeli.
@@ -512,3 +547,4 @@ birebir doğrulayın):
 | 0.1.0 | Temel ve demo kılıf | Proje iskeleti, demo kılıf, onboarding, ana ekran, ayarlar, testler, GitHub Pages yayını |
 | 0.2.0 | Nefes ile oyunlaştırma | Duolingo tarzı tasarım (Nunito, tok butonlar, canlı renkler), maskot "Nefes", günlük görevler, XP, affedici seri, erteleme, nefes egzersizi, ruh hali, sigara nedenleri, konfetili kutlamalar, Bugün/İstatistik/Profil sekmeleri |
 | 0.3.0 | Ses ve titreşim | Sıfırdan sentezlenmiş 6 ses efekti (ding-ding, fanfar, sakin çan, nefes al/ver, zil), kutlama/nefes/erteleme titreşimleri, Ayarlar'da aç/kapat; telefonda sessiz moda uyar ve müziği durdurmaz; web'de iPhone uyumlu Web Audio |
+| 0.4.0 | Tarihli paket fiyatı | Fiyatın kendi yeri (İstatistik'te kart + pencere, Ayarlar'da kısayol), her sigara kendi tarihindeki fiyatla hesaplanır, fiyat geçmişi, "yanlış girmiştim" düzeltmesi, 90 günde bir "hâlâ aynı mı?", onboarding'de sadece fiyat (paket varsayılan 20), eski sürümden otomatik taşıma; fiyat internetten çekilmez |

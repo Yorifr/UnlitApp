@@ -44,6 +44,25 @@ void main() {
     );
   });
 
+  test('fiyat yazımı ve okunması', () {
+    expect(parsePrice('95,50'), 95.5);
+    expect(parsePrice(' 110 '), 110);
+    expect(parsePrice('0'), isNull);
+    expect(parsePrice('abc'), isNull);
+    expect(priceToInput(95.5), '95,5');
+    expect(priceToInput(110), '110');
+  });
+
+  test('Türkçe ekler: paket boyutu ve "…’den beri"', () {
+    expect(perPackLabel(10), '10’lu');
+    expect(perPackLabel(20), '20’li');
+    expect(perPackLabel(25), '25’li');
+    expect(perPackLabel(40), '40’lı');
+    expect(formatSince(DateTime(2026, 10, 5)), '5 Ekim’den beri');
+    expect(formatSince(DateTime(2026, 8, 10)), '10 Ağustos’tan beri');
+    expect(formatSince(DateTime(2026, 11, 1)), '1 Kasım’dan beri');
+  });
+
   test('yüzde işareti sayıdan önce gelir', () {
     expect(formatPercent(-10.4), '%10');
     expect(formatPercent(12.6), '%13');

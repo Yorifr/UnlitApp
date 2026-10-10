@@ -5,6 +5,7 @@ import '../logic/rewards.dart';
 import '../models/user_profile.dart';
 import '../services/effects.dart';
 import '../theme.dart';
+import '../utils/format.dart';
 import '../widgets/chunky.dart';
 import '../widgets/confetti.dart';
 import '../widgets/mascot.dart';
@@ -38,21 +39,18 @@ enum OnboardingStep {
 /// İlk açılıştaki kısa soru akışı. Her şey isteğe bağlı ve atlanabilir.
 ///
 /// [editMode] true ise (Profil/Ayarlar > Bilgilerimi düzenle) karşılama ve
-/// bitiş sayfaları gösterilmez; "KAYDET" ile geri dönülür.
+/// bitiş sayfaları gösterilmez; "KAYDET" ile geri dönülür. Paket fiyatı
+/// düzenleme modunda YOKTUR: fiyatın kendi yeri var (İstatistik → Paket
+/// fiyatı), çünkü tarihiyle saklanması gerekiyor.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
     super.key,
     required this.state,
     this.editMode = false,
-    this.initialStep,
   });
 
   final AppState state;
   final bool editMode;
-
-  /// Doluysa akış bu sayfadan başlar (ör. "paket fiyatını ekle"ye
-  /// dokununca doğrudan fiyat sorusu açılır).
-  final OnboardingStep? initialStep;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -64,17 +62,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   late final List<OnboardingStep> _steps = [
     for (final step in OnboardingStep.values)
-      if (step.isQuestion || !widget.editMode) step,
+      if (!widget.editMode)
+        step
+      // Düzenleme modunda: sadece sorular, fiyat hariç.
+      else if (step.isQuestion && step != OnboardingStep.packPrice)
+        step,
   ];
 
   /// Şu an gösterilen sayfanın sırası (0'dan başlar).
-  late int _index = widget.initialStep == null
-      ? 0
-      : _steps.indexOf(widget.initialStep!).clamp(0, _steps.length - 1);
-  late final _pageController = PageController(initialPage: _index);
-  late final _priceController = TextEditingController(
-    text: _draft.packPrice == null ? '' : _priceToText(_draft.packPrice!),
-  );
+  int _index = 0;
+  final _pageController = PageController();
+
+  /// Paket fiyatı (sadece ilk onboarding'de sorulur, profilin parçası değil).
+  double? _price;
+  int _perPack = 20;
+  bool _showPerPack = false;
+  final _priceController = TextEditingController();
 
   OnboardingStep get _step => _steps[_index];
   bool get _isLast => _index == _steps.length - 1;
@@ -124,6 +127,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       await widget.state.updateProfile(_draft);
       if (mounted) Navigator.of(context).pop();
     } else {
+      final price = _price;
+      if (price != null) {
+        await widget.state.setPackPrice(price: price, perPack: _perPack);
+      }
       // Ana ekrana geçişi uygulamanın kökü kendisi yapar (bkz. app.dart).
       await widget.state.completeOnboarding(_draft);
     }
@@ -134,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingStep.cigarettesPerDay => _draft.cigarettesPerDay != null,
     OnboardingStep.yearsSmoking => _draft.yearsSmoking != null,
     OnboardingStep.firstCigarette => _draft.firstCigarette != null,
-    OnboardingStep.packPrice => _draft.packPrice != null,
+    OnboardingStep.packPrice => _price != null,
     OnboardingStep.triggers => _draft.triggers.isNotEmpty,
     OnboardingStep.goal => _draft.goal != null,
     OnboardingStep.quitDesire => _draft.quitDesire != null,
@@ -437,15 +444,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _pricePage() {
     final priceText = _priceController.text.trim();
-    final priceInvalid = priceText.isNotEmpty && _parsePrice(priceText) == null;
+    final priceInvalid = priceText.isNotEmpty && parsePrice(priceText) == null;
     final theme = Theme.of(context);
 
     return _question(
       question: 'Bir paket sigara kaç lira?',
       why:
           'Sigaraya ne kadar para harcadığını ve azalttıkça ne kadar '
-          'biriktirdiğini hesaplamak için. Paketteki adet de bir sigaranın '
-          'kaç liraya geldiğini bulmamızı sağlar.',
+          'biriktirdiğini hesaplamak için. Zam gelirse sonra İstatistik → '
+          'Paket fiyatı bölümünden kolayca güncelleyebilirsin; eski günlerin '
+          'hesabı değişmez.',
       answer: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -454,26 +462,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             style: theme.textTheme.headlineSmall,
             decoration: InputDecoration(
-              hintText: 'Örneğin 100',
+              hintText: 'Örneğin 110',
               suffixText: '₺',
               errorText: priceInvalid
                   ? 'Geçerli bir fiyat gir (ör. 95,50)'
                   : null,
             ),
-            onChanged: (text) =>
-                setState(() => _draft.packPrice = _parsePrice(text)),
+            onChanged: (text) => setState(() => _price = parsePrice(text)),
           ),
-          const SizedBox(height: 20),
-          Text('Pakette kaç sigara var?', style: theme.textTheme.titleSmall),
-          const SizedBox(height: 10),
-          ChipChoice<int>(
-            options: const [10, 20, 25],
-            selected: _draft.cigarettesPerPack,
-            labelOf: (n) => n == 10 ? '10’lu' : '$n’li',
-            // Seçim kaldırılırsa varsayılan 20'ye dön.
-            onChanged: (v) =>
-                setState(() => _draft.cigarettesPerPack = v ?? 20),
-          ),
+          const SizedBox(height: 12),
+          // Çoğu paket 20'li; farklıysa değiştirilebilir.
+          if (_showPerPack) ...[
+            Text('Pakette kaç sigara var?', style: theme.textTheme.titleSmall),
+            const SizedBox(height: 10),
+            ChipChoice<int>(
+              options: const [10, 20, 25],
+              selected: _perPack,
+              labelOf: perPackLabel,
+              // Seçim kaldırılırsa varsayılan 20'ye dön.
+              onChanged: (v) => setState(() => _perPack = v ?? 20),
+            ),
+          ] else
+            TextButton(
+              onPressed: () => setState(() => _showPerPack = true),
+              child: Text('Paketin ${perPackLabel(20)} değil mi?'),
+            ),
         ],
       ),
     );
@@ -582,22 +595,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ],
     );
   }
-}
-
-// ---------- Fiyat metni yardımcıları ----------
-
-/// "95,50" veya "95.50" → 95.5. Geçersizse null.
-double? _parsePrice(String text) {
-  final value = double.tryParse(text.trim().replaceAll(',', '.'));
-  if (value == null || value <= 0 || value > 100000) return null;
-  return value;
-}
-
-/// 95.5 → "95,5", 100.0 → "100"
-String _priceToText(double price) {
-  final isWhole = price == price.roundToDouble();
-  return (isWhole ? price.toStringAsFixed(0) : price.toString()).replaceAll(
-    '.',
-    ',',
-  );
 }

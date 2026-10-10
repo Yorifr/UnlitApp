@@ -14,6 +14,7 @@ import '../logic/quests.dart';
 import '../logic/rewards.dart';
 import '../logic/stats.dart';
 import '../models/activity_log.dart';
+import '../models/pack_price.dart';
 import '../models/smoking_event.dart';
 import '../models/user_profile.dart';
 import 'demo_device_service.dart';
@@ -33,7 +34,19 @@ Future<void> loadDemoHistory(AppState state, DemoDeviceService demo) async {
     events: result.events,
     activity: result.activity,
     trackingStartedAt: start,
+    // Hiç fiyat girilmemişse örnek bir fiyat geçmişi ekle (5 gün önce "zam"
+    // gelmiş gibi). Kullanıcının girdiği fiyata ASLA dokunma.
+    prices: state.prices.isEmpty ? demoPrices(start: start, now: now) : null,
   );
+}
+
+/// Demo için örnek fiyat geçmişi: başta 105 ₺, 5 gün önce 115 ₺'ye "zam".
+/// (Sahte veridir; sadece fiyat geçmişi özelliğini göstermek için.)
+PriceHistory demoPrices({required DateTime start, required DateTime now}) {
+  return PriceHistory([
+    PackPrice(since: start, price: 105),
+    PackPrice(since: addDays(startOfDay(now), -5), price: 115),
+  ]);
 }
 
 /// Geçmiş her gün için gerçekçi etkinlik üretir (bugün hariç).

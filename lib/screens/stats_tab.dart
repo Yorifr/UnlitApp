@@ -8,8 +8,8 @@ import '../theme.dart';
 import '../utils/format.dart';
 import '../widgets/bar_chart.dart';
 import '../widgets/chunky.dart';
+import '../widgets/price_sheet.dart';
 import '../widgets/stat_tile.dart';
-import 'onboarding_screen.dart';
 
 /// Grafikte ne gösterilsin?
 enum _ChartRange { week, today }
@@ -41,18 +41,8 @@ class _StatsTabState extends State<StatsTab> {
 
   AppState get state => widget.state;
 
-  /// Paket fiyatı sorusunu doğrudan açar.
-  void _openPriceEditor() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => OnboardingScreen(
-          state: state,
-          editMode: true,
-          initialStep: OnboardingStep.packPrice,
-        ),
-      ),
-    );
-  }
+  /// "Paket fiyatı" penceresini açar.
+  void _openPriceSheet() => showPriceSheet(context, state);
 
   @override
   Widget build(BuildContext context) {
@@ -96,12 +86,17 @@ class _StatsTabState extends State<StatsTab> {
     final theme = Theme.of(context);
     final c = AppColors.of(context);
     final profile = state.profile;
-    final count = switch (_period) {
-      _Period.today => countToday(events, now),
-      _Period.week => countLastDays(events, now, 7),
-      _Period.month => countLastDays(events, now, 30),
+    // Dönemin başlangıcı: bugün gece yarısı / 7 gün önce / 30 gün önce
+    final from = switch (_period) {
+      _Period.today => startOfDay(now),
+      _Period.week => addDays(now, -7),
+      _Period.month => addDays(now, -30),
     };
-    final money = moneyFor(count, profile);
+    final to = untilNow(now);
+    final count = countBetween(events, from, to);
+    final prices = state.prices;
+    final money = moneyBetween(events, from, to, prices);
+    final currentPrice = prices.current;
     final perCigarette = lifeMinutesPerCigarette(profile.gender);
     final periodText = _period == _Period.today
         ? 'Bugün'
@@ -116,6 +111,8 @@ class _StatsTabState extends State<StatsTab> {
           '$periodText: $count sigara',
           style: theme.textTheme.bodyMedium?.copyWith(color: c.textMuted),
         ),
+        const SizedBox(height: 12),
+        _PriceCard(state: state, onEdit: _openPriceSheet),
         const SizedBox(height: 12),
         SegmentedButton<_Period>(
           segments: [
@@ -132,11 +129,14 @@ class _StatsTabState extends State<StatsTab> {
           color: c.green,
           title: 'Harcanan para',
           value: money == null ? '—' : formatMoney(money),
-          footnote: money == null
+          footnote: currentPrice == null
               ? 'Hesaplamak için dokun ve paket fiyatını ekle'
-              : 'Paket fiyatı ${formatMoney(profile.packPrice!)} '
-                    '(${profile.cigarettesPerPack} sigara) üzerinden',
-          onTap: money == null ? _openPriceEditor : null,
+              : priceChangedBetween(prices, from, to)
+              // Dönem içinde zam olduysa: her sigara kendi fiyatıyla
+              ? 'Her sigara kendi tarihindeki fiyatla hesaplandı'
+              : 'Paket fiyatı ${formatMoney(currentPrice.price)} '
+                    '(${perPackLabel(currentPrice.perPack)}) üzerinden',
+          onTap: currentPrice == null ? _openPriceSheet : null,
         ),
         const SizedBox(height: 12),
         StatTile(
@@ -526,6 +526,84 @@ class _ChartCard extends StatelessWidget {
             showValues: range == _ChartRange.week,
             semanticsLabel: description,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Paket fiyatı kartı: şu anki fiyat + "DEĞİŞTİR". Fiyatın TEK yeri burası.
+/// Fiyat uzun süredir aynıysa nazikçe "hâlâ aynı mı?" diye sorar.
+class _PriceCard extends StatelessWidget {
+  const _PriceCard({required this.state, required this.onEdit});
+
+  final AppState state;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    final current = state.prices.current;
+
+    return ChunkyCard(
+      onTap: onEdit,
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.sell_outlined, color: c.green, size: 26),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Paket fiyatı', style: theme.textTheme.titleSmall),
+                    Text(
+                      current == null
+                          ? 'Henüz girilmedi'
+                          : '${formatMoney(current.price)} · '
+                                '${perPackLabel(current.perPack)} · '
+                                '${formatSince(current.since)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: c.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: onEdit,
+                child: Text(current == null ? 'EKLE' : 'DEĞİŞTİR'),
+              ),
+            ],
+          ),
+          if (current != null && state.shouldAskPriceStillSame) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+              decoration: BoxDecoration(
+                color: c.blueLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Paket fiyatın hâlâ ${formatMoney(current.price)} mı?',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: state.confirmPriceStillSame,
+                    child: const Text('AYNI'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

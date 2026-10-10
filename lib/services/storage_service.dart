@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/activity_log.dart';
+import '../models/pack_price.dart';
 import '../models/smoking_event.dart';
 import '../models/user_profile.dart';
 
@@ -35,6 +36,8 @@ class StorageService {
   static const _kDemoSeed = 'demo_seed';
   static const _kActivity = 'activity';
   static const _kTrackingStartedAt = 'tracking_started_at';
+  static const _kPrices = 'prices';
+  static const _kPriceConfirmedAt = 'price_confirmed_at';
 
   // ---------- Profil ----------
 
@@ -51,6 +54,25 @@ class StorageService {
 
   Future<void> saveProfile(UserProfile profile) =>
       _prefs.setString(_kProfile, jsonEncode(profile.toJson()));
+
+  /// ESKİ SÜRÜM (0.3.0 ve öncesi) fiyatı profilin içinde saklıyordu.
+  /// Taşıma (migration) için o eski değerleri okur; yoksa null döner.
+  ({double price, int perPack})? loadLegacyPackPrice() {
+    final text = _prefs.getString(_kProfile);
+    if (text == null) return null;
+    try {
+      final json = jsonDecode(text) as Map<String, dynamic>;
+      final price = json['packPrice'];
+      if (price is! num || price <= 0) return null;
+      final perPack = json['cigarettesPerPack'];
+      return (
+        price: price.toDouble(),
+        perPack: perPack is int && perPack > 0 ? perPack : 20,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 
   // ---------- Onboarding ----------
 
@@ -94,6 +116,30 @@ class StorageService {
 
   Future<void> saveActivity(ActivityLog activity) =>
       _prefs.setString(_kActivity, jsonEncode(activity.toJson()));
+
+  // ---------- Paket fiyatı geçmişi ----------
+
+  PriceHistory loadPrices() {
+    final text = _prefs.getString(_kPrices);
+    if (text == null) return PriceHistory();
+    try {
+      return PriceHistory.fromJson(jsonDecode(text));
+    } catch (_) {
+      return PriceHistory();
+    }
+  }
+
+  Future<void> savePrices(PriceHistory prices) =>
+      _prefs.setString(_kPrices, jsonEncode(prices.toJson()));
+
+  /// Kullanıcının "fiyat hâlâ aynı" dediği son an.
+  DateTime? get priceConfirmedAt {
+    final ms = _prefs.getInt(_kPriceConfirmedAt);
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  Future<void> setPriceConfirmedAt(DateTime time) =>
+      _prefs.setInt(_kPriceConfirmedAt, time.millisecondsSinceEpoch);
 
   // ---------- Takibin başladığı gün ----------
 

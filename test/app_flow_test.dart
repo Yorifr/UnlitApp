@@ -121,7 +121,9 @@ void main() {
     expect(state.profile.cigarettesPerDay, 16);
     expect(state.profile.yearsSmoking, isNull);
     expect(state.profile.firstCigarette, FirstCigaretteTime.within5Min);
-    expect(state.profile.packPrice, 95.5);
+    // Fiyat profilde değil, tarihli fiyat geçmişinde; paket varsayılan 20'li.
+    expect(state.prices.current!.price, 95.5);
+    expect(state.prices.current!.perPack, 20);
     expect(find.text('Günlük görevler'), findsOneWidget);
   });
 
@@ -208,7 +210,7 @@ void main() {
     expect(find.textContaining('Karşılaştırma için en az'), findsNothing);
   });
 
-  testApp('fiyat yoksa para kartı doğrudan fiyat sorusunu açar', (
+  testApp('fiyat yoksa para kartı fiyat penceresini açar', (
     tester,
     state,
   ) async {
@@ -221,13 +223,40 @@ void main() {
       find.text('Hesaplamak için dokun ve paket fiyatını ekle'),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Bir paket sigara kaç lira?'), findsOneWidget);
+    expect(find.text('Paket fiyatı'), findsWidgets);
+    // Daha önce fiyat yoksa "yanlış girmiştim" seçeneği gösterilmez.
+    expect(find.text('Yanlış girmiştim'), findsNothing);
 
     await tester.enterText(find.byType(TextField), '100');
+    await tester.pump();
     await tester.tap(find.text('KAYDET'));
     await tester.pumpAndSettle();
-    expect(state.profile.packPrice, 100);
-    expect(find.text('Harcanan para'), findsOneWidget);
+    expect(state.prices.current!.price, 100);
+    expect(find.textContaining('Paket fiyatı 100 ₺'), findsOneWidget);
+  });
+
+  testApp('zam gelince fiyat kartından güncellenir, geçmiş görünür', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    await state.setPackPrice(price: 100);
+    await tester.tap(find.text('İstatistik'));
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('DEĞİŞTİR'));
+    await tester.pumpAndSettle();
+    expect(find.text('Yanlış girmiştim'), findsOneWidget);
+    expect(find.textContaining('beri:'), findsOneWidget); // fiyat geçmişi
+
+    await tester.enterText(find.byType(TextField), '115');
+    await tester.pump();
+    await tester.tap(find.text('KAYDET'));
+    await tester.pumpAndSettle();
+
+    // Aynı gün değiştirildiği için bugünkü kayıt düzeltildi.
+    expect(state.prices.entries.length, 1);
+    expect(state.prices.current!.price, 115);
   });
 
   testApp('büyük yazı boyutunda da ekranlar taşmaz', (tester, state) async {

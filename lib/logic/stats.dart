@@ -5,6 +5,7 @@
 // bile parametre olarak ([now]) alırlar. Bu sayede test etmeleri çok kolay
 // (bkz. test/stats_test.dart).
 
+import '../models/pack_price.dart';
 import '../models/smoking_event.dart';
 import '../models/user_profile.dart';
 
@@ -60,9 +61,10 @@ int countBetween(List<SmokingEvent> events, DateTime from, DateTime to) {
       .length;
 }
 
-/// [now] anını da kapsayan bitiş zamanı. (countBetween'de bitiş hariç
-/// olduğu için, tam şu ana denk gelen kaydı da saymak için 1 sn ekliyoruz.)
-DateTime _untilNow(DateTime now) => now.add(const Duration(seconds: 1));
+/// [now] anını da kapsayan bitiş zamanı. (countBetween/moneyBetween'de
+/// bitiş hariç olduğu için, tam şu ana denk gelen kaydı da saymak için 1 sn
+/// ekliyoruz.)
+DateTime untilNow(DateTime now) => now.add(const Duration(seconds: 1));
 
 /// Kayıtlar verilen andan önce başlamış mı?
 /// Karşılaştırmanın anlamlı olması için gerekli: kullanıcı uygulamayı
@@ -72,11 +74,11 @@ bool hasDataSince(List<SmokingEvent> events, DateTime time) =>
 
 /// Bugün (gece yarısından şu ana kadar) içilen sigara sayısı.
 int countToday(List<SmokingEvent> events, DateTime now) =>
-    countBetween(events, startOfDay(now), _untilNow(now));
+    countBetween(events, startOfDay(now), untilNow(now));
 
 /// Son [days] günde (şu andan geriye days×24 saat) içilen sigara sayısı.
 int countLastDays(List<SmokingEvent> events, DateTime now, int days) =>
-    countBetween(events, addDays(now, -days), _untilNow(now));
+    countBetween(events, addDays(now, -days), untilNow(now));
 
 /// Geçen haftanın aynı gününde, aynı saate kadar içilen sigara sayısı.
 /// Örn. bugün cumartesi 15:00 ise: geçen cumartesi 00:00–15:00.
@@ -108,7 +110,7 @@ WeekComparison compareWeeks(List<SmokingEvent> events, DateTime now) {
   final weekAgo = addDays(now, -7);
   final twoWeeksAgo = addDays(now, -14);
   return WeekComparison(
-    thisWeek: countBetween(events, weekAgo, _untilNow(now)),
+    thisWeek: countBetween(events, weekAgo, untilNow(now)),
     lastWeek: countBetween(events, twoWeeksAgo, weekAgo),
   );
 }
@@ -162,10 +164,33 @@ DateTime? firstEventOfDay(List<SmokingEvent> events, DateTime day) {
 
 // ---------- Para, süre, yaşam ----------
 
-/// [count] sigaranın tutarı (₺). Paket fiyatı bilinmiyorsa null.
-double? moneyFor(int count, UserProfile profile) {
-  final price = profile.pricePerCigarette;
-  return price == null ? null : count * price;
+/// [from] (dahil) ile [to] (hariç) arasındaki sigaraların tutarı (₺).
+///
+/// Her sigara KENDİ TARİHİNDEKİ fiyatla hesaplanır: zam gelip fiyat
+/// güncellenince eski günlerin harcaması değişmez. Hiç fiyat girilmemişse
+/// null döner (ekranda "—" gösterilir, uydurma yok).
+double? moneyBetween(
+  List<SmokingEvent> events,
+  DateTime from,
+  DateTime to,
+  PriceHistory prices,
+) {
+  if (prices.isEmpty) return null;
+  var total = 0.0;
+  for (final e in events) {
+    if (e.time.isBefore(from) || !e.time.isBefore(to)) continue;
+    total += prices.at(e.time)!.perCigarette;
+  }
+  return total;
+}
+
+/// [from]–[to] arasında birden fazla fiyat geçerli olmuş mu?
+/// (Ekranda "her gün kendi fiyatıyla hesaplandı" demek için.)
+bool priceChangedBetween(PriceHistory prices, DateTime from, DateTime to) {
+  return prices.entries.length > 1 &&
+      prices.entries
+          .skip(1)
+          .any((p) => p.since.isAfter(from) && p.since.isBefore(to));
 }
 
 /// [count] sigaraya harcanan tahmini süre (dakika).

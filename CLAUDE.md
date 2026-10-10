@@ -89,6 +89,11 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 - Bir şey başarıldığında `CelebrationScreen.show(...)`; zor anlarda
   `calm: true` (konfetisiz, destekleyici).
 - Yazı tipi Nunito (`assets/fonts/`, gömülü). Ağırlıklar: 500/700/800/900.
+- **Paket fiyatı** profilde DEĞİL, tarihli `PriceHistory`'de
+  (`models/pack_price.dart`). Para hesabı her zaman `moneyBetween(...)` ile
+  (her sigara kendi tarihindeki fiyatla); tek bir "güncel fiyat × sayı"
+  hesabı yapma. Fiyat sadece `showPriceSheet` / `setPackPrice` ile
+  değişir. Fiyat internetten çekilmez (SPEC.md Bölüm 11'deki karar).
 - **Ses ve titreşim** sadece `Effects` üzerinden (`Effects.tap()`,
   `Effects.select()`, `Effects.celebrate()`, `Effects.breath()`,
   `Effects.timerDone()`). `HapticFeedback`'i doğrudan çağırma; yoksa
