@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_info.dart';
 import '../app_state.dart';
+import '../services/demo_activity.dart';
 import '../services/demo_device_service.dart';
 import '../services/device_service.dart';
 import '../widgets/privacy_banner.dart';
@@ -57,8 +58,8 @@ class SettingsScreen extends StatelessWidget {
                   leading: const Icon(Icons.auto_awesome),
                   title: const Text('Demo verisi üret'),
                   subtitle: const Text(
-                    'Son iki haftanın sahte kayıtlarını oluşturur. Mevcut '
-                    'kayıtların yerini alır.',
+                    'Son iki haftanın sahte kayıtlarını, görevlerini ve '
+                    'XP\'sini oluşturur. Mevcut kayıtların yerini alır.',
                   ),
                   onTap: () => _generateDemo(context, demo),
                 ),
@@ -77,7 +78,7 @@ class SettingsScreen extends StatelessWidget {
                   leading: const Icon(Icons.restart_alt),
                   title: const Text('Demo verisini sıfırla'),
                   subtitle: const Text(
-                    'Tüm sigara kayıtlarını siler. Cevapların kalır.',
+                    'Kayıtları, XP ve seriyi siler. Cevapların kalır.',
                   ),
                   onTap: () => _resetEvents(context),
                 ),
@@ -170,16 +171,15 @@ class SettingsScreen extends StatelessWidget {
         context,
         title: 'Demo verisi üretilsin mi?',
         message:
-            'Mevcut tüm sigara kayıtları silinip yerine son iki haftanın '
-            'yeni demo verisi oluşturulacak.',
+            'Mevcut sigara kayıtları, XP ve görevler silinip yerine son '
+            'iki haftanın yeni demo verisi oluşturulacak.',
         action: 'Üret',
       );
       if (!ok) return;
     }
-    final events = await demo.generateHistory();
-    await state.replaceEvents(events);
+    await loadDemoHistory(state, demo);
     if (context.mounted) {
-      _showSnack(context, '${events.length} demo kaydı oluşturuldu.');
+      _showSnack(context, '${state.events.length} demo kaydı oluşturuldu.');
     }
   }
 
@@ -187,11 +187,13 @@ class SettingsScreen extends StatelessWidget {
     final ok = await _confirm(
       context,
       title: 'Kayıtlar silinsin mi?',
-      message: 'Tüm sigara kayıtları silinecek. Onboarding cevapların kalır.',
+      message:
+          'Tüm sigara kayıtları, XP, seri ve görevler silinecek. Onboarding '
+          'cevapların kalır.',
       action: 'Sil',
     );
     if (!ok) return;
-    await state.clearEvents();
+    await state.resetEventsAndProgress();
     if (context.mounted) _showSnack(context, 'Kayıtlar silindi.');
   }
 

@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../theme.dart';
+
 /// Grafikteki tek bir çubuk.
 class BarChartItem {
   const BarChartItem({
@@ -47,9 +49,9 @@ class SimpleBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final c = AppColors.of(context);
     final textStyle = Theme.of(context).textTheme.labelSmall
-        ?.copyWith(color: scheme.onSurfaceVariant);
+        ?.copyWith(color: c.textMuted);
     // En büyük değer, çubukların ölçeğini belirler (en az 1, sıfıra bölme olmasın).
     final maxValue = max(1, items.fold<int>(0, (m, i) => max(m, i.value)));
     final gap = items.length > 12 ? 1.5 : 5.0;
@@ -87,10 +89,10 @@ class SimpleBarChart extends StatelessWidget {
                               height: max(3, barArea * item.value / maxValue),
                               decoration: BoxDecoration(
                                 color: item.highlight
-                                    ? scheme.primary
-                                    : scheme.primary.withValues(alpha: 0.3),
+                                    ? c.green
+                                    : c.green.withValues(alpha: 0.35),
                                 borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(6),
+                                  top: Radius.circular(8),
                                   bottom: Radius.circular(2),
                                 ),
                               ),
@@ -102,7 +104,7 @@ class SimpleBarChart extends StatelessWidget {
                                 item.label,
                                 item.highlight
                                     ? textStyle?.copyWith(
-                                        color: scheme.primary,
+                                        color: c.greenText,
                                         fontWeight: FontWeight.w700,
                                       )
                                     : textStyle,

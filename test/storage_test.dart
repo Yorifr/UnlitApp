@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:unlit/models/activity_log.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/services/storage_service.dart';
@@ -67,5 +68,52 @@ void main() {
     await storage.clearAll();
     expect(storage.onboardingDone, isFalse);
     expect(storage.loadProfile().cigarettesPerDay, isNull);
+  });
+
+  test('etkinlik günlüğü ve sigara nedeni saklanır', () async {
+    final storage = await StorageService.create();
+    final t = DateTime(2026, 10, 10, 9);
+    await storage.saveEvents([
+      SmokingEvent(
+        time: t,
+        source: EventSource.demo,
+        trigger: SmokingTrigger.tea,
+      ),
+    ]);
+    await storage.saveActivity(
+      ActivityLog(
+        moods: [MoodEntry(time: t, mood: Mood.okay)],
+        delays: [
+          DelayAttempt(
+            start: t,
+            end: t.add(const Duration(minutes: 10)),
+            outcome: DelayOutcome.success,
+          ),
+        ],
+        breaths: [t],
+        xp: [XpEntry(time: t, amount: 15, reason: XpReason.delaySuccess)],
+        activeDelayStart: t,
+      ),
+    );
+
+    expect(storage.loadEvents().single.trigger, SmokingTrigger.tea);
+    final a = storage.loadActivity();
+    expect(a.moods.single.mood, Mood.okay);
+    expect(a.delays.single.minutes, 10);
+    expect(a.breaths.single, t);
+    expect(a.totalXp, 15);
+    expect(a.activeDelayStart, t);
+  });
+
+  test('bozuk etkinlik satırları atlanır', () {
+    final a = ActivityLog.fromJson({
+      'moods': [
+        {'t': 1, 'm': 'yok_boyle'},
+        {'t': 2, 'm': 'good'},
+      ],
+      'xp': 'yanlış tip',
+    });
+    expect(a.moods.length, 1);
+    expect(a.xp, isEmpty);
   });
 }

@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_info.dart';
 import 'app_state.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'theme.dart';
 
@@ -46,7 +46,7 @@ class _RootScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: state,
       builder: (context, _) => state.onboardingDone
-          ? HomeScreen(state: state)
+          ? MainScreen(state: state)
           : OnboardingScreen(state: state),
     );
   }

@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
+import 'package:unlit/logic/rewards.dart';
+import 'package:unlit/logic/stats.dart';
+import 'package:unlit/services/demo_activity.dart';
 import 'package:unlit/services/demo_day_planner.dart';
 import 'package:unlit/services/demo_device_service.dart';
 import 'package:unlit/services/storage_service.dart';
@@ -116,5 +119,37 @@ void main() {
       expect((await next).time, now);
       demo.dispose();
     });
+  });
+
+  test('demo etkinliği seri, XP ve nedenler üretir (bugün hariç)', () async {
+    SharedPreferences.setMockInitialValues({});
+    final storage = await StorageService.create();
+    final now = DateTime(2026, 10, 10, 15);
+    final demo = DemoDeviceService(storage: storage, clock: () => now);
+    final events = await demo.generateHistory();
+    final start = startOfDay(events.first.time);
+
+    final result = buildDemoActivity(
+      events: events,
+      trackingStart: start,
+      now: now,
+      random: Random(7),
+    );
+    final today = startOfDay(now);
+
+    expect(result.events.length, events.length);
+    expect(result.events.where((e) => e.trigger != null), isNotEmpty);
+    expect(result.activity.totalXp, greaterThan(100));
+    // Bugün boş: görevleri kullanıcı kendisi yapsın.
+    expect(
+      result.activity.xp.where((x) => startOfDay(x.time) == today),
+      isEmpty,
+    );
+    // 15 günlük veri: 14 geçmiş gün, biri (10. gün) boş ama dinlenme günü
+    // sayesinde seri sürüyor → 13 aktif gün.
+    final streak = computeStreak(result.activity.xp, now);
+    expect(streak.current, 13);
+    expect(streak.activeToday, isFalse);
+    demo.dispose();
   });
 }

@@ -1,37 +1,42 @@
 import 'package:flutter/material.dart';
 
+import '../theme.dart';
+
 /// "Bilgilerin sadece bu telefonda kalır" uyarısı.
 /// Onboarding'in en üstünde ve ayarlarda gösterilir.
 class PrivacyBanner extends StatelessWidget {
-  const PrivacyBanner({super.key});
+  const PrivacyBanner({super.key, this.compact = false});
+
+  /// true: tek satırlık küçük hali (onboarding sayfalarında).
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: compact ? 6 : 10),
       decoration: BoxDecoration(
-        color: scheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(14),
+        color: c.greenLight,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.lock_outline,
-            size: 20,
-            color: scheme.onSecondaryContainer,
-          ),
-          const SizedBox(width: 10),
+          Icon(Icons.lock_outline, size: compact ? 16 : 20, color: c.greenText),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Bilgilerin sadece bu telefonda kalır, kimseyle paylaşılmaz.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: scheme.onSecondaryContainer,
-                fontWeight: FontWeight.w600,
-              ),
+              style:
+                  (compact
+                          ? theme.textTheme.bodySmall
+                          : theme.textTheme.bodyMedium)
+                      ?.copyWith(
+                        color: c.greenText,
+                        fontWeight: FontWeight.w700,
+                      ),
             ),
           ),
         ],

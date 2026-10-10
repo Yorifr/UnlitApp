@@ -35,137 +35,265 @@ void testApp(
   });
 }
 
+/// Onboarding'i "ATLA" ile geçip ana ekrana gel.
+Future<void> skipOnboarding(WidgetTester tester) async {
+  await tester.tap(find.text('ATLA'));
+  await tester.pumpAndSettle();
+}
+
+/// Ekranın altında kalmış bir şeyi görünür yapıp ona dokun.
+Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
+  await tester.scrollUntilVisible(
+    finder,
+    250,
+    scrollable: find.byType(Scrollable).hitTestable().first,
+  );
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+}
+
 void main() {
-  testApp('ilk açılışta onboarding, "Atla" ile ana ekran', (
+  testApp('ilk açılışta onboarding, "ATLA" ile ana ekran', (
     tester,
     state,
   ) async {
-    expect(find.text('Unlit’e hoş geldin'), findsOneWidget);
+    expect(find.text('Merhaba! Ben Nefes.'), findsOneWidget);
     expect(
       find.text('Bilgilerin sadece bu telefonda kalır, kimseyle paylaşılmaz.'),
       findsOneWidget,
     );
 
-    await tester.tap(find.text('Atla'));
-    await tester.pumpAndSettle();
+    await skipOnboarding(tester);
 
     expect(state.onboardingDone, isTrue);
-    expect(find.text('sigara\nbugün'), findsOneWidget);
-    expect(find.text('Henüz kayıt yok'), findsOneWidget);
+    expect(find.text('Günlük görevler'), findsOneWidget);
+    expect(find.text('CANIM SİGARA İSTİYOR'), findsOneWidget);
+    // Hoş geldin XP'si verildi, seri başladı.
+    expect(state.totalXp, 10);
+    expect(state.streak.current, 1);
   });
 
   testApp('sorular cevaplanınca profile kaydedilir', (tester, state) async {
-    await tester.tap(find.text('Başlayalım'));
+    await tester.tap(find.text('BAŞLAYALIM'));
     await tester.pumpAndSettle();
-    expect(find.text('Adım 1 / 6'), findsOneWidget);
 
-    // "Neden soruyoruz?" açıklaması açılıp kapanır.
-    await tester.tap(find.text('Neden soruyoruz?').first);
+    // Cevap yokken buton "ŞİMDİLİK GEÇ" der.
+    expect(find.text('ŞİMDİLİK GEÇ'), findsOneWidget);
+
+    // "Neden soruyoruz?" açıklaması açılır.
+    await tester.tap(find.text('Neden soruyoruz?'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Başlangıç noktanı bilmek'), findsOneWidget);
 
     // Günlük sigara: ilk "+" 15'ten başlar, ikinci "+" 16 yapar.
-    await tester.tap(find.byTooltip('Artır').first);
+    await tester.tap(find.byTooltip('Artır'));
     await tester.pump();
-    await tester.tap(find.byTooltip('Artır').first);
+    await tester.tap(find.byTooltip('Artır'));
     await tester.pump();
-    expect(find.text('16 sigara'), findsOneWidget);
+    expect(find.text('16'), findsOneWidget);
+    expect(find.text('DEVAM'), findsOneWidget);
 
-    // Üçüncü soru ekranın altında kalıyor: önce aşağı kaydır.
-    final option = find.text(FirstCigaretteTime.within5Min.label);
-    await tester.scrollUntilVisible(
-      option,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(ListView),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.ensureVisible(option);
+    await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
-    await tester.tap(option);
-    await tester.pump();
+    await tester.tap(find.text('ŞİMDİLİK GEÇ')); // kaç yıldır: boş geç
+    await tester.pumpAndSettle();
 
-    // Sonraki sayfa: paket fiyatı
-    await tester.tap(find.text('İleri'));
+    await tester.tap(find.text(FirstCigaretteTime.within5Min.label));
+    await tester.pump();
+    await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
+
     await tester.enterText(find.byType(TextField), '95,50');
     await tester.pump();
 
     // Geri kalanını atla: verilen cevaplar yine kaydedilmeli.
-    await tester.tap(find.text('Atla'));
-    await tester.pumpAndSettle();
+    await skipOnboarding(tester);
 
     expect(state.profile.cigarettesPerDay, 16);
+    expect(state.profile.yearsSmoking, isNull);
     expect(state.profile.firstCigarette, FirstCigaretteTime.within5Min);
     expect(state.profile.packPrice, 95.5);
-    expect(find.text('sigara\nbugün'), findsOneWidget);
+    expect(find.text('Günlük görevler'), findsOneWidget);
   });
 
-  testApp('demo verisi üretilince ana ekran dolar', (tester, state) async {
-    await tester.tap(find.text('Atla'));
+  testApp('check-in kutlama ekranı açar ve XP verir', (tester, state) async {
+    await skipOnboarding(tester);
+    final xpBefore = state.totalXp;
+
+    await scrollAndTap(tester, find.text('İyi'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Demo verisi üret'));
+    expect(find.text('Görev tamamlandı!'), findsOneWidget);
+    expect(state.totalXp, xpBefore + 10);
+
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    expect(find.text('Günlük görevler'), findsOneWidget);
+  });
+
+  testApp('erteleme: "İSTEK GEÇTİ" ile kutlama', (tester, state) async {
+    await skipOnboarding(tester);
+
+    await tester.tap(find.text('CANIM SİGARA İSTİYOR'));
+    // Erteleme ekranında saniyelik sayaç var; pumpAndSettle yerine pump.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('kaldı'), findsOneWidget);
+    expect(state.activeDelayStart, isNotNull);
+
+    await scrollAndTapNoSettle(tester, find.text('İSTEK GEÇTİ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Başardın!'), findsOneWidget);
+    expect(state.successfulDelays, 1);
+    expect(state.activeDelayStart, isNull);
+  });
+
+  testApp('demo verisi üretilince her yer dolar', (tester, state) async {
+    await skipOnboarding(tester);
+
+    await scrollAndTap(tester, find.text('DEMO VERİSİ ÜRET'));
     await tester.pumpAndSettle();
 
     expect(state.events.length, greaterThan(100));
-    expect(find.text('Henüz kayıt yok'), findsNothing);
-    // 15 günlük veri var: haftalık karşılaştırma görünmeli.
+    expect(state.streak.current, greaterThan(5));
+    // Ölçüm haftası geçmişte kaldı → erteleme görevi geldi.
+    expect(state.measurementDay, isNull);
+
+    await tester.tap(find.text('İstatistik'));
+    await tester.pumpAndSettle();
+    expect(find.text('sigara\nbugün'), findsOneWidget);
     expect(find.textContaining('Karşılaştırma için en az'), findsNothing);
-  });
-
-  testApp('"+1 sigara" bugünkü sayıyı artırır', (tester, state) async {
-    await tester.tap(find.text('Atla'));
-    await tester.pumpAndSettle();
-
-    final before = state.events.length;
-    await tester.tap(find.text('+1 sigara'));
-    await tester.pumpAndSettle();
-    expect(state.events.length, before + 1);
   });
 
   testApp('fiyat yoksa para kartı doğrudan fiyat sorusunu açar', (
     tester,
     state,
   ) async {
-    await tester.tap(find.text('Atla'));
+    await skipOnboarding(tester);
+    await tester.tap(find.text('İstatistik'));
     await tester.pumpAndSettle();
 
-    final tile = find.text('Hesaplamak için dokun ve paket fiyatını ekle');
-    await tester.scrollUntilVisible(tile, 200);
-    await tester.ensureVisible(tile);
-    await tester.pumpAndSettle();
-    await tester.tap(tile);
+    await scrollAndTap(
+      tester,
+      find.text('Hesaplamak için dokun ve paket fiyatını ekle'),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Bir paket sigara kaç lira?'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), '100');
-    await tester.tap(find.text('Kaydet'));
+    await tester.tap(find.text('KAYDET'));
     await tester.pumpAndSettle();
     expect(state.profile.packPrice, 100);
-    expect(find.text('Harcanan para'), findsOneWidget); // ana ekrana döndü
+    expect(find.text('Harcanan para'), findsOneWidget);
+  });
+
+  testApp('büyük yazı boyutunda da ekranlar taşmaz', (tester, state) async {
+    // Telefonun ayarlarında yazı boyutu büyütülmüş gibi (%130).
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('BAŞLAYALIM'));
+    await tester.pumpAndSettle();
+    await skipOnboarding(tester);
+    await scrollAndTap(tester, find.text('DEMO VERİSİ ÜRET'));
+    await tester.pumpAndSettle();
+    // Dar bir Android telefon (360 px) ve her sekmeyi sonuna kadar kaydır.
+    tester.view.physicalSize = const Size(1080, 2340);
+    await tester.pumpAndSettle();
+    for (final tab in ['Bugün', 'İstatistik', 'Profil']) {
+      await tester.tap(find.text(tab));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 6; i++) {
+        await tester.drag(
+          find.byType(Scrollable).hitTestable().first,
+          const Offset(0, -400),
+        );
+        await tester.pumpAndSettle();
+      }
+    }
+    // Taşma olsaydı Flutter test hata verirdi.
+    expect(tester.takeException(), isNull);
+  });
+
+  testApp('büyük yazı: onboarding, kutlama ve erteleme taşmaz', (
+    tester,
+    state,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    tester.view.physicalSize = const Size(1080, 2340); // 360 px genişlik
+    await tester.pumpAndSettle();
+
+    // Onboarding'in tüm sayfalarını cevaplamadan geç.
+    await tester.tap(find.text('BAŞLAYALIM'));
+    await tester.pumpAndSettle();
+    while (find.text('ŞİMDİLİK GEÇ').evaluate().isNotEmpty) {
+      await tester.tap(find.text('ŞİMDİLİK GEÇ'));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Hazırsın!'), findsOneWidget);
+    await tester.tap(find.text('BAŞLA'));
+    await tester.pumpAndSettle();
+
+    // Kutlama ekranı
+    await scrollAndTap(tester, find.text('İyi'));
+    await tester.pumpAndSettle();
+    expect(find.text('Görev tamamlandı!'), findsOneWidget);
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
+    // Erteleme ekranı (saniyelik sayaç var: pumpAndSettle yok)
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 2000),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CANIM SİGARA İSTİYOR'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, -800),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('YİNE DE İÇECEĞİM'), findsOneWidget);
+    await tester.tap(find.text('YİNE DE İÇECEĞİM'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(find.text('Sorun değil'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testApp('"Tüm verilerimi sil" uygulamayı ilk haline döndürür', (
     tester,
     state,
   ) async {
-    await tester.tap(find.text('Atla'));
+    await skipOnboarding(tester);
+    await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
+    expect(find.text('Toplam XP'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Ayarlar'));
     await tester.pumpAndSettle();
-    final deleteTile = find.text('Tüm verilerimi sil');
-    await tester.scrollUntilVisible(deleteTile, 200);
-    await tester.ensureVisible(deleteTile);
-    await tester.pumpAndSettle();
-    await tester.tap(deleteTile);
+    await scrollAndTap(tester, find.text('Tüm verilerimi sil'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Hepsini sil'));
     await tester.pumpAndSettle();
 
     expect(state.onboardingDone, isFalse);
-    expect(find.text('Unlit’e hoş geldin'), findsOneWidget);
+    expect(state.totalXp, 0);
+    expect(find.text('Merhaba! Ben Nefes.'), findsOneWidget);
   });
+}
+
+/// [scrollAndTap] gibi ama pumpAndSettle kullanmaz (saniyelik sayaç olan
+/// ekranlarda pumpAndSettle hiç bitmez).
+Future<void> scrollAndTapNoSettle(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.tap(finder);
+  await tester.pump();
 }

@@ -10,6 +10,9 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
   alınışını sayıp Bluetooth LE ile telefona gönderir; bu Flutter uygulaması
   tüketimi takip eder ve kullanıcıyı azaltmadan bırakmaya yönlendirir.
 - Kılıf henüz yok → `DemoDeviceService` gerçekçi sahte veri üretir.
+- Tasarım ve his **Duolingo'dan ilham** alır: günlük görevler, XP, seri,
+  konfetili kutlamalar, maskot "Nefes", tok butonlar. Ama bağımlılığa
+  uyarlandı: asla ceza/suçlama yok (SPEC.md → "Oyunlaştırma ilkeleri").
 - Şu anki durum: SPEC.md → "Aşama planı ve durum".
 
 ## Ekip ve iletişim
@@ -33,10 +36,15 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
    kırmızıyla değil nötr renkle gösterilir.
 4. **Her soru isteğe bağlı:** Eksik bilgide değer uydurma; "—" göster ve
    eklemeyi öner.
-5. **Kılıf erişimi sadece `DeviceService` üzerinden.** Ekranlar Bluetooth'u
-   ya da demo detaylarını bilmez (tek istisna: ayarlardaki ve ana ekrandaki
+5. **Oyunlaştırma ceza vermez:** XP asla düşmez; sigara içmek XP
+   götürmez, seriyi bozmaz, kutlama/mesaj tetiklemez. Seri "sigarasız
+   gün" değil "en az bir görev yapılan gün" sayar (dinlenme günüyle).
+   Maskot asla üzgün/kızgın çizilmez. "Can/kalp", lig, suçlayan bildirim
+   yok. Yeni bir oyun mekaniği eklerken önce SPEC.md Bölüm 3'e bak.
+6. **Kılıf erişimi sadece `DeviceService` üzerinden.** Ekranlar Bluetooth'u
+   ya da demo detaylarını bilmez (tek istisna: ayarlardaki ve "Bugün" sekmesindeki
    demo butonları `is DemoDeviceService` kontrolüyle gösterilir).
-6. **Web'de çalışmalı.** Her değişiklikten sonra web derlemesi başarılı
+7. **Web'de çalışmalı.** Her değişiklikten sonra web derlemesi başarılı
    olmalı. Web'e özgü olmayan bir paket eklersen web'de ne olacağını düşün.
 
 ## Komutlar
@@ -53,15 +61,33 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 - Push öncesi: `flutter analyze` temiz + `flutter test` yeşil + web derlemesi
   başarılı olmalı. CI de aynılarını çalıştırır.
 
-## Mimari (özet — detay SPEC.md Bölüm 4)
-- `lib/app_state.dart`: tek `ChangeNotifier`; profil + olaylar; cihaz
-  olaylarını dinler, kaydeder. Ekranlar `ListenableBuilder` ile dinler.
+## Mimari (özet — detay SPEC.md Bölüm 5)
+- `lib/app_state.dart`: tek `ChangeNotifier`; profil, olaylar, etkinlikler
+  (ruh hali, erteleme, nefes, XP). Olumlu eylem metotları (`logMood`,
+  `tagEvent`, `finishDelay`, `logBreathing`...) bir `Reward` döndürür;
+  ekran `CelebrationScreen.show(context, reward)` ile kutlar.
 - `lib/services/`: `DeviceService` (arayüz), `DemoDeviceService`,
-  `demo_day_planner.dart`, `StorageService` (shared_preferences).
-- `lib/logic/stats.dart`: **saf** hesap fonksiyonları; `now`'ı parametre
-  olarak alır → kolay test. Yeni hesapları buraya koy ve test yaz.
+  `demo_day_planner.dart`, `demo_activity.dart`, `StorageService`.
+- `lib/logic/`: **saf** hesap fonksiyonları (`stats.dart`, `quests.dart`,
+  `rewards.dart`, `mascot_messages.dart`); `now`'ı parametre olarak alır →
+  kolay test. Yeni hesapları buraya koy ve test yaz. XP miktarları
+  `rewards.dart`'ın başında.
 - `lib/utils/format.dart`: Türkçe tarih/para/süre/yüzde yazımı.
-- `lib/screens/`, `lib/widgets/`: arayüz.
+- `lib/screens/`: onboarding, `main_screen` (alt menü) + `today_tab`,
+  `stats_tab`, `profile_tab`; erteleme, nefes, kutlama, ayarlar.
+- `lib/widgets/`: `chunky.dart` (tok buton/kart/çubuk), `mascot.dart`,
+  `confetti.dart`, `pickers.dart`, ...
+
+## Tasarım dili (Duolingo tarzı)
+- Renkler için her zaman `AppColors.of(context)` kullan (açık/koyu tema
+  otomatik). Kırmızı (`red`) sadece silme gibi tehlikeli işlemlerde.
+- Ana eylemler `ChunkyButton` (yazısı BÜYÜK HARF, elle yazılmış: "DEVAM",
+  "İLERİ"); kartlar `ChunkyCard`; ilerleme `ChunkyProgressBar`.
+- Maskotla konuşma: `MascotSpeech(text:, mood:)`. Cümle seçimi
+  `logic/mascot_messages.dart`'ta, kurallara uygun (suçlama yok, kendi veri).
+- Bir şey başarıldığında `CelebrationScreen.show(...)`; zor anlarda
+  `calm: true` (konfetisiz, destekleyici).
+- Yazı tipi Nunito (`assets/fonts/`, gömülü). Ağırlıklar: 500/700/800/900.
 - Testler `test/` altında; demo ve hesaplar için sahte saat (`clock:`)
   kullanılır.
 
@@ -71,21 +97,28 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 kodla çözülmüyor mu? (2) web dahil tüm platformları destekliyor mu?
 (3) iyi bakılıyor mu (pub.dev puanı, son güncelleme)? (4) internete veri
 gönderiyor mu? (göndermemeli). Eklersen SPEC.md'ye nedenini yaz.
-Planlanan: `flutter_blue_plus` (Aşama 6), muhtemelen
-`flutter_local_notifications` (Aşama 3).
+Planlanan: `flutter_blue_plus` (Aşama 7), muhtemelen
+`flutter_local_notifications` (Aşama 4). Grafik, konfeti ve maskot bilerek
+paketsiz yazıldı.
 
 ## Dikkat edilecek tuzaklar
 - **Türkçe büyük/küçük harf:** Dart'ın `toUpperCase()`/`toLowerCase()`
   fonksiyonları i/İ ve ı/I'yı yanlış çevirir. Türkçe metinde kullanma;
   hazır yazılmış metin/liste kullan (bkz. `format.dart`).
-- **Web'de yedek font isteği:** Arayüz metninde Roboto'da olmayan karakter
+- **Web'de yedek font isteği:** Arayüz metninde Nunito'da olmayan karakter
   (→, ✓, emoji…) kullanırsan tarayıcı Google'dan font indirir (gizlilik
-  vaadine aykırı). Bunun yerine `Icons.xxx` kullan. `₺ · – — … ’` sorunsuz.
+  vaadine aykırı). Bunun yerine `Icons.xxx` kullan. `₺ · – — … ’ %`
+  sorunsuz. Yeni karakter eklersen web'de dış istek olmadığını kontrol et.
 - **Tarih aritmetiği:** Gün eklerken `Duration(days: n)` yerine
   `stats.dart`'taki `addDays` kullan (takvim günüyle hesaplar).
 - **Testlerde zamanlayıcı:** Demo kılıf `Timer.periodic` kullanır; widget
   testlerinde test bitmeden `disconnect()` çağır (bkz.
-  `test/app_flow_test.dart` → `testApp`).
+  `test/app_flow_test.dart` → `testApp`). Erteleme ekranında saniyelik
+  sayaç var: o ekran açıkken `pumpAndSettle()` bitmez, `pump()` kullan.
+- **Testlerde yazı tipi:** Testler her harfi kare çizen bir font kullanır,
+  yazılar gerçekte olduğundan geniş görünür. Bir `Row` taşıyorsa uzun
+  yazıyı `Expanded`/`Flexible` içine al (bu, küçük telefonlarda da işe
+  yarar).
 - **Sürüm:** `pubspec.yaml` `version` ile `lib/app_info.dart` `appVersion`
   aynı olmalı.
 

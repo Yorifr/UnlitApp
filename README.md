@@ -17,6 +17,22 @@ TÜBİTAK 2204-A Lise Öğrencileri Araştırma Projesi.
 > 🧪 Kılıf henüz hazır olmadığı için uygulama **demo modunda** çalışır:
 > "demo kılıf" gerçekçi sahte sigara kayıtları üretir.
 
+## Uygulamada neler var?
+
+Tasarım ve kullanım hissi **Duolingo'dan ilham** alır, ama hiçbir zaman
+suçlamaz:
+
+- **Nefes** adında bir maskot seni karşılar, soruları sorar, yol gösterir.
+- **Günlük 3 görev** (check-in, sigaranın nedenini işaretleme, nefes molası,
+  bir isteği 10 dakika erteleme…) → **XP** ve **seri**.
+- **"CANIM SİGARA İSTİYOR"** butonu: 10 dakikalık erteleme, öneriler ve
+  nefes egzersizi.
+- Her başarıda **konfetili kutlama ekranı**.
+- **Seri sigara içince bozulmaz**: kendine iyi baktığın günleri sayar,
+  haftada bir kaçırılan gün affedilir.
+- **İstatistik:** bugünkü sayı, geçen haftayla karşılaştırma, grafik,
+  harcanan para, sigaraya giden süre, tahmini yaşam süresi etkisi.
+
 ---
 
 ## GitHub Pages'i açma (bir kez yapılır)
@@ -78,13 +94,15 @@ derlenip GitHub Pages'e yayınlanır (`.github/workflows/pages.yml`).
 lib/
 ├── main.dart              Uygulama buradan başlar
 ├── app.dart               Tema, Türkçe dil, ilk ekran seçimi
-├── app_state.dart         Profil + sigara kayıtları (uygulamanın beyni)
-├── models/                Veri modelleri (sigara olayı, kullanıcı profili)
+├── app_state.dart         Profil, sigaralar, XP (uygulamanın beyni)
+├── theme.dart             Renkler ve yazı tipi (Duolingo tarzı)
+├── models/                Veri modelleri (sigara, profil, etkinlikler)
 ├── services/              Kılıf bağlantısı (demo), yerel kayıt
-├── logic/stats.dart       Tüm hesaplamalar (sayılar, para, süre, yaşam)
+├── logic/                 Hesaplar: sayılar, görevler, XP, seri
 ├── utils/format.dart      Türkçe tarih/para/süre yazımı
-├── screens/               Onboarding, ana ekran, ayarlar
-└── widgets/               Grafik, kartlar, soru bileşenleri
+├── screens/               Onboarding, Bugün, İstatistik, Profil, ...
+└── widgets/               Tok butonlar, maskot, konfeti, grafik
+assets/fonts/              Nunito yazı tipi (uygulamanın içinde)
 test/                      Otomatik testler
 docs/SPEC.md               Şartname + aşama planı
 ```
@@ -95,4 +113,5 @@ docs/SPEC.md               Şartname + aşama planı
   *"The price of a cigarette: 20 minutes of life?"* Addiction, 2024 (UCL).
 - Uyanınca ilk sigara sorusu: Fagerström Nikotin Bağımlılığı Testi
   (Heatherton ve ark., 1991).
+- Yazı tipi: Nunito, SIL Open Font License 1.1 (`assets/fonts/OFL.txt`).
 - Diğerleri: [docs/SPEC.md](docs/SPEC.md) → "Kaynaklar".
