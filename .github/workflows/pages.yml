@@ -1,0 +1,81 @@
+# Web sürümünü derleyip GitHub Pages'e yayınlar.
+#
+# - main'e her push'ta: analiz + test + web derlemesi + YAYIN
+# - Pull request'lerde: sadece analiz + test + derleme (yayın YOK).
+#   Böylece hatalı kod main'e girmeden fark edilir.
+# - Actions sekmesinden "Run workflow" ile elle de çalıştırılabilir.
+#
+# İlk kullanımdan önce: Settings → Pages → Source: "GitHub Actions" (bkz. README).
+name: Web'i yayınla (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Pages'e yayın için gereken izinler
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Aynı dal için iki çalışma aynı anda olursa yayınlar çakışmasın.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Kontrol et ve derle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v5
+
+      - name: Flutter kur
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # Herkes aynı sürümle çalışsın diye sabitledik. Güncellerken
+          # CLAUDE.md'deki sürümü de değiştir.
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Paketleri indir
+        run: flutter pub get
+
+      - name: Kod analizi
+        run: flutter analyze
+
+      - name: Testler
+        run: flutter test
+
+      # --base-href: Site https://KULLANICI.github.io/REPO_ADI/ altında
+      #   yayınlandığı için. REPO_ADI otomatik olarak bu repo'nun adı olur.
+      # --no-web-resources-cdn: Flutter'ın motor dosyalarını Google'ın
+      #   sunucusundan değil, kendi sitemizden yükle (gizlilik vaadi).
+      - name: Web derlemesi
+        run: >-
+          flutter build web --release
+          --no-web-resources-cdn
+          --base-href "/${{ github.event.repository.name }}/"
+
+      - name: Derlenen siteyi Pages için paketle
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/web
+
+  deploy:
+    name: GitHub Pages'e yayınla
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Yayınla
+        id: deployment
+        uses: actions/deploy-pages@v4

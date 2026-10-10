@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <!--
+    Uygulama GitHub Pages'te alt klasörde (/REPO_ADI/) yayınlanıyor.
+    Aşağıdaki değer, derlerken verilen --base-href ile otomatik değişir.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Akıllı sigara kılıfı için takip uygulaması">
+  <meta name="theme-color" content="#2F7D6D">
+
+  <!-- iPhone'da "Ana Ekrana Ekle" ile uygulama gibi açılması için -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Unlit">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>Unlit</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Flutter yüklenene kadar gösterilen basit "Yükleniyor" ekranı */
+    body { margin: 0; background: #F5FBF8; }
+    #yukleniyor {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #2F7D6D;
+    }
+    #yukleniyor .daire {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 4px solid #CDE8DF; border-top-color: #2F7D6D;
+      animation: don 0.9s linear infinite;
+    }
+    #yukleniyor p { margin-top: 16px; font-size: 15px; }
+    @keyframes don { to { transform: rotate(360deg); } }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0F1513; }
+      #yukleniyor { color: #8ED5C0; }
+      #yukleniyor .daire { border-color: #23413A; border-top-color: #8ED5C0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="yukleniyor">
+    <div class="daire"></div>
+    <p>Unlit yükleniyor…</p>
+  </div>
+  <!-- Flutter'ı başlatan betik (web/flutter_bootstrap.js) -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

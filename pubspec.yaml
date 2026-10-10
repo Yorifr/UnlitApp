@@ -1,0 +1,31 @@
+# Unlit — akıllı sigara kılıfı uygulaması
+# Paket eklemeden önce CLAUDE.md'deki "Paket kuralları"nı oku!
+name: unlit
+description: "Akıllı sigara kılıfı için takip uygulaması"
+publish_to: 'none' # pub.dev'e yayınlanmayacak
+
+# Sürüm: 0.1.0 = görünen sürüm, +1 = derleme numarası.
+# Değiştirirsen lib/app_info.dart içindeki appVersion'ı da güncelle.
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Flutter'ın kendi Türkçe yazıları (Geri, Kapat, tarih seçici...) için.
+  flutter_localizations:
+    sdk: flutter
+  # Verileri SADECE cihazda saklamak için (web'de tarayıcının localStorage'ı).
+  shared_preferences: ^2.5.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # Kod stil kuralları (flutter analyze bunları kontrol eder).
+  flutter_lints: ^6.0.0
+
+flutter:
+  # Material ikonlarını (Icons.xxx) kullanabilmek için.
+  uses-material-design: true
