@@ -2,7 +2,7 @@
 //
 // Her gün 3 küçük, YAPILABİLİR görev var. Görevler sigara içmeyi
 // cezalandırmaz; kullanıcının kendine iyi bakmasını ödüllendirir
-// (check-in yapmak, bir isteği ertelemek, nefes molası vermek...).
+// (nasıl hissettiğini söylemek, bir isteği ertelemek, nefes molası...).
 //
 // Yapılmayan görevin cezası yok: gece yarısı sessizce yenileri gelir.
 
@@ -22,7 +22,7 @@ const int delayMinutes = 10;
 /// Görev türleri.
 enum QuestType {
   checkIn(
-    title: 'Günlük check-in',
+    title: 'Kendini dinle',
     description: 'Bugün nasıl hissettiğini seç',
     icon: Icons.mood,
     reason: XpReason.questCheckIn,
@@ -60,7 +60,8 @@ enum QuestType {
   /// Tamamlanınca verilen XP'nin "nedeni" (aynı gün iki kez verilmesin diye).
   final XpReason reason;
 
-  /// Tamamlamak için kaç kez yapılmalı? (Şimdilik hepsi 1: kolay kazanım.)
+  /// Tamamlamak için kaç kez yapılmalı? (Şimdilik hepsi 1: kolay kazanım.
+  /// Bu yüzden ekranda ilerleme çubuğu yok; onay işareti yeterli.)
   int get target => 1;
 }
 
@@ -71,9 +72,6 @@ class QuestStatus {
   final int progress;
 
   bool get done => progress >= type.target;
-
-  /// İlerleme oranı (0.0–1.0), ilerleme çubuğu için.
-  double get ratio => (progress / type.target).clamp(0.0, 1.0);
 }
 
 /// Verilen gün ölçüm haftasında mı?
@@ -95,7 +93,8 @@ int? measurementDayNumber(DateTime day, DateTime? trackingStart) {
 /// O günün 3 görevi.
 List<QuestType> questsForDay(DateTime day, {required DateTime? trackingStart}) {
   if (isMeasurementDay(day, trackingStart)) {
-    // Ölçüm haftası: sadece farkındalık ve kendine iyi bakma.
+    // Ölçüm haftası: sadece farkındalık ve kendine iyi bakma. (Erteleme
+    // görevi ölçüm haftası bitince "açılır"; bkz. ölçüm haftası özeti.)
     return const [QuestType.checkIn, QuestType.tagTrigger, QuestType.breathe];
   }
   // Ölçümden sonra: erteleme görevi eklenir; üçüncü görev günden güne değişir.

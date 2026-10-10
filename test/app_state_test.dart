@@ -64,7 +64,7 @@ void main() {
     expect(again.isEmpty, isTrue);
   });
 
-  test('check-in görevi bir kez ödüllendirilir', () async {
+  test('"Kendini dinle" görevi bir kez ödüllendirilir', () async {
     await state.completeOnboarding(UserProfile());
     final first = await state.logMood(Mood.good);
     expect(first.has(XpReason.questCheckIn), isTrue);
@@ -142,6 +142,79 @@ void main() {
     expect(reloaded.activity.breaths.length, 1);
     expect(reloaded.totalXp, state.totalXp);
   });
+
+  group('ölçüm haftası özeti', () {
+    test('hafta bitince bir kez çıkar, görülünce kaybolur', () async {
+      await state.completeOnboarding(UserProfile());
+      device.emit(DateTime(2026, 10, 10, 11));
+      await Future<void>.delayed(Duration.zero);
+      expect(state.measurementSummaryPending, isFalse); // hafta sürüyor
+      expect(state.gains, isNull);
+
+      now = DateTime(2026, 10, 17, 9); // 8. gün
+      expect(state.measurementDay, isNull);
+      expect(state.measurementSummaryPending, isTrue);
+      expect(state.measurementSummary!.total, 1);
+      expect(state.gains, isNotNull);
+
+      await state.markMeasurementSummarySeen();
+      expect(state.measurementSummaryPending, isFalse);
+
+      // Uygulama yeniden açılınca da görülmüş sayılır.
+      final reloaded = AppState(
+        storage: await StorageService.create(),
+        device: FakeDevice(),
+        clock: () => now,
+      );
+      await reloaded.start();
+      expect(reloaded.measurementSummaryPending, isFalse);
+
+      // Takip sıfırlanınca yeni ölçüm haftasının özeti yeniden çıkar.
+      await state.resetEventsAndProgress();
+      device.emit(now);
+      await Future<void>.delayed(Duration.zero);
+      now = DateTime(2026, 10, 25, 9);
+      expect(state.measurementSummaryPending, isTrue);
+    });
+
+    test('ölçüm haftasında hiç kayıt yoksa özet çıkmaz', () async {
+      await state.completeOnboarding(UserProfile());
+      now = DateTime(2026, 10, 20, 9);
+      expect(state.measurementSummaryPending, isFalse);
+      expect(state.gains, isNull);
+    });
+  });
+
+  test('kendine not kaydedilir, boş not silinir', () async {
+    await state.completeOnboarding(UserProfile());
+    await state.setReasonNote('  Kızımla koşabilmek için  ');
+    expect(state.profile.reasonNote, 'Kızımla koşabilmek için');
+    await state.setReasonNote('   ');
+    expect(state.profile.reasonNote, isNull);
+  });
+
+  test(
+    'açılışta eski, artık kullanılmayan cevaplar kayıttan silinir',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'flutter.onboarding_done': true,
+        'flutter.profile':
+            '{"cigarettesPerDay": 12, "gender": "female", "quitDesire": 7}',
+      });
+      final storage = await StorageService.create();
+      final old = AppState(
+        storage: storage,
+        device: FakeDevice(),
+        clock: () => now,
+      );
+      await old.start();
+      expect(old.profile.cigarettesPerDay, 12);
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString('profile')!;
+      expect(saved.contains('gender'), isFalse);
+      expect(saved.contains('quitDesire'), isFalse);
+    },
+  );
 
   group('paket fiyatı', () {
     test(

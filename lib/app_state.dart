@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'logic/measurement.dart';
 import 'logic/quests.dart';
 import 'logic/rewards.dart';
 import 'logic/stats.dart';
@@ -15,7 +16,7 @@ import 'services/storage_service.dart';
 /// Uygulamanın "beyni": profil, sigara kayıtları ve etkinlikler burada durur.
 ///
 /// - Kılıftan ([DeviceService]) gelen olayları dinler ve kaydeder.
-/// - Kullanıcının olumlu eylemlerini (check-in, erteleme...) kaydeder ve
+/// - Kullanıcının olumlu eylemlerini (ruh hali, erteleme...) kaydeder ve
 ///   kazandığı XP'yi hesaplar. Bu metotlar bir [Reward] döndürür; ekran da
 ///   buna bakıp kutlama gösterir.
 /// - Her değişiklikte [notifyListeners] çağırır; ekranlar
@@ -42,6 +43,7 @@ class AppState extends ChangeNotifier {
   DateTime? _trackingStartedAt;
   PriceHistory _prices = PriceHistory();
   DateTime? _priceConfirmedAt;
+  bool _measurementSummarySeen = false;
   StreamSubscription<SmokingEvent>? _subscription;
 
   UserProfile get profile => _profile;
@@ -91,6 +93,30 @@ class AppState extends ChangeNotifier {
   /// Ölçüm haftasının kaçıncı günü (bittiyse null).
   int? get measurementDay => measurementDayNumber(now, _trackingStartedAt);
 
+  /// Ölçüm haftasının özeti (takip başlamadıysa null).
+  MeasurementSummary? get measurementSummary {
+    final start = _trackingStartedAt;
+    return start == null ? null : summarizeMeasurementWeek(_events, start);
+  }
+
+  /// "Ölçüm haftan bitti!" kartı gösterilsin mi? Hafta bittiyse, özet henüz
+  /// görülmediyse ve haftada en az bir kayıt varsa (yoksa özetlenecek bir şey
+  /// yok).
+  bool get measurementSummaryPending =>
+      _onboardingDone &&
+      !_measurementSummarySeen &&
+      measurementOver(now, _trackingStartedAt) &&
+      (measurementSummary?.total ?? 0) > 0;
+
+  /// "Kazandıkların": ölçüm haftasına göre içilmeyen sigaralar, cepte kalan
+  /// para, korunan yaşam süresi. Ölçüm haftası bitmediyse null.
+  Gains? get gains => computeGains(
+    events: _events,
+    trackingStart: _trackingStartedAt,
+    now: now,
+    prices: _prices,
+  );
+
   /// Bugün seçilen son ruh hali (yoksa null).
   Mood? get todayMood {
     final today = _activity.moods.where(
@@ -114,6 +140,7 @@ class AppState extends ChangeNotifier {
     _trackingStartedAt = storage.trackingStartedAt;
     _prices = storage.loadPrices();
     _priceConfirmedAt = storage.priceConfirmedAt;
+    _measurementSummarySeen = storage.measurementSummarySeen;
 
     // Eski sürümden gelen kullanıcı: takip başlangıcı kayıtlı değilse
     // ilk sigara kaydını (yoksa bugünü) başlangıç say.
@@ -135,8 +162,10 @@ class AppState extends ChangeNotifier {
       ]);
       await storage.savePrices(_prices);
     }
-    if (legacy != null) {
-      // Profili eski alanlar olmadan tekrar kaydet: taşıma bir daha olmasın.
+    if (_onboardingDone || legacy != null) {
+      // Profili yeniden kaydet: eski sürümlerden kalan ve artık kullanılmayan
+      // alanlar (eski fiyat; yaş, cinsiyet, hedef gibi artık sorulmayan
+      // cevaplar) böylece kayıttan silinir. Kullanmadığımız veriyi tutmayız.
       await storage.saveProfile(_profile);
     }
 
@@ -229,9 +258,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Kullanıcının kendine yazdığı notu kaydet (boşsa not silinir).
+  Future<void> setReasonNote(String? note) async {
+    final text = note?.trim() ?? '';
+    _profile.reasonNote = text.isEmpty ? null : text;
+    await storage.saveProfile(_profile);
+    notifyListeners();
+  }
+
+  /// "Ölçüm haftan bitti!" özeti görüldü: kart bir daha çıkmasın.
+  Future<void> markMeasurementSummarySeen() async {
+    _measurementSummarySeen = true;
+    await storage.setMeasurementSummarySeen(true);
+    notifyListeners();
+  }
+
   // ---------- Olumlu eylemler (her biri ödül döndürür) ----------
 
-  /// Günlük check-in: ruh halini kaydet.
+  /// "Kendini dinle" görevi: ruh halini kaydet.
   Future<Reward> logMood(Mood mood) {
     _activity.moods.add(MoodEntry(time: now, mood: mood));
     return _collect();
@@ -324,9 +368,12 @@ class AppState extends ChangeNotifier {
     _events = [...events]..sort(_byTime);
     _activity = activity;
     _trackingStartedAt = trackingStartedAt;
+    // Takip yeniden başladı: yeni ölçüm haftasının özeti de yeniden çıksın.
+    _measurementSummarySeen = false;
     await storage.saveEvents(_events);
     await storage.saveActivity(_activity);
     await storage.setTrackingStartedAt(trackingStartedAt);
+    await storage.setMeasurementSummarySeen(false);
     if (prices != null) {
       _prices = prices;
       await storage.savePrices(prices);
@@ -349,6 +396,7 @@ class AppState extends ChangeNotifier {
     _trackingStartedAt = null;
     _prices = PriceHistory();
     _priceConfirmedAt = null;
+    _measurementSummarySeen = false;
     notifyListeners();
   }
 

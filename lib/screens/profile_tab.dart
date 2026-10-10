@@ -7,7 +7,7 @@ import '../widgets/mascot.dart';
 import 'onboarding_screen.dart';
 import 'settings_screen.dart';
 
-/// "Profil" sekmesi: seri, XP ve başarılar. Sadece OLUMLU sayılar.
+/// "Profil" sekmesi: seri, puan ve başarılar. Sadece OLUMLU sayılar.
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key, required this.state});
 
@@ -79,7 +79,7 @@ class ProfileTab extends StatelessWidget {
                 icon: Icons.bolt,
                 color: c.gold,
                 value: '${state.totalXp}',
-                label: 'Toplam XP',
+                label: 'Toplam puan',
               ),
               right: _StatBox(
                 icon: Icons.timer_outlined,
@@ -176,7 +176,7 @@ class _StatBox extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: 28),
               const SizedBox(width: 6),
-              // Sayı çok büyürse (ör. 12.500 XP) yazı küçülsün, taşmasın.
+              // Sayı çok büyürse (ör. 12.500 puan) yazı küçülsün, taşmasın.
               Flexible(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,

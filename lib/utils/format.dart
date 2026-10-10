@@ -84,6 +84,21 @@ String formatTimeAgo(DateTime time, DateTime now) {
   return '${minutes ~/ (24 * 60)} gün önce';
 }
 
+/// Ondalık sayı, virgülle ve tek basamakla: 17.33 → "17,3", 15.0 → "15"
+String formatDecimal(double value) {
+  final rounded = (value * 10).round() / 10;
+  if (rounded == rounded.roundToDouble()) return rounded.toStringAsFixed(0);
+  return rounded.toStringAsFixed(1).replaceAll('.', ',');
+}
+
+/// Gece yarısından beri geçen dakikayı saate çevirir: 465 → "07:45"
+String formatMinuteOfDay(int minutes) =>
+    '${_twoDigits(minutes ~/ 60 % 24)}:${_twoDigits(minutes % 60)}';
+
+/// Bir saatlik aralık: 10 → "10:00–11:00", 23 → "23:00–00:00"
+String formatHourRange(int hour) =>
+    '${_twoDigits(hour)}:00–${_twoDigits((hour + 1) % 24)}:00';
+
 /// Yüzde: Türkçede yüzde işareti sayıdan ÖNCE gelir → "%12"
 String formatPercent(double percent) => '%${percent.abs().round()}';
 

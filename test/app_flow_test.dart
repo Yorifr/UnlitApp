@@ -92,7 +92,10 @@ void main() {
     // "Neden soruyoruz?" açıklaması açılır.
     await tester.tap(find.text('Neden soruyoruz?'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Başlangıç noktanı bilmek'), findsOneWidget);
+    expect(
+      find.textContaining('Ölçüm haftasının sonunda bu tahminini'),
+      findsOneWidget,
+    );
 
     // Günlük sigara: ilk "+" 15'ten başlar, ikinci "+" 16 yapar.
     await tester.tap(find.byTooltip('Artır'));
@@ -104,8 +107,6 @@ void main() {
 
     await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ŞİMDİLİK GEÇ')); // kaç yıldır: boş geç
-    await tester.pumpAndSettle();
 
     await tester.tap(find.text(FirstCigaretteTime.within5Min.label));
     await tester.pump();
@@ -114,24 +115,49 @@ void main() {
 
     await tester.enterText(find.byType(TextField), '95,50');
     await tester.pump();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
 
-    // Geri kalanını atla: verilen cevaplar yine kaydedilmeli.
-    await skipOnboarding(tester);
+    // Son soru: tetikleyiciler. Sadece 4 soru var, sonra "Hazırsın!".
+    await tester.tap(find.text('Çay'));
+    await tester.pump();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hazırsın!'), findsOneWidget);
+    expect(find.text('+10 puan'), findsOneWidget);
+    await tester.tap(find.text('BAŞLA'));
+    await tester.pumpAndSettle();
 
     expect(state.profile.cigarettesPerDay, 16);
-    expect(state.profile.yearsSmoking, isNull);
     expect(state.profile.firstCigarette, FirstCigaretteTime.within5Min);
+    expect(state.profile.triggers, {SmokingTrigger.tea});
     // Fiyat profilde değil, tarihli fiyat geçmişinde; paket varsayılan 20'li.
     expect(state.prices.current!.price, 95.5);
     expect(state.prices.current!.perPack, 20);
     expect(find.text('Günlük görevler'), findsOneWidget);
   });
 
-  testApp('check-in kutlama ekranı açar ve XP verir', (tester, state) async {
+  testApp('"Kendini dinle" kutlama ekranı açar ve puan verir', (
+    tester,
+    state,
+  ) async {
     await skipOnboarding(tester);
     final xpBefore = state.totalXp;
+    // Ruh hali için tek giriş noktası var: görev satırı.
+    expect(find.text('Bugün nasıl hissediyorsun?'), findsNothing);
 
-    await scrollAndTap(tester, find.text('İyi'));
+    await scrollAndTap(tester, find.text('Kendini dinle'));
+    await tester.pumpAndSettle();
+    // Soldan sağa olumsuzdan olumluya: "Çok zor" en solda, "Harika" en sağda.
+    final x = [
+      for (final mood in ['Çok zor', 'Zor', 'İdare eder', 'İyi', 'Harika'])
+        tester.getCenter(find.text(mood)).dx,
+    ];
+    for (var i = 1; i < x.length; i++) {
+      expect(x[i], greaterThan(x[i - 1]));
+    }
+
+    await tester.tap(find.text('İyi'));
     await tester.pumpAndSettle();
 
     expect(find.text('Görev tamamlandı!'), findsOneWidget);
@@ -204,10 +230,103 @@ void main() {
     // Ölçüm haftası geçmişte kaldı → erteleme görevi geldi.
     expect(state.measurementDay, isNull);
 
+    // "Ölçüm haftan bitti!" özeti bir kez gösterilir.
+    expect(state.measurementSummaryPending, isTrue);
+    await tester.tap(find.text('SONUÇLARIMI GÖR'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ölçüm haftan bitti!'), findsOneWidget);
+    expect(find.text('Günde ortalama'), findsOneWidget);
+    await scrollAndTap(tester, find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    expect(state.measurementSummaryPending, isFalse);
+    expect(find.text('SONUÇLARIMI GÖR'), findsNothing);
+
     await tester.tap(find.text('İstatistik'));
     await tester.pumpAndSettle();
     expect(find.text('sigara\nbugün'), findsOneWidget);
-    expect(find.textContaining('Karşılaştırma için en az'), findsNothing);
+    expect(find.text('Geçen haftayla karşılaştırma'), findsOneWidget);
+    // "Kaybedilen yaşam" yok; aynı kaynak "korunan" tarafta.
+    expect(find.textContaining('kaybedilen'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Korunan yaşam süresi'),
+      250,
+      scrollable: find.byType(Scrollable).hitTestable().first,
+    );
+    expect(find.text('Kazandıkların'), findsOneWidget);
+    expect(find.text('İçmediğin sigara'), findsOneWidget);
+  });
+
+  testApp('ölçüm haftasında "Kazandıkların" kapalı, ne zaman açılacağı yazar', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    expect(state.measurementDay, 1);
+    // Puan üst çubukta yok (sadece seri); Profil'de ve kutlamalarda var.
+    expect(find.byTooltip('Toplam XP'), findsNothing);
+    await tester.tap(find.text('İstatistik'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.textContaining('Ölçüm haftası bitince burada açılacak'),
+      250,
+      scrollable: find.byType(Scrollable).hitTestable().first,
+    );
+    expect(find.text('İçmediğin sigara'), findsNothing);
+    // Haftalık karşılaştırma kartı 2 haftalık kayıt olmadan görünmez.
+    expect(find.text('Geçen haftayla karşılaştırma'), findsNothing);
+  });
+
+  testApp('"Neden?" penceresinde kendi seçtiğin nedenler başta', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    await state.updateProfile(UserProfile(triggers: {SmokingTrigger.stress}));
+    (state.device as DemoDeviceService).simulatePickup();
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('Neden?'));
+    await tester.pumpAndSettle();
+    final chips = tester.widgetList<ChoiceChip>(find.byType(ChoiceChip));
+    expect((chips.first.label as Text).data, 'Stres');
+    expect((chips.elementAt(1).label as Text).data, 'Kahve');
+  });
+
+  testApp('erteleme ekranında kendine not yazılır (emoji süzülür)', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    await tester.tap(find.text('CANIM SİGARA İSTİYOR'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    // Not önerisi en altta (asıl butonları itmesin diye).
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, -2000),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('Kendine bir not yaz'));
+    await tester.pump(const Duration(milliseconds: 500));
+    // Emoji yazı tipinde yok: web'de Google'dan font indirilmesin diye süzülür.
+    await tester.enterText(
+      find.byType(TextField),
+      'Kızımla koşabilmek için \u{1F3C3}',
+    );
+    await tester.tap(find.text('KAYDET'));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(state.profile.reasonNote, 'Kızımla koşabilmek için');
+    // Not artık sayacın hemen altında, en üstte.
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 3000),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Kendine notun'), findsOneWidget);
+    expect(find.text('Kızımla koşabilmek için'), findsOneWidget);
+    await state.cancelDelay();
   });
 
   testApp('fiyat yoksa para kartı fiyat penceresini açar', (
@@ -273,6 +392,25 @@ void main() {
     // Dar bir Android telefon (360 px) ve her sekmeyi sonuna kadar kaydır.
     tester.view.physicalSize = const Size(1080, 2340);
     await tester.pumpAndSettle();
+
+    // Önce "Ölçüm haftan bitti!" özeti (en üstteki buton).
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 3000),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SONUÇLARIMI GÖR'));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 6; i++) {
+      await tester.drag(
+        find.byType(Scrollable).hitTestable().first,
+        const Offset(0, -400),
+      );
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
     for (final tab in ['Bugün', 'İstatistik', 'Profil']) {
       await tester.tap(find.text(tab));
       await tester.pumpAndSettle();
@@ -308,8 +446,10 @@ void main() {
     await tester.tap(find.text('BAŞLA'));
     await tester.pumpAndSettle();
 
-    // Kutlama ekranı
-    await scrollAndTap(tester, find.text('İyi'));
+    // Ruh hali penceresi + kutlama ekranı
+    await scrollAndTap(tester, find.text('Kendini dinle'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('İyi'));
     await tester.pumpAndSettle();
     expect(find.text('Görev tamamlandı!'), findsOneWidget);
     await tester.tap(find.text('DEVAM'));
@@ -344,7 +484,7 @@ void main() {
     await skipOnboarding(tester);
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
-    expect(find.text('Toplam XP'), findsOneWidget);
+    expect(find.text('Toplam puan'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Ayarlar'));
     await tester.pumpAndSettle();

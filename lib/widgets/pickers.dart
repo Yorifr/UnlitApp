@@ -10,7 +10,9 @@ import '../theme.dart';
 import '../utils/format.dart';
 import 'chunky.dart';
 
-/// Beş ruh hali butonu yan yana. [selected] doluysa o vurgulanır.
+/// Beş ruh hali butonu yan yana: soldan sağa olumsuzdan olumluya ("Çok zor"
+/// en solda, "Harika" en sağda; sıra [Mood] enum'unda). [selected] doluysa o
+/// vurgulanır.
 class MoodRow extends StatelessWidget {
   const MoodRow({super.key, required this.onSelected, this.selected});
 
@@ -110,10 +112,15 @@ class TriggerChoice {
 }
 
 /// "Bu sigara neden?" penceresi. Vazgeçilirse null döner.
+///
+/// [preferred]: kullanıcının onboarding'de seçtiği tetikleyiciler. Bunlar
+/// listenin EN BAŞINDA çıkar; çoğu zaman tek dokunuşla işaretlenir.
 Future<TriggerChoice?> showTriggerSheet(
   BuildContext context,
-  SmokingEvent event,
-) {
+  SmokingEvent event, {
+  Set<SmokingTrigger> preferred = const {},
+}) {
+  final ordered = triggersInOrder(preferred);
   return showModalBottomSheet<TriggerChoice>(
     context: context,
     showDragHandle: true,
@@ -140,7 +147,7 @@ Future<TriggerChoice?> showTriggerSheet(
                 spacing: 8,
                 runSpacing: 10,
                 children: [
-                  for (final t in SmokingTrigger.values)
+                  for (final t in ordered)
                     ChoiceChip(
                       label: Text(t.label),
                       selected: event.trigger == t,
@@ -176,3 +183,12 @@ Future<TriggerChoice?> showTriggerSheet(
     },
   );
 }
+
+/// Önce kullanıcının seçtiği tetikleyiciler, sonra diğerleri (her grup kendi
+/// içinde her zamanki sırada).
+List<SmokingTrigger> triggersInOrder(Set<SmokingTrigger> preferred) => [
+  for (final t in SmokingTrigger.values)
+    if (preferred.contains(t)) t,
+  for (final t in SmokingTrigger.values)
+    if (!preferred.contains(t)) t,
+];

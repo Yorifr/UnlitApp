@@ -9,6 +9,7 @@ import '../services/effects.dart';
 import '../utils/format.dart';
 import '../widgets/price_sheet.dart';
 import '../widgets/privacy_banner.dart';
+import '../widgets/reason_note.dart';
 import 'onboarding_screen.dart';
 
 /// Ayarlar: kılıf/demo, bilgilerim, gizlilik, kaynaklar.
@@ -62,7 +63,7 @@ class SettingsScreen extends StatelessWidget {
                   title: const Text('Demo verisi üret'),
                   subtitle: const Text(
                     'Son iki haftanın sahte kayıtlarını, görevlerini ve '
-                    'XP\'sini oluşturur. Mevcut kayıtların yerini alır.',
+                    'puanlarını oluşturur. Mevcut kayıtların yerini alır.',
                   ),
                   onTap: () => _generateDemo(context, demo),
                 ),
@@ -81,7 +82,7 @@ class SettingsScreen extends StatelessWidget {
                   leading: const Icon(Icons.restart_alt),
                   title: const Text('Demo verisini sıfırla'),
                   subtitle: const Text(
-                    'Kayıtları, XP ve seriyi siler. Cevapların kalır.',
+                    'Kayıtları, puanları ve seriyi siler. Cevapların kalır.',
                   ),
                   onTap: () => _resetEvents(context),
                 ),
@@ -93,13 +94,28 @@ class SettingsScreen extends StatelessWidget {
                 leading: const Icon(Icons.edit_outlined),
                 title: const Text('Bilgilerimi düzenle'),
                 subtitle: const Text(
-                  'Sigara alışkanlığı, tetikleyiciler, hedef ve profil',
+                  'Günlük sigara, ilk sigara ve tetikleyiciler',
                 ),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) =>
                         OnboardingScreen(state: state, editMode: true),
                   ),
+                ),
+              ),
+              // Not değişince güncel hâlini göstersin diye state'i dinler.
+              ListenableBuilder(
+                listenable: state,
+                builder: (context, _) => ListTile(
+                  leading: const Icon(Icons.edit_note),
+                  title: const Text('Kendime notum'),
+                  subtitle: Text(
+                    state.profile.reasonNote ??
+                        'Henüz yazmadın. Erteleme ekranında karşına çıkar.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () => showReasonNoteDialog(context, state),
                 ),
               ),
               // Fiyat değişince güncel özeti göstersin diye state'i dinler.
@@ -149,13 +165,14 @@ class SettingsScreen extends StatelessWidget {
               ),
               const _SectionTitle('Kaynaklar'),
               const ListTile(
-                title: Text('Tahmini yaşam süresi etkisi'),
+                title: Text('Korunan yaşam süresi'),
                 subtitle: Text(
                   'Jackson SE, Jarvis MJ, West R. "The price of a cigarette: '
                   '20 minutes of life?" Addiction, 2024 (University College '
                   'London). Bir sigara ortalama olarak erkeklerde ~17 dk, '
                   'kadınlarda ~22 dk (genel ortalama ~20 dk) yaşam süresine '
-                  'mal oluyor. Ortalama bir tahmindir.',
+                  'mal oluyor. Uygulama, içilmeyen her sigara için genel '
+                  'ortalamayı (20 dk) kullanır. Ortalama bir tahmindir.',
                 ),
               ),
               const ListTile(
@@ -163,13 +180,6 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: Text(
                   'Fagerström Nikotin Bağımlılığı Testi (Heatherton ve ark., '
                   '1991) sorularından biridir.',
-                ),
-              ),
-              const ListTile(
-                title: Text('Sigaraya giden süre'),
-                subtitle: Text(
-                  'Bir sigaranın ~6 dakikada içildiği varsayılır. Bu kaynaklı '
-                  'bir ölçüm değil, yaklaşık bir varsayımdır.',
                 ),
               ),
               const _SectionTitle('Hakkında'),
@@ -195,7 +205,7 @@ class SettingsScreen extends StatelessWidget {
         context,
         title: 'Demo verisi üretilsin mi?',
         message:
-            'Mevcut sigara kayıtları, XP ve görevler silinip yerine son '
+            'Mevcut sigara kayıtları, puanlar ve görevler silinip yerine son '
             'iki haftanın yeni demo verisi oluşturulacak.',
         action: 'Üret',
       );
@@ -212,7 +222,7 @@ class SettingsScreen extends StatelessWidget {
       context,
       title: 'Kayıtlar silinsin mi?',
       message:
-          'Tüm sigara kayıtları, XP, seri ve görevler silinecek. Onboarding '
+          'Tüm sigara kayıtları, puanlar, seri ve görevler silinecek. Onboarding '
           'cevapların kalır.',
       action: 'Sil',
     );

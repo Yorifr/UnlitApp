@@ -1,7 +1,13 @@
-/// Kullanıcının onboarding'de verdiği cevaplar.
+/// Kullanıcının onboarding'de verdiği cevaplar (+ kendine yazdığı not).
 ///
 /// Tüm sorular isteğe bağlı olduğu için alanların çoğu boş (null) olabilir.
 /// Uygulamanın her yeri "bu bilgi yoksa ne yaparım?" sorusunu düşünmeli.
+///
+/// KURAL: Burada sadece uygulamanın GERÇEKTEN kullandığı bilgiler durur.
+/// "Sorulan her soru bir söz": cevap bir şeyi değiştirmiyorsa sorulmaz ve
+/// saklanmaz. (0.6.0'da yaş, cinsiyet, kaç yıldır, hedef, bırakma isteği,
+/// motivasyon ve aktiviteler bu yüzden kaldırıldı; hangisinin ne zaman
+/// sorulacağı docs/SPEC.md'de yazıyor.)
 ///
 /// Paket fiyatı BURADA DEĞİL: sık değiştiği ve tarihiyle saklanması gerektiği
 /// için ayrı tutulur (bkz. models/pack_price.dart).
@@ -13,50 +19,30 @@
 class UserProfile {
   UserProfile({
     this.cigarettesPerDay,
-    this.yearsSmoking,
     this.firstCigarette,
     Set<SmokingTrigger>? triggers,
-    this.goal,
-    this.quitDesire,
-    this.ageRange,
-    this.gender,
-    Set<Motivator>? motivators,
-    Set<Activity>? activities,
-  }) : triggers = triggers ?? {},
-       motivators = motivators ?? {},
-       activities = activities ?? {};
-
-  // ---------- Sigara alışkanlığı ----------
+    this.reasonNote,
+  }) : triggers = triggers ?? {};
 
   /// Günde ortalama kaç sigara içtiği (kullanıcının kendi tahmini).
+  /// Ölçüm haftası özetinde kılıfın saydığıyla yan yana gösterilir; demo
+  /// kılıf da sahte veriyi buna yakın üretir.
   int? cigarettesPerDay;
 
-  /// Kaç yıldır sigara içtiği. 0 = "1 yıldan az".
-  int? yearsSmoking;
-
   /// Uyandıktan sonra ilk sigarayı ne zaman içtiği (Fagerström testi 1. soru).
+  /// Ölçüm haftası özetinde gösterilir; demo kılıf da buna göre davranır.
   FirstCigaretteTime? firstCigarette;
 
   /// Sigara isteğini tetikleyen durumlar (kahve, stres, ...).
+  /// "Bu sigara neden?" penceresinde bunlar en başta çıkar.
   Set<SmokingTrigger> triggers;
 
-  /// Hedef: azaltmak mı, bırakmak mı?
-  QuitGoal? goal;
+  /// Kullanıcının kendine yazdığı kısa not ("Neden azaltmak istiyorum?").
+  /// Erteleme ekranında, zor anda kendi cümlesi olarak gösterilir.
+  String? reasonNote;
 
-  /// Bırakma isteği, 1 (hiç) – 10 (çok).
-  int? quitDesire;
-
-  // ---------- İsteğe bağlı profil ----------
-
-  AgeRange? ageRange;
-  Gender? gender;
-
-  /// Kullanıcıyı motive eden kişiler/şeyler.
-  Set<Motivator> motivators;
-
-  /// Sevdiği aktiviteler (mesaj motorunda "yarın koşacaksan..." gibi
-  /// önerilerde kullanılacak).
-  Set<Activity> activities;
+  /// Notun en fazla kaç harf olabileceği (ekranda kısa ve okunur kalsın).
+  static const maxNoteLength = 140;
 
   /// Profilin bağımsız bir kopyasını üretir.
   UserProfile copy() => UserProfile.fromJson(toJson());
@@ -64,34 +50,25 @@ class UserProfile {
   /// Kayıt için JSON'a çevirir. Enum'ları adlarıyla ("coffee" gibi) saklarız.
   Map<String, dynamic> toJson() => {
     'cigarettesPerDay': cigarettesPerDay,
-    'yearsSmoking': yearsSmoking,
     'firstCigarette': firstCigarette?.name,
     'triggers': triggers.map((t) => t.name).toList(),
-    'goal': goal?.name,
-    'quitDesire': quitDesire,
-    'ageRange': ageRange?.name,
-    'gender': gender?.name,
-    'motivators': motivators.map((m) => m.name).toList(),
-    'activities': activities.map((a) => a.name).toList(),
+    'reasonNote': reasonNote,
   };
 
   /// JSON'dan profili geri oluşturur. Bozuk ya da eski sürümden kalma bir
-  /// değer gelirse o alanı boş bırakırız; uygulama çökmez.
+  /// değer gelirse o alanı boş bırakırız; uygulama çökmez. Eski sürümlerin
+  /// artık kullanılmayan alanları (yaş, cinsiyet...) okunmaz; profil bir
+  /// sonraki kayıtta onlarsız yazılır.
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final note = json['reasonNote'];
     return UserProfile(
       cigarettesPerDay: _asInt(json['cigarettesPerDay']),
-      yearsSmoking: _asInt(json['yearsSmoking']),
       firstCigarette: _enumByName(
         FirstCigaretteTime.values,
         json['firstCigarette'],
       ),
       triggers: _enumSet(SmokingTrigger.values, json['triggers']),
-      goal: _enumByName(QuitGoal.values, json['goal']),
-      quitDesire: _asInt(json['quitDesire']),
-      ageRange: _enumByName(AgeRange.values, json['ageRange']),
-      gender: _enumByName(Gender.values, json['gender']),
-      motivators: _enumSet(Motivator.values, json['motivators']),
-      activities: _enumSet(Activity.values, json['activities']),
+      reasonNote: note is String && note.trim().isNotEmpty ? note : null,
     );
   }
 }
@@ -140,60 +117,5 @@ enum SmokingTrigger {
   phone('Telefonda konuşurken');
 
   const SmokingTrigger(this.label);
-  final String label;
-}
-
-enum QuitGoal {
-  reduce('Azaltmak istiyorum'),
-  quit('Tamamen bırakmak istiyorum');
-
-  const QuitGoal(this.label);
-  final String label;
-}
-
-enum AgeRange {
-  from18to24('18–24'),
-  from25to34('25–34'),
-  from35to44('35–44'),
-  from45to54('45–54'),
-  from55to64('55–64'),
-  over65('65+');
-
-  const AgeRange(this.label);
-  final String label;
-}
-
-enum Gender {
-  male('Erkek'),
-  female('Kadın'),
-  unspecified('Belirtmek istemiyorum');
-
-  const Gender(this.label);
-  final String label;
-}
-
-enum Motivator {
-  child('Çocuğum'),
-  partner('Eşim / sevgilim'),
-  parents('Annem, babam'),
-  pet('Evcil hayvanım'),
-  myself('Kendim');
-
-  const Motivator(this.label);
-  final String label;
-}
-
-enum Activity {
-  running('Koşu'),
-  football('Futbol'),
-  walking('Yürüyüş'),
-  cycling('Bisiklet'),
-  swimming('Yüzme'),
-  basketball('Basketbol'),
-  gym('Spor salonu'),
-  dancing('Dans'),
-  hiking('Doğa yürüyüşü');
-
-  const Activity(this.label);
   final String label;
 }

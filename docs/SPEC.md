@@ -5,8 +5,9 @@
 > durum" ile "Sürüm geçmişi" bölümlerini güncelleyin.**
 
 Son güncelleme: 10 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
-oyunlaştırma), ses/titreşim efektleri, tarihli paket fiyatı ve kendi renk
-teması ("Nane") tamamlandı.
+oyunlaştırma), ses/titreşim efektleri, tarihli paket fiyatı, kendi renk
+teması ("Nane") ve sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
+özeti, "Kazandıkların") tamamlandı.
 
 ---
 
@@ -57,7 +58,9 @@ suçluluk duymasın**.
 
 ### Duolingo'dan aldıklarımız
 - **Günlük görevler** (her gün 3 küçük, yapılabilir görev)
-- **XP** (puan) ve **seri** (bizde alev değil yaprak ikonu; bkz. Bölüm 8)
+- **XP** ve **seri** (bizde alev değil yaprak ikonu; bkz. Bölüm 8). Ekranda
+  XP'ye **"puan"** diyoruz: "XP" İngilizce oyun jargonu, herkes bilmiyor.
+  (Kodda kısa olsun diye adı XP.)
 - **Kutlama ekranı:** konfeti, sevinen maskot, sayarak artan XP, seri
   kutucuğu, "DEVAM" butonu
 - **Maskot** ("Nefes") konuşma balonlarıyla yol gösterir
@@ -88,15 +91,17 @@ suçluluk duymasın**.
    - Seri sıfırlanırsa dil olumlu: "Bugün bir görev yap, serin başlasın!"
      ve "en uzun seri" her zaman gösterilir.
 3. **Günlük görevler** (gece yarısı yenilenir, yapılmayanın cezası yok):
-   - **Ölçüm haftası (ilk 7 gün):** Günlük check-in, Nedenini keşfet (bir
-     sigaranın nedenini işaretle), Nefes molası. **Azaltma görevi yok**,
-     böylece başlangıç alışkanlığı doğru ölçülür.
-   - **Sonrası:** Günlük check-in, İsteği ertele (10 dk), + günden güne
+   - **Ölçüm haftası (ilk 7 gün):** Kendini dinle (ruh hali), Nedenini
+     keşfet (bir sigaranın nedenini işaretle), Nefes molası. **Azaltma
+     görevi yok**, böylece başlangıç alışkanlığı doğru ölçülür.
+   - **Sonrası:** Kendini dinle, İsteği ertele (10 dk), + günden güne
      değişen 3. görev (Nedenini keşfet / Nefes molası).
+   - Her görevin hedefi 1 olduğu için görev satırında ilerleme çubuğu yok;
+     onay işareti yeterli.
    - "Canım sigara istiyor" (erteleme) butonu **her zaman** açıktır:
      kullanıcının kendi istediği yardım asla engellenmez; sadece ölçüm
      haftasında görev olarak önerilmez.
-4. **XP tablosu:**
+4. **XP (puan) tablosu:**
 
    | Eylem | XP |
    |---|---|
@@ -111,14 +116,26 @@ suçluluk duymasın**.
    birine yaz…), nefes egzersizi kısayolu. İki çıkış da ödüllü:
    "İSTEK GEÇTİ" → konfetili kutlama; "YİNE DE İÇECEĞİM" → sakin ekran,
    "X dakika bekledin ve isteğini fark ettin. Bu da bir adım."
-6. **Ruh hali check-in'i:** "Zor/Çok zor" seçilirse kutlama sakin olur ve
-   maskot destekleyici konuşur.
+6. **Kendini dinle (ruh hali):** Sadece görev satırından açılır (eskiden
+   ayrıca bir kart vardı; aynı iş için iki giriş kafa karıştırıyordu).
+   Seçenekler soldan sağa **olumsuzdan olumluya**: Çok zor, Zor, İdare
+   eder, İyi, Harika (ölçeklerde alışılmış düzen). "Zor/Çok zor" seçilirse
+   kutlama sakin olur ve maskot destekleyici konuşur.
 7. **Maskot cümleleri** (`lib/logic/mascot_messages.dart`): sadece
    kullanıcının kendi verisi; azalma varsa kutlar, artış varsa nazikçe
-   erteleme önerir; ölçüm haftasında karşılaştırma yapmaz.
+   erteleme önerir; ölçüm haftasında karşılaştırma yapmaz ("hiçbir şeyi
+   değiştirmeye çalışma, kılıfını taşı"); hafta bitince özeti önerir.
 8. **Renkler:** Kırmızı sadece "tümünü sil" gibi tehlikeli işlemlerde.
    Kullanıcının sigara davranışı asla kırmızıyla gösterilmez.
-9. **Ses ve titreşim** (`lib/services/effects.dart`):
+9. **Sadelik ve kademeli açılım** (0.6.0):
+   - Her işin tek giriş noktası; ekranda tek seçici; üst çubukta sadece
+     seri (puanın harcanacağı bir yer olmadığı için sürekli göz önünde
+     durması gereksiz; kutlamalarda ve Profil'de görünür).
+   - İlk gün her şey açık değil: **ölçüm haftası bitince** "Ölçüm haftan
+     bitti!" ekranı açılır ve "İsteği ertele" görevi ile İstatistik'teki
+     "Kazandıkların" bölümü o an "açılır". "CANIM SİGARA İSTİYOR" butonu
+     ise her zaman açık (kural, bkz. madde 3).
+10. **Ses ve titreşim** (`lib/services/effects.dart`):
    - Ses **sadece güzel anlarda** çalar; "hata/ceza" sesi yoktur. Sigara
      içmek (kılıftan gelen olay) **hiçbir ses ya da titreşim tetiklemez**.
 
@@ -141,18 +158,43 @@ suçluluk duymasın**.
 
 ## 4. Özellikler (tam vizyon)
 
-### Özellik 1 — Onboarding ✅ (Aşama 1, Aşama 2'de yenilendi)
+### Özellik 1 — Onboarding ✅ (Aşama 1; Aşama 2'de yenilendi; 0.6.0'da 4 soruya indi)
 - En üstte: **"Bilgilerin sadece bu telefonda kalır, kimseyle paylaşılmaz."**
 - Her ekranda tek soru; maskot soruyu sorar; **"Neden soruyoruz?"**
   açıklaması; cevap yoksa buton "ŞİMDİLİK GEÇ", varsa "DEVAM".
-- Sigara soruları: günlük sigara sayısı, kaç yıldır, uyanınca ilk sigara ne
-  zaman (Fagerström 1. soru), paket fiyatı (+ paketteki adet), tetikleyiciler
-  (kahve, çay, yemek, stres, arkadaşlar, alkol, can sıkıntısı, ders/iş arası,
-  araba, telefon), hedef (azaltma/bırakma), bırakma isteği 1–10.
-- İsteğe bağlı profil ("BU BÖLÜMÜ ATLA"): yaş aralığı, cinsiyet ("Belirtmek
-  istemiyorum" dahil), motivasyon (çocuk, eş, anne-baba, evcil hayvan,
-  kendim), sevilen aktiviteler (koşu, futbol, yürüyüş, …).
-- Sonunda konfetili "Hazırsın!" ekranı ve +10 XP.
+- İlke: **"Sorulan her soru bir söz."** Bir soru ancak cevabı uygulamada
+  gerçekten bir şeyi değiştiriyorsa sorulur ve saklanır; "Neden
+  soruyoruz?" metni tam olarak bunu söyler. Soru, cevabın kullanılacağı
+  ana konur ("tam zamanında").
+- **Sorulan 4 soru ve nerede kullanıldıkları:**
+
+  | Soru | Nerede kullanılıyor |
+  |---|---|
+  | Günde kaç sigara (tahmin) | Ölçüm haftası özetinde kılıfın saydığıyla yan yana; demo verisi buna yakın |
+  | Uyanınca ilk sigara (Fagerström 1. soru) | Ölçüm haftası özetinde, ölçülen ilk sigara saatinin yanında; demo verisi; Aşama 3'te sabah hedefi |
+  | Paket fiyatı (+ paketteki adet) | Harcanan para, cebinde kalan para |
+  | Tetikleyiciler | "Bu sigara neden?" penceresinde seçilenler en başta (tek dokunuş) |
+
+- **Kaldırılan sorular ve ne zaman sorulacakları** (0.6.0'a kadar
+  soruluyordu ama hiçbir yerde kullanılmıyordu; eski cevaplar açılışta
+  kayıttan silinir):
+
+  | Soru | Karar |
+  |---|---|
+  | Hedef (azaltmak/bırakmak), bırakma isteği 1–10 | Aşama 3'te, ölçüm haftası bitip plan kurulurken sorulacak |
+  | Sevilen aktiviteler | Aşama 4'te, mesaj motoru ("Yarın koşacaksan…") gelince |
+  | Motivasyon (çocuk, eş…) | Hazır seçenek yerine **kendine not** (aşağıda) |
+  | Kaç yıldır, yaş aralığı, cinsiyet | Uygulamada dürüst bir kullanımı yok; pilot için gerekirse bkz. Bölüm 11 |
+
+- **Kendine not:** Kullanıcı isterse "Bunu neden yapıyorsun?" sorusuna kendi
+  cümlesiyle kısa bir not yazar (en fazla 140 harf). Erteleme ekranında,
+  sayacın hemen altında gösterilir; yoksa ekranın en altında nazikçe
+  önerilir. Ayarlar → "Kendime notum"dan da düzenlenir. Hazır seçenek
+  ("Çocuğum için") yerine serbest yazı seçildi: hazır cümleler kolayca
+  suçluluğa dönüşebilir; kişinin kendi cümlesi daha kişisel ve daha az
+  riskli. Yazı kutusu sadece yazı tipinde olan harflere izin verir (emoji
+  web'de dış font isteğine yol açardı).
+- Sonunda konfetili "Hazırsın!" ekranı ve +10 puan.
 
 ### Özellik 2 — Ana ekran ✅ (Aşama 1; Aşama 2'de "İstatistik" sekmesine taşındı)
 - Bugünkü sigara sayısı (+ bugünkü ilk sigara saati, son sigaradan geçen süre)
@@ -160,12 +202,29 @@ suçluluk duymasın**.
   - Bugün ↔ geçen haftanın aynı günü, **aynı saate kadar**
   - Son 7 gün ↔ önceki 7 gün (yüzde değişim; azalma varsa kart nane renkli)
   - Yeterli kayıt yoksa karşılaştırma gösterilmez (yanıltmasın diye).
-- Grafik: son 7 gün (günlük) / bugün (saatlik)
-- Harcanan para, sigaraya giden süre, tahmini kaybedilen yaşam süresi
-  (dönem: bugün / 7 gün / 30 gün)
-  - Yaşam süresi: sigara başına erkek ~17 dk, kadın ~22 dk, belirtilmemişse
-    ~20 dk (UCL 2024). **"Ortalama tahmin"** olduğu açıkça yazar.
-  - Sigaraya giden süre: sigara başına ~6 dk **varsayımı**.
+  - Haftalık karşılaştırma kartı sadece 2 haftalık kayıt varken görünür
+    (öncesinde boş bir "henüz yok" kartı kalabalık yapıyordu).
+- Grafik: sadece son 7 gün (günlük). Saatlik görünüm ve ikinci seçici
+  kaldırıldı (sayfada tek seçici kalsın; en yoğun saat ölçüm haftası
+  özetinde).
+- **Harcanan para** (dönem: bugün / 7 gün / 30 gün; sayfadaki tek seçici).
+- **"Kazandıkların"** (0.6.0; ölçüm haftası bitince açılır, öncesinde ne
+  zaman açılacağını söyleyen kapalı bir kart görünür):
+  - Başlangıç noktası = ölçüm haftasında günde ortalama sigara.
+  - **İçmediğin sigara** = ölçüm haftasından sonraki TAMAMLANMIŞ günlerde
+    (bugün sayılmaz) Σ(ortalama − o günkü sayı), **net** ve en az 0.
+  - **Cebinde kalan para** = her gün (ortalama − o günkü sayı) × **o günün**
+    sigara fiyatı (`PriceHistory.at`), net ve en az 0.
+  - **Korunan yaşam süresi** = içilmeyen sigara × ~20 dk (UCL 2024, genel
+    ortalama). **"Ortalama tahmin"** olduğu ve kaynağı açıkça yazar; (i)
+    penceresi hesabı anlatır.
+  - Neden net? Her günü ayrı "ortalamanın altındaysa ekle" diye toplamak,
+    hiç azaltmayan birinin günlük dalgalanmasını bile kazanç gibi
+    gösterirdi. Neden bugün yok? Gün bitmeden "bugün 15 sigara içmedin"
+    demek yanlış olur; böylece sayı sigaradan hemen sonra da değişmez.
+  - Bu bölümün altında "ÖLÇÜM HAFTASI ÖZETİM" ile özet tekrar açılabilir.
+- **Kaldırılanlar (0.6.0):** "Tahmini kaybedilen yaşam süresi" ve
+  "Sigaraya giden süre (~6 dk varsayımı)" kartları. Gerekçe: Bölüm 11.
 - **Paket fiyatı (tarihli):** Fiyat profilin parçası değil; kendi yeri
   İstatistik → "Paket fiyatı" kartı (ve Ayarlar'da kısayol).
   - Her fiyat "ne zamandan beri geçerli" bilgisiyle saklanır. **Her sigara
@@ -184,14 +243,29 @@ suçluluk duymasın**.
 
 ### Özellik 2b — Oyunlaştırma ✅ Aşama 2
 Bölüm 3'teki her şey: "Bugün" sekmesi (maskot, "CANIM SİGARA İSTİYOR",
-günlük görevler, ruh hali check-in'i, bugünkü sigaralar ve nedenleri),
+günlük görevler, bugünkü sigaralar ve nedenleri),
 erteleme ekranı, nefes egzersizi, kutlama ekranı, "Profil" sekmesi (seri,
-en uzun seri, toplam XP, ertelenen istekler).
+en uzun seri, toplam puan, ertelenen istekler).
+
+### Özellik 2c — Ölçüm haftası özeti ✅ (0.6.0)
+- Ölçüm haftası (ilk 7 gün) bitince "Bugün" sekmesinde maskot "Ölçüm haftan
+  bitti!" der ve **SONUÇLARIMI GÖR** butonu çıkar (açılır pencere değil).
+- Özet ekranı (konfeti + fanfar): günde ortalama (kullanıcının onboarding
+  tahmini yanında, yorum yok), günün ilk sigarasının ortalama saati
+  (onboarding'deki Fagerström cevabı yanında; gece 04:00'ten önceki
+  sigaralar önceki gecenin sayılır), en yoğun saat, en sık işaretlenen
+  neden. "Doğru ya da yanlış yok; bu senin başlangıç noktan."
+- "Neler açıldı?": erteleme görevi ve "Kazandıkların" (kademeli açılım).
+- Bir kez gösterilir (`measurement_summary_seen`); takip sıfırlanınca (demo
+  verisi üretme, kayıtları sıfırlama) yeni ölçüm haftası için yeniden çıkar.
+  Ölçüm haftasında hiç kayıt yoksa gösterilmez.
+- Kod: `lib/logic/measurement.dart` (saf hesaplar),
+  `lib/screens/measurement_summary_screen.dart`.
 
 ### Özellik 3 — Süreç aşamaları ⏳ Aşama 3
 Ölçüm → Farkındalık → Azaltma → Bırakma günü → Sürdürme
 - **Ölçüm (1 hafta):** sadece veri toplanır, **hiç mesaj yok**. (Aşama 2'de
-  ölçüm haftası sayacı ve görev kısıtı eklendi.)
+  ölçüm haftası sayacı ve görev kısıtı; 0.6.0'da hafta sonu özeti eklendi.)
 - **Farkındalık:** kullanıcıya kendi örüntüsü gösterilir (en yoğun saatler,
   işaretlenen nedenlerin dağılımı, sabah ilk sigara saati).
 - **Azaltma:** kademeli günlük hedefler (ölçüm haftası ortalamasından).
@@ -221,9 +295,9 @@ asla "serini kaybedeceksin!").
 ### Özellik 5 — Para kumbarası ⏳ Aşama 5
 Kullanıcı bir hedef ödül belirler (ör. "kulaklık, 2.000 ₺"); ölçüm haftası
 ortalamasına göre **içilmeyen** sigaraların parası kumbarada birikir ve
-hedefe ilerleme gösterilir (kutlama ekranıyla). Biriken para her gün
-**o günün fiyatıyla** hesaplanmalı (`PriceHistory.at`), yoksa zam gelince
-geçmişte biriken para değişir.
+hedefe ilerleme gösterilir (kutlama ekranıyla). Hesap 0.6.0'da hazır:
+`computeGains` (`lib/logic/measurement.dart`) parayı her gün **o günün
+fiyatıyla** ve net hesaplıyor; kumbara bunun üstüne kurulmalı.
 
 ### Özellik 6 — Karakter ⏳ Aşama 6 (maskot Aşama 2'de geldi)
 Maskot **"Nefes"** Aşama 2'de görsel olarak eklendi. Bu aşamada: ödül
@@ -262,7 +336,8 @@ lib/
 │   ├── sound_player_native.dart  Telefonda: audioplayers
 │   └── sound_player_web.dart  Web'de: tarayıcının Web Audio motoru
 ├── logic/                     Saf (test edilebilir) hesaplar
-│   ├── stats.dart             Sayılar, para, süre, yaşam tahmini
+│   ├── stats.dart             Sayılar, para, yaşam tahmini sabiti
+│   ├── measurement.dart       Ölçüm haftası özeti + "Kazandıkların"
 │   ├── quests.dart            Günlük görevler, ölçüm haftası
 │   ├── rewards.dart           XP ödülleri, seri (dinlenme günü dahil)
 │   └── mascot_messages.dart   Maskotun ana ekran cümlesi
@@ -270,12 +345,13 @@ lib/
 ├── screens/
 │   ├── onboarding_screen.dart Tek soru = tek ekran
 │   ├── main_screen.dart       Alt menü + 3 sekme
-│   ├── today_tab.dart         Bugün: maskot, görevler, erteleme, check-in
+│   ├── today_tab.dart         Bugün: maskot, görevler, erteleme
 │   ├── stats_tab.dart         İstatistik: sayılar, grafik, maliyet
 │   ├── profile_tab.dart       Profil: seri, XP, başarılar
 │   ├── delay_screen.dart      10 dk erteleme
 │   ├── breathing_screen.dart  1 dk nefes egzersizi
 │   ├── celebration_screen.dart Konfetili kutlama
+│   ├── measurement_summary_screen.dart "Ölçüm haftan bitti!" özeti
 │   └── settings_screen.dart   Demo, gizlilik, kaynaklar
 └── widgets/
     ├── chunky.dart            Tok buton, kart, ilerleme çubuğu, sayaç
@@ -283,6 +359,7 @@ lib/
     ├── confetti.dart          Konfeti animasyonu
     ├── pickers.dart           Ruh hali ve "neden?" pencereleri
     ├── price_sheet.dart       "Paket fiyatı" penceresi (fiyatın tek yeri)
+    ├── reason_note.dart       "Kendine bir not" penceresi + kartı
     ├── onboarding_inputs.dart Seçenek kutuları, sayı seçici, ölçek
     ├── bar_chart.dart, stat_tile.dart, privacy_banner.dart
 assets/fonts/                  Nunito (SIL OFL), uygulamaya gömülü
@@ -306,16 +383,23 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 - **Demo kılıf:** Her gün için tohumdan (seed) üretilen sabit bir plan:
   günde 10–25 sigara (profildeki günlük sayıya yakın), uyanınca ilk sigara
   (Fagerström cevabına göre), kahve/çay ve yemek sonrası yoğunlaşma, hafta
-  sonu geç uyanma ve akşam artışı, en az 20 dk ara. "Demo verisi üret"
+  sonu geç uyanma ve akşam artışı, en az 20 dk ara. Ölçüm haftasından
+  sonra demo kullanıcısı yavaşça azaltır (ilk gün %5, her gün +%2, en fazla
+  %30; `demoReduction`) ki "Kazandıkların" sunumda dolu görünsün; bu sahte
+  bir demodur, gerçek kullanıcı hakkında iddia değildir. "Demo verisi üret"
   ayrıca geçmiş günler için ruh hali, nedenler, nefes, erteleme ve XP üretir
   (bugün boş kalır; 10. gün bilerek boş: dinlenme gününü gösterir).
 - **Kayıt:** `shared_preferences` (Android/iOS yerel dosya, web'de
   localStorage). Anahtarlar: `profile`, `onboarding_done`, `events`,
   `activity`, `tracking_started_at`, `demo_last_sync`, `demo_seed`,
-  `sound_on`, `haptics_on`, `prices`, `price_confirmed_at`.
+  `sound_on`, `haptics_on`, `prices`, `price_confirmed_at`,
+  `measurement_summary_seen`.
   - Taşıma: 0.3.0 ve öncesinde fiyat profilin içindeydi (`packPrice`,
     `cigarettesPerPack`). Açılışta bir kez, takip başlangıcından geçerli tek
     bir fiyata taşınır ve profilden silinir.
+  - 0.6.0: Profil açılışta yeniden kaydedilir; artık sorulmayan eski
+    cevaplar (yaş, cinsiyet, kaç yıldır, hedef, bırakma isteği, motivasyon,
+    aktiviteler) böylece kayıttan silinir.
 - **Paketler:** `shared_preferences`, `flutter_localizations` (SDK),
   `audioplayers` (telefonda ses), `web` (Dart ekibinin resmi paketi; web'de
   ses). Grafik, konfeti ve maskot kendi yazdığımız bileşenler.
@@ -349,34 +433,40 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 ## 6. Veri modeli
 
 - `SmokingEvent { time, source: demo | device, trigger? }`
-- `UserProfile` (hepsi isteğe bağlı): `cigarettesPerDay`, `yearsSmoking`,
-  `firstCigarette` (4 seçenek), `triggers`, `goal`, `quitDesire` (1–10), `ageRange`, `gender`,
-  `motivators`, `activities`.
+- `UserProfile` (hepsi isteğe bağlı): `cigarettesPerDay`, `firstCigarette`
+  (4 seçenek), `triggers`, `reasonNote` (kendine not, ≤140 harf).
 - `ActivityLog { moods[], delays[], breaths[], xp[], activeDelayStart? }`
-  - `MoodEntry { time, mood }` (Harika / İyi / İdare eder / Zor / Çok zor)
+  - `MoodEntry { time, mood }` (Çok zor / Zor / İdare eder / İyi / Harika;
+    ekranda bu sırayla soldan sağa)
   - `DelayAttempt { start, end, outcome: success | gaveIn }`
   - `XpEntry { time, amount, reason }` — XP'nin "defteri"; toplam ve seri
     buradan hesaplanır.
 - `PriceHistory { entries: PackPrice { since, price, perPack (vars. 20) } }`
   — `at(zaman)` o andaki geçerli fiyatı verir.
 - `tracking_started_at`: ölçüm haftasının başlangıcı (onboarding bitince).
+- `measurement_summary_seen`: "Ölçüm haftan bitti!" özeti görüldü mü.
 
 ## 7. Ekranlar (Aşama 2 itibarıyla)
 
-- **Onboarding:** Karşılama ("Merhaba! Ben Nefes.") → 11 tek-soruluk ekran
+- **Onboarding:** Karşılama ("Merhaba! Ben Nefes.") → 4 tek-soruluk ekran
   → konfetili "Hazırsın!". Sağ üstte "ATLA" (o ana kadarki cevaplar
   kaydedilir). Profil/Ayarlar'dan düzenleme modunda tekrar açılır;
   düzenleme modunda paket fiyatı sorusu YOKTUR (fiyatın kendi yeri var).
-- **Bugün:** ölçüm rozeti + seri + XP; demo uyarısı (+1 sigara); maskot
-  cümlesi; "CANIM SİGARA İSTİYOR"; günlük görevler; ruh hali check-in'i;
-  bugünkü sigaralar ve "Neden?" etiketleri.
-- **İstatistik:** bugün kartı, haftalık karşılaştırma, grafik, paket fiyatı
-  kartı (DEĞİŞTİR → fiyat penceresi, fiyat geçmişi), maliyet kartları.
-- **Profil:** maskot, seri, en uzun seri, toplam XP, ertelenen istekler,
+- **Bugün:** ölçüm rozeti + seri; demo uyarısı (+1 sigara); maskot
+  cümlesi (+ hafta bitince "SONUÇLARIMI GÖR"); "CANIM SİGARA İSTİYOR";
+  günlük görevler; bugünkü sigaralar ve "Neden?" etiketleri.
+- **İstatistik:** bugün kartı, haftalık karşılaştırma (2 haftalık kayıt
+  varsa), son 7 gün grafiği, "Kazandıkların" (ölçüm haftasından sonra),
+  "Para": paket fiyatı kartı (DEĞİŞTİR → fiyat penceresi, fiyat geçmişi),
+  dönem seçici, harcanan para.
+- **Profil:** maskot, seri, en uzun seri, toplam puan, ertelenen istekler,
   "Seri nasıl işler?", bilgilerimi düzenle, ayarlar.
-- **Erteleme / Nefes / Kutlama:** tam ekran akışlar.
-- **Ayarlar:** kılıf durumu, demo verisi üret/simüle et/sıfırla, bilgilerim,
-  gizlilik + tüm verilerimi sil, kaynaklar, hakkında.
+- **Erteleme / Nefes / Kutlama / Ölçüm haftası özeti:** tam ekran akışlar.
+  Erteleme ekranında kendine not (varsa sayacın altında, yoksa en altta
+  öneri).
+- **Ayarlar:** kılıf durumu, demo verisi üret/simüle et/sıfırla, bilgilerim
+  (düzenle, kendime notum, paket fiyatı), gizlilik + tüm verilerimi sil,
+  kaynaklar, hakkında.
 
 ## 8. Görsel dil
 
@@ -412,10 +502,11 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 
 | Bilgi | Kaynak | Kullanıldığı yer |
 |---|---|---|
-| Sigara başına yaşam süresi: erkek ~17 dk, kadın ~22 dk, ort. ~20 dk | Jackson SE, Jarvis MJ, West R. "The price of a cigarette: 20 minutes of life?" *Addiction*, 2024 (UCL). doi:10.1111/add.16757 | İstatistik |
+| Sigara başına yaşam süresi: erkek ~17 dk, kadın ~22 dk, ort. ~20 dk | Jackson SE, Jarvis MJ, West R. "The price of a cigarette: 20 minutes of life?" *Addiction*, 2024 (UCL). doi:10.1111/add.16757 | İstatistik → "Kazandıkların": içilmeyen sigara × 20 dk (genel ortalama; cinsiyet sorulmuyor) |
 | Uyanınca ilk sigara süresi (bağımlılık göstergesi) | Heatherton TF ve ark. "The Fagerström Test for Nicotine Dependence", *Br J Addict*, 1991 | Onboarding, demo |
 | Perhiz ihlali etkisi (seri tasarımının gerekçesi) | Marlatt GA, Gordon JR. *Relapse Prevention*, Guilford Press, 1985 | Tasarım kararı (ekranda sayı yok) |
-| Sigara başına ~6 dk içme süresi | **Varsayım** (kaynaklı değil) | İstatistik |
+| Korku/tehdit mesajları ancak kişi "değiştirebilirim" diye hissederse işe yarar; yoksa kaçınma/savunma | Witte K. "Putting the fear back into fear appeals: The extended parallel process model." *Communication Monographs*, 1992; Peters GJY, Ruiter RAC, Kok G. "Threatening communication: a critical re-analysis and a revised meta-analytic test of fear appeal theory." *Health Psychology Review*, 2013 | Tasarım kararı: "kaybedilen yaşam" kartı kaldırıldı (ekranda sayı yok) |
+| İnsanlar kötü hissettiren ilerleme bilgisine bakmaktan kaçınabilir ("devekuşu sorunu") | Webb TL, Chang BPI, Benn Y. "'The Ostrich Problem': Motivated avoidance or rejection of information about goal progress." *Social and Personality Psychology Compass*, 2013 | Tasarım kararı: kayıp yerine kazanım çerçevesi (ekranda sayı yok) |
 | İyileşme takvimi (aşağıda) | WHO — "Tobacco: Health benefits of smoking cessation" (who.int) | Aşama 3 (Sürdürme), Aşama 4 (mesajlar) |
 | ALO 171 Sigara Bırakma Danışma Hattı | T.C. Sağlık Bakanlığı | Aşama 3 (Bırakma günü) |
 | Sigara bırakma poliklinikleri (MHRS randevu) | T.C. Sağlık Bakanlığı | Aşama 3 (Bırakma günü) |
@@ -442,6 +533,7 @@ birebir doğrulayın):
 |---|---|---|
 | 1 | Temel: proje, dokümanlar, CI/Pages, `DeviceService` + demo kılıf, onboarding + yerel kayıt, ana ekran (Özellik 1–2) | ✅ Tamamlandı (10.10.2026) |
 | 2 | Duolingo tarzı tasarım + oyunlaştırma: görevler, XP, seri, erteleme, nefes, kutlama, maskot, sekmeler (Özellik 2b) | ✅ Tamamlandı (10.10.2026) |
+| 2+ | Sadeleştirme: 4 soruluk onboarding, ölçüm haftası özeti, "Kazandıkların", kendine not, tekrarların temizlenmesi (Özellik 1, 2, 2c) | ✅ Tamamlandı (10.10.2026, 0.6.0) |
 | 3 | Süreç aşamaları (Özellik 3) | ⏳ Sıradaki |
 | 4 | Mesaj motoru + bildirimler (Özellik 4) | ⏳ Planlandı |
 | 5 | Para kumbarası (Özellik 5) | ⏳ Planlandı |
@@ -468,7 +560,7 @@ birebir doğrulayın):
 - [x] Konfeti + kutlama ekranı (sayarak artan XP, seri kutucuğu, titreşim)
 - [x] Günlük görevler (ölçüm haftasına göre değişen), XP defteri
 - [x] Affedici seri (dinlenme günü), en uzun seri
-- [x] Erteleme (10 dk), nefes egzersizi (1 dk), ruh hali check-in'i,
+- [x] Erteleme (10 dk), nefes egzersizi (1 dk), ruh hali seçimi,
       sigara nedenini işaretleme
 - [x] Alt menü: Bugün / İstatistik / Profil
 - [x] Onboarding: tek soru = tek ekran, maskot soruyor, sonunda konfeti
@@ -483,11 +575,30 @@ birebir doğrulayın):
       girmiştim", 90 günde bir "hâlâ aynı mı?", onboarding'de sadece fiyat
       (paket varsayılan 20), eski sürümden otomatik taşıma
 
+### Sadeleştirme (0.6.0) ✅
+- [x] Onboarding 11 → 4 soru; "Neden soruyoruz?" metinleri gerçekte
+      yapılanla eşleşti; kullanılmayan eski cevaplar kayıttan silinir
+- [x] Tetikleyiciler "Neden?" penceresinde en başta
+- [x] Kendine not (erteleme ekranı + Ayarlar), emoji süzgeci
+- [x] "Bugün": ikinci ruh hali kartı, görev ilerleme çubukları ve üst
+      çubuktaki XP kaldırıldı; "check-in" → "Kendini dinle", XP → puan
+- [x] Ruh hali sırası soldan sağa olumsuzdan olumluya (Harika en sağda)
+- [x] İstatistik: tek seçici; saatlik grafik, "kaybedilen yaşam" ve
+      "sigaraya giden süre" kaldırıldı; haftalık kart 2 haftalık kayıtla
+- [x] Ölçüm haftası özeti + "Kazandıkların" (net, o günün fiyatıyla,
+      bugün hariç); kademeli açılım
+- [x] Demo kullanıcısı ölçüm haftasından sonra yavaşça azaltır
+- [x] Testler (ölçüm/kazanç hesapları, demo azaltma, yeni akışlar);
+      web'de dış istek yok (Playwright ile kontrol edildi)
+
 ### Aşama 3 — Süreç aşamaları (sıradaki)
 - [ ] Aşama modeli ve kaydı (hangi aşamada, ne zaman başladı)
-- [ ] Ölçüm haftası bitişi: "Ölçüm haftan bitti!" kutlaması + özet
+- [x] Ölçüm haftası bitişi: "Ölçüm haftan bitti!" kutlaması + özet (0.6.0)
+- [ ] Ölçüm haftası bitince **hedef** (azaltmak/bırakmak) ve **bırakma
+      isteği** (1–10) sorusu: plan kurulurken, cevaplar planı değiştirir
 - [ ] Farkındalık ekranı: en yoğun saatler, işaretlenen nedenlerin
-      dağılımı, ilk sigara saati ortalaması (sadece kullanıcının verisi)
+      dağılımı, ilk sigara saati ortalaması (sadece kullanıcının verisi;
+      özet hesapları `measurement.dart`'ta hazır)
 - [ ] Azaltma: haftalık kademeli hedef (ölçüm ortalamasından), hedef kartı;
       hedefin altında kalınan gün için görev/rozet
 - [ ] Bırakma günü: tarih seçimi, ALO 171 ve poliklinik (MHRS) bilgisi
@@ -499,6 +610,7 @@ birebir doğrulayın):
 
 ### Aşama 4 — Mesaj motoru
 - [ ] Mesaj şablonları (3 tür × ton seçenekleri), profil/veri koşulları
+- [ ] "Sevdiğin aktiviteler" sorusu (mesajlarda kullanılacağı için burada)
 - [ ] Kurallar: günde ≤3, sigaradan hemen sonra suçlama yok, aynı tür üst
       üste yok, hedef aşılınca destek, ölçüm haftasında mesaj yok
 - [ ] Yerel bildirimler (mobilde; web'de uygulama içi kart); seri
@@ -507,7 +619,8 @@ birebir doğrulayın):
 - [ ] Kuralların birim testleri
 
 ### Aşama 5 — Para kumbarası
-- [ ] Hedef ödül (ad + tutar), biriken = (ölçüm ort. − içilen) × sigara fiyatı
+- [ ] Hedef ödül (ad + tutar), biriken = `computeGains(...).money` (net,
+      her gün o günün fiyatıyla; 0.6.0'da hazır)
 - [ ] İlerleme çubuğu, hedefe ulaşınca kutlama
 
 ### Aşama 6 — Karakter
@@ -533,9 +646,35 @@ birebir doğrulayın):
   ödediği fiyatı yazması daha doğru ve 3 saniye sürüyor. Bunun yerine
   tarihli fiyat geçmişi + 90 günde bir nazik "hâlâ aynı mı?" sorusu var.
 
-- **Yaş sınırı ve etik:** Yaş aralıkları 18+ ile başlıyor. Pilotta reşit
-  olmayan katılımcı olacaksa etik kurul/veli izni gerekir — ekip ve danışman
-  öğretmen karar vermeli.
+- **Karar — "kaybedilen yaşam süresi" kartı kaldırıldı (0.6.0):** Her
+  sigarada büyüyen, hiç iyiye gitmeyen tek sayıydı (günde 15 içen biri
+  "30 gün"de ~5–6 gün görüyordu). Oyunlaştırmanın "ceza yok" ilkesiyle
+  çelişiyordu; korku mesajları kişi "değiştirebilirim" hissetmezse kaçınma
+  yaratabilir (Witte 1992; Peters ve ark. 2013) ve insanlar kötü
+  hissettiren bilgiye bakmayı bırakabilir (Webb ve ark. 2013). Stres de
+  uygulamanın kendi tetikleyici listesinde. Aynı kaynak (UCL 2024) artık
+  "içmediğin sigaralarla korunan süre" olarak, ölçüm haftasından sonra
+  gösteriliyor. Kaynaksız "sigaraya giden süre (~6 dk)" varsayımı da
+  kaldırıldı (önceki açık soru böylece kapandı).
+- **Karar — kazanç NET hesaplanır:** Gün gün "ortalamanın altındaysa ekle"
+  toplamı, hiç azaltmayan birinin dalgalanmasını bile kazanç gösterirdi.
+  Net hesap daha dürüst; toplam eksiye inmez, bugün sayılmaz (sayı gün
+  içinde, sigaradan hemen sonra düşmez). Bir ağır gün sonrası sayı
+  azalabilir; bu bilgi verir, suçlamaz (renk nötr, mesaj yok).
+- **Karar — kullanılmayan sorular kaldırıldı (0.6.0):** Bkz. Özellik 1.
+  **Pilot için demografi** (yaş aralığı, cinsiyet, kaç yıldır içtiği)
+  gerekiyorsa uygulamada "kişiselleştirme" gibi sorulmamalı: ya pilot onam
+  formunda ya da Aşama 7'de CSV ile birlikte, açıkça "araştırma için,
+  uygulamayı değiştirmez" diye etiketlenmiş ayrı bir bölümde sorulmalı.
+  Ekip ve danışman öğretmen karar vermeli.
+- **Açık soru — cinsiyete göre yaşam süresi:** Cinsiyet artık sorulmadığı
+  için herkese genel ortalama (20 dk) kullanılıyor (UCL: erkek ~17, kadın
+  ~22). Bu bir ortalama tahmin olduğu için yeterli görüldü.
+- **Yaş sınırı ve etik:** Uygulama 0.6.0'dan beri yaş sormuyor (önceki yaş
+  aralıkları 18+ ile başlıyordu). Uygulama yetişkin sigara içiciler için;
+  pilotta reşit olmayan katılımcı olacaksa etik kurul/veli izni gerekir —
+  ekip ve danışman öğretmen karar vermeli (yaş kontrolü pilot onam
+  formunda yapılabilir).
 - **Maskotun adı ve görünüşü:** Şimdilik "Nefes" (`lib/widgets/mascot.dart`
   → `mascotName`). Ekip isterse değiştirebilir. Duolingo'nun adı, logosu
   veya baykuşu kullanılmaz; sadece tarzından ilham alınır.
@@ -549,8 +688,6 @@ birebir doğrulayın):
   da açık; bu, başlangıç ölçümünü biraz etkileyebilir. Kullanıcının kendi
   istediği yardımı engellemek etik olmadığı için bilerek açık bırakıldı.
   Pilot raporunda belirtilmeli.
-- **Sigara içme süresi varsayımı (6 dk):** Kaynaklı bir değer bulunursa
-  güncellenmeli ya da kullanıcı ayarlayabilmeli.
 - **iPhone web depolama:** Safari, uzun süre ziyaret edilmeyen sitelerin
   verilerini silebilir. "Ana Ekrana Ekle" ile açmak daha güvenli; kalıcı
   pilot verisi için mobil uygulama gerekir.
@@ -565,4 +702,5 @@ birebir doğrulayın):
 | 0.2.0 | Nefes ile oyunlaştırma | Duolingo tarzı tasarım (Nunito, tok butonlar, canlı renkler), maskot "Nefes", günlük görevler, XP, affedici seri, erteleme, nefes egzersizi, ruh hali, sigara nedenleri, konfetili kutlamalar, Bugün/İstatistik/Profil sekmeleri |
 | 0.3.0 | Ses ve titreşim | Sıfırdan sentezlenmiş 6 ses efekti (ding-ding, fanfar, sakin çan, nefes al/ver, zil), kutlama/nefes/erteleme titreşimleri, Ayarlar'da aç/kapat; telefonda sessiz moda uyar ve müziği durdurmaz; web'de iPhone uyumlu Web Audio |
 | 0.4.0 | Tarihli paket fiyatı | Fiyatın kendi yeri (İstatistik'te kart + pencere, Ayarlar'da kısayol), her sigara kendi tarihindeki fiyatla hesaplanır, fiyat geçmişi, "yanlış girmiştim" düzeltmesi, 90 günde bir "hâlâ aynı mı?", onboarding'de sadece fiyat (paket varsayılan 20), eski sürümden otomatik taşıma; fiyat internetten çekilmez |
+| 0.6.0 | Sade ve kişisel | Onboarding 11 → 4 soru (her cevap bir şeyi değiştirir; kullanılmayan eski cevaplar silinir), tetikleyiciler "Neden?" penceresinde başta, erteleme ekranında "kendine not", ölçüm haftası bitince özet ekranı ve kademeli açılım, "kaybedilen yaşam" yerine "Kazandıkların" (içmediğin sigara, cebinde kalan para, korunan yaşam süresi; net hesap), tekrarlar temizlendi (ikinci ruh hali kartı, görev çubukları, iki seçici, üst çubukta XP), ruh hali soldan sağa olumsuzdan olumluya, "XP" → "puan", "check-in" → "Kendini dinle" |
 | 0.5.0 | Nane teması | Duolingo'nun birebir renkleri yerine kendi paletimiz: nane (turkuaz) ana renk, mavi ikinci renk, yaprak yeşili seri; nane renkli, yeşil filizli maskot; seri ikonu alev yerine yaprak; alt menüde yumuşak kapsül; hafif nane tonlu zemin, lacivert koyu tema; buton kontrastı ~3,2'den ~3,5'e çıktı |

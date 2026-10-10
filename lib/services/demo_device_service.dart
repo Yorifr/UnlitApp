@@ -95,9 +95,17 @@ class DemoDeviceService implements DeviceService {
 
   /// (from, to] aralığına düşen planlanmış sigara saatleri.
   /// Aralığın kapsadığı her gün için o günün planını çıkarıp süzer.
-  List<DateTime> plannedBetween(DateTime from, DateTime to) {
+  ///
+  /// [trackingStart] verilmezse kayıttaki takip başlangıcı kullanılır (demo
+  /// kullanıcısı ölçüm haftasından sonra yavaşça azaltır).
+  List<DateTime> plannedBetween(
+    DateTime from,
+    DateTime to, {
+    DateTime? trackingStart,
+  }) {
     final seed = _seed();
     final profile = storage.loadProfile(); // Demo, profile benzesin.
+    final start = trackingStart ?? storage.trackingStartedAt;
     final result = <DateTime>[];
 
     var day = DateTime(from.year, from.month, from.day);
@@ -111,6 +119,7 @@ class DemoDeviceService implements DeviceService {
         random,
         usualPerDay: profile.cigarettesPerDay,
         firstCigarette: profile.firstCigarette,
+        reduction: demoReduction(day, start),
       );
       for (final time in plan) {
         if (time.isAfter(from) && !time.isAfter(to)) result.add(time);
@@ -140,7 +149,9 @@ class DemoDeviceService implements DeviceService {
     final now = _clock();
     final from = DateTime(now.year, now.month, now.day - (days - 1));
 
-    final times = plannedBetween(from, now);
+    // Üretilen geçmişin ilk günü, takibin (ölçüm haftasının) başlangıcı olur
+    // (bkz. loadDemoHistory).
+    final times = plannedBetween(from, now, trackingStart: from);
     _lastSync = now;
     await storage.setDemoLastSync(now);
     return [

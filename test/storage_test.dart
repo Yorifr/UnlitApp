@@ -13,19 +13,34 @@ void main() {
     final storage = await StorageService.create();
     final profile = UserProfile(
       cigarettesPerDay: 18,
-      yearsSmoking: 0,
       firstCigarette: FirstCigaretteTime.within30Min,
       triggers: {SmokingTrigger.coffee, SmokingTrigger.stress},
-      goal: QuitGoal.reduce,
-      quitDesire: 7,
-      gender: Gender.unspecified,
-      motivators: {Motivator.child},
-      activities: {Activity.running, Activity.football},
+      reasonNote: 'Merdivenleri rahat çıkmak istiyorum.',
     );
     await storage.saveProfile(profile);
 
     final loaded = storage.loadProfile();
     expect(loaded.toJson(), profile.toJson());
+  });
+
+  test('eski sürümün artık sorulmayan cevapları okunmaz', () async {
+    SharedPreferences.setMockInitialValues({
+      'flutter.profile':
+          '{"cigarettesPerDay": 12, "gender": "male", "ageRange": "from18to24",'
+          ' "yearsSmoking": 4, "motivators": ["child"], "reasonNote": "  "}',
+    });
+    final storage = await StorageService.create();
+    final loaded = storage.loadProfile();
+    expect(loaded.cigarettesPerDay, 12);
+    // Yeniden kaydedilince eski alanlar kayıttan da silinir.
+    expect(loaded.toJson().keys, {
+      'cigarettesPerDay',
+      'firstCigarette',
+      'triggers',
+      'reasonNote',
+    });
+    // Sadece boşluktan oluşan not, not sayılmaz.
+    expect(loaded.reasonNote, isNull);
   });
 
   test('fiyat geçmişi kaydedilip sıralı geri okunur', () async {

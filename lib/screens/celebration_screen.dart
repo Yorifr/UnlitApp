@@ -10,7 +10,7 @@ import '../widgets/mascot.dart';
 
 /// Bir şey başarıldığında açılan tam ekran kutlama.
 ///
-/// Konfeti yağar, maskot sevinir, XP sayarak artar ve seri uzadıysa seri
+/// Konfeti yağar, maskot sevinir, puan (XP) sayarak artar ve seri uzadıysa seri
 /// yaprağı gösterilir. Bu, Duolingo'daki "ders bitti!" anının karşılığı: küçük ama
 /// gerçek bir "başardım" hissi.
 ///
@@ -159,7 +159,7 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
                                 if (reward.totalXp > 0)
                                   Expanded(
                                     child: _RewardTile(
-                                      label: 'KAZANILAN XP',
+                                      label: 'KAZANILAN PUAN',
                                       color: c.gold,
                                       icon: Icons.bolt,
                                       child: TweenAnimationBuilder<int>(
@@ -195,7 +195,7 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 4),
                                 child: Text(
-                                  '${gain.reason.label}  +${gain.amount} XP',
+                                  '${gain.reason.label}  +${gain.amount} puan',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: c.textMuted,
                                   ),

@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:unlit/logic/stats.dart';
 import 'package:unlit/models/pack_price.dart';
 import 'package:unlit/models/smoking_event.dart';
-import 'package:unlit/models/user_profile.dart';
 
 /// Kısa yoldan test olayı oluşturur.
 SmokingEvent at(DateTime time) =>
@@ -150,14 +149,12 @@ void main() {
     });
   });
 
-  test('yaşam süresi: erkek 17, kadın 22, belirtilmemiş 20 dk', () {
-    expect(lifeMinutesFor(10, Gender.male), 170);
-    expect(lifeMinutesFor(10, Gender.female), 220);
-    expect(lifeMinutesFor(10, Gender.unspecified), 200);
-    expect(lifeMinutesFor(10, null), 200);
-  });
-
-  test('sigaraya giden süre varsayımı', () {
-    expect(smokingMinutesFor(10), 10 * minutesPerCigarette);
-  });
+  test(
+    'korunan yaşam süresi: içilmeyen sigara başına genel ortalama 20 dk',
+    () {
+      expect(lifeMinutesPerCigarette, 20);
+      expect(lifeMinutesFor(10), 200);
+      expect(lifeMinutesFor(0), 0);
+    },
+  );
 }
