@@ -55,6 +55,21 @@ void main() {
       expect(plan.first.isBefore(DateTime(2026, 10, 7, 7, 36)), isTrue);
     });
 
+    test('ölçüm haftasından sonra demo kullanıcısı yavaşça azaltır', () {
+      final start = DateTime(2026, 10, 1, 9); // ölçüm 1–7 Ekim
+      expect(demoReduction(DateTime(2026, 10, 7), start), 0);
+      expect(demoReduction(DateTime(2026, 10, 8), start), closeTo(0.05, 1e-9));
+      expect(demoReduction(DateTime(2026, 10, 10), start), closeTo(0.09, 1e-9));
+      expect(demoReduction(DateTime(2027, 1, 1), start), 0.30); // üst sınır
+      expect(demoReduction(DateTime(2026, 10, 20), null), 0);
+
+      // %30 azaltma gerçekten daha az sigara demek.
+      final day = DateTime(2026, 10, 7);
+      final normal = planDemoDay(day, Random(3)).length;
+      final reduced = planDemoDay(day, Random(3), reduction: 0.3).length;
+      expect(reduced, (normal * 0.7).round());
+    });
+
     test('profildeki günlük sayıya yakın üretir', () {
       final counts = [
         for (var i = 0; i < 30; i++)
@@ -86,7 +101,8 @@ void main() {
       expect(events.every((e) => e.source == EventSource.demo), isTrue);
       expect(events.every((e) => !e.time.isAfter(now)), isTrue);
       expect(events.first.time.isAfter(DateTime(2026, 9, 26)), isTrue);
-      // 14 tam gün × 10–25 + bugünün bir kısmı
+      // 14 tam gün × 10–25 + bugünün bir kısmı (ölçüm haftasından sonra
+      // demo kullanıcısı biraz azaltsa da günde 10'un altına inmez).
       expect(events.length, inInclusiveRange(14 * 10, 15 * 25));
       demo.dispose();
     });

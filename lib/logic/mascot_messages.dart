@@ -25,11 +25,19 @@ MascotLine mascotGreeting({
   required bool canCompareWeeks,
   required bool hardDay,
   required bool delayActive,
+  bool measurementSummaryPending = false,
 }) {
   if (delayActive) {
     return const MascotLine(
       'Ertelemen sürüyor. Yanındayım, birlikte bekliyoruz!',
       MascotMood.calm,
+    );
+  }
+  if (measurementSummaryPending) {
+    return const MascotLine(
+      'Ölçüm haftan bitti! Seni bir hafta tanıdım. Sonuçlarına birlikte '
+      'bakalım mı?',
+      MascotMood.cheer,
     );
   }
   if (questsTotal > 0 && questsDone == questsTotal) {
@@ -46,8 +54,8 @@ MascotLine mascotGreeting({
   }
   if (measurementDay != null) {
     return MascotLine(
-      'Ölçüm haftasının $measurementDay. günü! Bu hafta sadece kılıfını '
-      'yanında taşı; ben de seni tanıyayım.',
+      'Ölçüm haftasının $measurementDay. günü! Bu hafta hiçbir şeyi '
+      'değiştirmeye çalışma; kılıfını taşı, ben de seni tanıyayım.',
       MascotMood.happy,
     );
   }

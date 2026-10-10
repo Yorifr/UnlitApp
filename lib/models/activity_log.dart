@@ -1,18 +1,24 @@
 // Kullanıcının uygulamada yaptığı olumlu şeylerin kaydı:
-// ruh hali check-in'leri, ertelemeler, nefes egzersizleri ve kazanılan XP.
+// ruh hali kayıtları, ertelemeler, nefes egzersizleri ve kazanılan XP.
+// (Ekranda XP'ye "puan" diyoruz; kodda kısa olsun diye adı XP.)
 //
 // ÖNEMLİ KURAL: Burada sigara içmekle ilgili hiçbir "ceza" yok. XP sadece
 // artar, asla azalmaz.
 
 import 'package:flutter/material.dart' show IconData, Icons;
 
-/// Günlük check-in'de seçilen ruh hali.
+/// "Kendini dinle" görevinde seçilen ruh hali.
+///
+/// SIRA ÖNEMLİ: Ekranda soldan sağa bu sırayla dizilir. Ölçeklerde alışılmış
+/// olan "sola doğru olumsuz, sağa doğru olumlu" düzeni: en solda "Çok zor",
+/// en sağda "Harika". (Kayıtta adıyla saklandığı için sırayı değiştirmek eski
+/// kayıtları bozmaz.)
 enum Mood {
-  great('Harika', Icons.sentiment_very_satisfied),
-  good('İyi', Icons.sentiment_satisfied),
-  okay('İdare eder', Icons.sentiment_neutral),
+  veryHard('Çok zor', Icons.sentiment_very_dissatisfied),
   hard('Zor', Icons.sentiment_dissatisfied),
-  veryHard('Çok zor', Icons.sentiment_very_dissatisfied);
+  okay('İdare eder', Icons.sentiment_neutral),
+  good('İyi', Icons.sentiment_satisfied),
+  great('Harika', Icons.sentiment_very_satisfied);
 
   const Mood(this.label, this.icon);
   final String label;
@@ -86,7 +92,7 @@ class DelayAttempt {
 /// XP'nin neden kazanıldığı.
 enum XpReason {
   welcome('Yolculuğa başladın'),
-  questCheckIn('Görev: Günlük check-in'),
+  questCheckIn('Görev: Kendini dinle'),
   questTag('Görev: Nedenini keşfet'),
   questBreathe('Görev: Nefes molası'),
   questDelay('Görev: İsteği ertele'),

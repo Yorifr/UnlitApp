@@ -1,4 +1,4 @@
-// Ana ekrandaki tüm hesaplamalar.
+// İstatistik ekranındaki temel hesaplamalar.
 //
 // Buradaki fonksiyonlar "saf" (pure) fonksiyonlardır: aynı girdiye her zaman
 // aynı sonucu verirler, ekranla ya da kayıtla uğraşmazlar. Şu anki zamanı
@@ -7,33 +7,23 @@
 
 import '../models/pack_price.dart';
 import '../models/smoking_event.dart';
-import '../models/user_profile.dart';
 
 // ---------- Kaynaklı sabitler ----------
 
-/// Bir sigaranın ortalama yaşam süresi etkisi (dakika).
+/// İçilmeyen bir sigaranın korunan ortalama yaşam süresi (dakika).
 ///
 /// Kaynak: Jackson SE, Jarvis MJ, West R. "The price of a cigarette:
 /// 20 minutes of life?" Addiction, 2024 (University College London).
 /// doi:10.1111/add.16757
 /// Bu yazıya göre bir sigara ortalama olarak erkeklerde ~17 dk, kadınlarda
-/// ~22 dk yaşam süresine mal oluyor; genel ortalama ~20 dk. Bu kişiye özel
-/// değil, ORTALAMA bir tahmindir; ekranda da böyle yazmalıyız.
-int lifeMinutesPerCigarette(Gender? gender) {
-  return switch (gender) {
-    Gender.male => 17,
-    Gender.female => 22,
-    // Belirtilmemişse genel ortalama:
-    Gender.unspecified || null => 20,
-  };
-}
-
-/// Bir sigarayı içmenin kaç dakika sürdüğü (VARSAYIM).
+/// ~22 dk yaşam süresine mal oluyor; genel ortalama ~20 dk. Cinsiyet
+/// sormadığımız için herkes için genel ortalamayı kullanıyoruz. Bu kişiye
+/// özel değil, ORTALAMA bir tahmindir; ekranda da böyle yazmalıyız.
 ///
-/// Bu kaynaklı bir sayı değil, yaklaşık bir varsayımdır (bir sigara
-/// genelde 5–7 dakikada içilir). Ekranda "varsayım" olduğu yazıyor.
-/// İleride kullanıcının kendisinin ayarlaması sağlanabilir.
-const int minutesPerCigarette = 6;
+/// Not: Bu sayıyı sadece "KAZANILAN" tarafta (içilmeyen sigaralar) gösteriyoruz;
+/// "kaybedilen yaşam" diye sürekli büyüyen bir sayı göstermiyoruz (gerekçesi
+/// docs/SPEC.md → Bölüm 3 ve 11).
+const int lifeMinutesPerCigarette = 20;
 
 // ---------- Tarih yardımcıları ----------
 
@@ -162,7 +152,7 @@ DateTime? firstEventOfDay(List<SmokingEvent> events, DateTime day) {
   return null;
 }
 
-// ---------- Para, süre, yaşam ----------
+// ---------- Para ve yaşam ----------
 
 /// [from] (dahil) ile [to] (hariç) arasındaki sigaraların tutarı (₺).
 ///
@@ -193,9 +183,5 @@ bool priceChangedBetween(PriceHistory prices, DateTime from, DateTime to) {
           .any((p) => p.since.isAfter(from) && p.since.isBefore(to));
 }
 
-/// [count] sigaraya harcanan tahmini süre (dakika).
-int smokingMinutesFor(int count) => count * minutesPerCigarette;
-
-/// [count] sigaranın tahmini yaşam süresi etkisi (dakika).
-int lifeMinutesFor(int count, Gender? gender) =>
-    count * lifeMinutesPerCigarette(gender);
+/// İçilmeyen [count] sigaranın korunan tahmini yaşam süresi (dakika).
+int lifeMinutesFor(int count) => count * lifeMinutesPerCigarette;

@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import '../app_state.dart';
 import '../logic/quests.dart';
 import '../models/activity_log.dart';
-import '../models/user_profile.dart';
 import '../services/effects.dart';
 import '../theme.dart';
 import '../widgets/chunky.dart';
 import '../widgets/mascot.dart';
+import '../widgets/reason_note.dart';
 import 'breathing_screen.dart';
 import 'celebration_screen.dart';
 
@@ -46,7 +46,7 @@ class _DelayScreenState extends State<DelayScreen> {
   void initState() {
     super.initState();
     if (state.activeDelayStart == null) state.startDelay();
-    _tipIndex = Random().nextInt(_tips(state.profile).length);
+    _tipIndex = Random().nextInt(_tips.length);
     // Her saniye ekranı yenile (geri sayım için).
     // Ekran açıldığında süre zaten dolmuşsa zil tekrar çalmasın.
     _bellRung = _timeIsUp();
@@ -121,7 +121,8 @@ class _DelayScreenState extends State<DelayScreen> {
     final remaining = elapsed >= total ? Duration.zero : total - elapsed;
     final done = remaining == Duration.zero;
     final progress = (elapsed.inSeconds / total.inSeconds).clamp(0.0, 1.0);
-    final tips = _tips(state.profile);
+    final tips = _tips;
+    final hasNote = state.profile.reasonNote != null;
 
     final minutesText = remaining.inMinutes.toString().padLeft(2, '0');
     final secondsText = (remaining.inSeconds % 60).toString().padLeft(2, '0');
@@ -187,6 +188,11 @@ class _DelayScreenState extends State<DelayScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                // Kullanıcının kendine yazdığı not: zor anda kendi cümlesi.
+                if (hasNote) ...[
+                  ReasonNoteCard(state: state),
+                  const SizedBox(height: 12),
+                ],
                 // Bu sırada ne yapabilirim?
                 ChunkyCard(
                   color: c.blueLight,
@@ -252,6 +258,11 @@ class _DelayScreenState extends State<DelayScreen> {
                     child: const Text('Yanlışlıkla başlattım'),
                   ),
                 ),
+                // Not yoksa yazmayı öner: en altta, asıl butonları itmesin.
+                if (!hasNote) ...[
+                  const SizedBox(height: 16),
+                  ReasonNoteCard(state: state),
+                ],
               ],
             ),
           ),
@@ -262,26 +273,14 @@ class _DelayScreenState extends State<DelayScreen> {
 }
 
 /// Erteleme sırasında önerilen somut eylemler (sayısal iddia yok).
-/// Kullanıcının sevdiği aktivitelere göre biraz kişiselleşir.
-List<String> _tips(UserProfile profile) {
-  final likesMoving = profile.activities.any(
-    (a) =>
-        a == Activity.walking ||
-        a == Activity.running ||
-        a == Activity.hiking ||
-        a == Activity.cycling,
-  );
-  return [
-    'Bir bardak su iç.',
-    likesMoving
-        ? 'Kısa bir yürüyüşe çık. Hareket etmeyi seviyorsun!'
-        : 'Kalk ve birkaç dakika yürü.',
-    'Birine mesaj at ya da birini ara.',
-    'Ellerini meşgul et: bir şey karala ya da bir şeyi düzenle.',
-    'Sakız çiğne ya da bir meyve ye.',
-    'Ortamı değiştir: başka bir odaya ya da dışarı çık.',
-  ];
-}
+const _tips = [
+  'Bir bardak su iç.',
+  'Kalk ve birkaç dakika yürü.',
+  'Birine mesaj at ya da birini ara.',
+  'Ellerini meşgul et: bir şey karala ya da bir şeyi düzenle.',
+  'Sakız çiğne ya da bir meyve ye.',
+  'Ortamı değiştir: başka bir odaya ya da dışarı çık.',
+];
 
 /// Geri sayım halkası: gri iz + dolan renkli yay.
 class _RingPainter extends CustomPainter {

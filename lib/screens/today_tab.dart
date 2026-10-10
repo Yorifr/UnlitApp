@@ -17,9 +17,14 @@ import '../widgets/pickers.dart';
 import 'breathing_screen.dart';
 import 'celebration_screen.dart';
 import 'delay_screen.dart';
+import 'measurement_summary_screen.dart';
 
-/// "Bugün" sekmesi: maskot, erteleme butonu, günlük görevler, check-in ve
-/// bugünkü sigaralar. Uygulamanın kalbi burası.
+/// "Bugün" sekmesi: maskot, erteleme butonu, günlük görevler ve bugünkü
+/// sigaralar. Uygulamanın kalbi burası.
+///
+/// Sade tutuyoruz: her iş için TEK bir giriş noktası var (ör. ruh hali sadece
+/// "Kendini dinle" görevinden seçilir). Üst çubukta sadece seri var; puan
+/// kutlamalarda ve Profil'de görünür.
 class TodayTab extends StatelessWidget {
   const TodayTab({super.key, required this.state});
 
@@ -38,6 +43,13 @@ class TodayTab extends StatelessWidget {
   void _openBreathing(BuildContext context) => Navigator.of(context).push(
     MaterialPageRoute<void>(builder: (_) => BreathingScreen(state: state)),
   );
+
+  void _openMeasurementSummary(BuildContext context) => Navigator.of(context)
+      .push(
+        MaterialPageRoute<void>(
+          builder: (_) => MeasurementSummaryScreen(state: state),
+        ),
+      );
 
   Future<void> _checkIn(BuildContext context, Mood mood) async {
     final reward = await state.logMood(mood);
@@ -58,7 +70,11 @@ class TodayTab extends StatelessWidget {
   }
 
   Future<void> _tag(BuildContext context, SmokingEvent event) async {
-    final choice = await showTriggerSheet(context, event);
+    final choice = await showTriggerSheet(
+      context,
+      event,
+      preferred: state.profile.triggers,
+    );
     if (choice == null || !context.mounted) return;
     final reward = await state.tagEvent(event, choice.trigger);
     if (!context.mounted) return;
@@ -127,6 +143,7 @@ class TodayTab extends StatelessWidget {
           canCompareWeeks: hasDataSince(state.events, addDays(now, -13)),
           hardDay: state.todayMood?.isHard ?? false,
           delayActive: state.activeDelayStart != null,
+          measurementSummaryPending: state.measurementSummaryPending,
         );
         final todayEvents = _todayEvents();
 
@@ -140,27 +157,19 @@ class TodayTab extends StatelessWidget {
               const SizedBox(height: 16),
             ],
             MascotSpeech(text: greeting.text, mood: greeting.mood),
+            if (state.measurementSummaryPending) ...[
+              const SizedBox(height: 12),
+              ChunkyButton(
+                label: 'SONUÇLARIMI GÖR',
+                icon: Icons.insights,
+                onPressed: () => _openMeasurementSummary(context),
+              ),
+            ],
             const SizedBox(height: 20),
             _DelayEntry(state: state, onOpen: () => _openDelay(context)),
             const SizedBox(height: 24),
             _QuestsCard(quests: quests, onTap: (q) => _onQuestTap(context, q)),
-            if (state.todayMood == null) ...[
-              const SizedBox(height: 16),
-              ChunkyCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Bugün nasıl hissediyorsun?',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    MoodRow(onSelected: (m) => _checkIn(context, m)),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _TodayCigarettes(
               events: todayEvents,
               now: now,
@@ -178,7 +187,8 @@ class TodayTab extends StatelessWidget {
 
 // ---------- Parçalar ----------
 
-/// Üst çubuk: ölçüm haftası rozeti + seri + XP.
+/// Üst çubuk: ölçüm haftası rozeti + seri. (Puan burada yok: harcanacağı
+/// bir yer olmadığı için sürekli göz önünde durması gereksiz kalabalık.)
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.state});
   final AppState state;
@@ -227,13 +237,6 @@ class _TopBar extends StatelessWidget {
           color: streak.activeToday ? c.leaf : c.disabledText,
           value: '${streak.current}',
           tooltip: 'Seri: ${streak.current} gün',
-        ),
-        const SizedBox(width: 16),
-        StatPill(
-          icon: Icons.bolt,
-          color: c.gold,
-          value: '${state.totalXp}',
-          tooltip: 'Toplam XP',
         ),
       ],
     );
@@ -372,7 +375,7 @@ class _QuestsCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             'Hepsi tamam! Yeni görevler gece yarısı gelecek. '
-            '+$xpAllQuestsBonus XP bonus kazandın.',
+            '+$xpAllQuestsBonus puan bonus kazandın.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(color: c.mintText),
           ),
@@ -424,18 +427,12 @@ class _QuestRow extends StatelessWidget {
                       color: c.textMuted,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  ChunkyProgressBar(
-                    value: quest.ratio,
-                    height: 12,
-                    color: c.gold,
-                  ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
             Text(
-              quest.done ? 'Tamam' : '+$xpPerQuest XP',
+              quest.done ? 'Tamam' : '+$xpPerQuest puan',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: quest.done ? c.mintText : c.goldShadow,
               ),

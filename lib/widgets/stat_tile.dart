@@ -11,7 +11,7 @@ class StatTile extends StatelessWidget {
     required this.color,
     required this.title,
     required this.value,
-    required this.footnote,
+    this.footnote,
     this.onTap,
     this.onInfo,
   });
@@ -23,8 +23,8 @@ class StatTile extends StatelessWidget {
   final String title;
   final String value;
 
-  /// Değerin altındaki küçük açıklama (varsayım, kaynak vb.).
-  final String footnote;
+  /// Değerin altındaki küçük açıklama (kaynak, ne demek olduğu vb.).
+  final String? footnote;
 
   /// Karta dokununca ne olsun? (ör. eksik bilgiyi doldurmaya git)
   final VoidCallback? onTap;
@@ -65,13 +65,15 @@ class StatTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(value, style: theme.textTheme.headlineSmall),
-                const SizedBox(height: 4),
-                Text(
-                  footnote,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: c.textMuted,
+                if (footnote != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    footnote!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: c.textMuted,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

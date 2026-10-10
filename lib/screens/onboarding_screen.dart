@@ -13,27 +13,21 @@ import '../widgets/onboarding_inputs.dart';
 import '../widgets/privacy_banner.dart';
 
 /// Onboarding'in adımları. Duolingo gibi: her ekranda TEK soru.
+///
+/// Sadece 4 soru var ve HER BİRİNİN cevabı uygulamada bir şeyi değiştirir
+/// ("sorulan her soru bir söz"). Hedef, bırakma isteği gibi sorular
+/// gerçekten kullanılacakları anda (Aşama 3: ölçüm haftası bitip plan
+/// kurulurken) sorulacak. Ayrıntı: docs/SPEC.md → Özellik 1.
 enum OnboardingStep {
   welcome,
   cigarettesPerDay,
-  yearsSmoking,
   firstCigarette,
   packPrice,
   triggers,
-  goal,
-  quitDesire,
-  ageRange,
-  gender,
-  motivators,
-  activities,
   done;
 
   /// Soru sayfası mı? (Karşılama ve bitiş değil.)
   bool get isQuestion => this != welcome && this != done;
-
-  /// İsteğe bağlı profil bölümünde mi? ("Bu bölümü atla" çıkar.)
-  bool get isOptionalProfile =>
-      index >= ageRange.index && index <= activities.index;
 }
 
 /// İlk açılıştaki kısa soru akışı. Her şey isteğe bağlı ve atlanabilir.
@@ -111,15 +105,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_index > 0) _goTo(_index - 1);
   }
 
-  /// İsteğe bağlı profil bölümünü atla.
-  void _skipSection() {
-    if (widget.editMode) {
-      _finish();
-    } else {
-      _goTo(_steps.indexOf(OnboardingStep.done));
-    }
-  }
-
   /// Cevapları kaydet ve bitir. ("ATLA" da buraya gelir: o ana kadar
   /// verilen cevaplar yine kaydedilir.)
   Future<void> _finish() async {
@@ -139,16 +124,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   /// Bu soru cevaplandı mı? (Buton "DEVAM" mı "ŞİMDİLİK GEÇ" mi olsun?)
   bool _answered(OnboardingStep step) => switch (step) {
     OnboardingStep.cigarettesPerDay => _draft.cigarettesPerDay != null,
-    OnboardingStep.yearsSmoking => _draft.yearsSmoking != null,
     OnboardingStep.firstCigarette => _draft.firstCigarette != null,
     OnboardingStep.packPrice => _price != null,
     OnboardingStep.triggers => _draft.triggers.isNotEmpty,
-    OnboardingStep.goal => _draft.goal != null,
-    OnboardingStep.quitDesire => _draft.quitDesire != null,
-    OnboardingStep.ageRange => _draft.ageRange != null,
-    OnboardingStep.gender => _draft.gender != null,
-    OnboardingStep.motivators => _draft.motivators.isNotEmpty,
-    OnboardingStep.activities => _draft.activities.isNotEmpty,
     OnboardingStep.welcome || OnboardingStep.done => true,
   };
 
@@ -246,23 +224,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_step.isOptionalProfile)
-            TextButton(
-              onPressed: _skipSection,
-              child: const Text('BU BÖLÜMÜ ATLA'),
-            ),
-          ChunkyButton(
-            label: label,
-            // Cevaplanmamış soruda buton beyaz: "geçmek de serbest".
-            variant: answered || _isLast
-                ? ChunkyVariant.primary
-                : ChunkyVariant.secondary,
-            onPressed: _next,
-          ),
-        ],
+      child: ChunkyButton(
+        label: label,
+        // Cevaplanmamış soruda buton beyaz: "geçmek de serbest".
+        variant: answered || _isLast
+            ? ChunkyVariant.primary
+            : ChunkyVariant.secondary,
+        onPressed: _next,
       ),
     );
   }
@@ -275,9 +243,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         question: 'Günde ortalama kaç sigara içiyorsun?',
         note: 'Emin değilsen tahmini bir sayı yeterli.',
         why:
-            'Başlangıç noktanı bilmek, ilerlemeni doğru karşılaştırmamızı '
-            'sağlar. Kılıf birkaç gün ölçüm yapana kadar bu sayıyı referans '
-            'alırız.',
+            'Ölçüm haftasının sonunda bu tahminini, kılıfın gerçekten '
+            'saydığıyla yan yana göstereceğim. Kılıf yokken (demo modunda) '
+            'sahte veriyi de bu sayıya yakın üretirim.',
         answer: NumberStepper(
           value: _draft.cigarettesPerDay,
           min: 1,
@@ -287,29 +255,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           onChanged: (v) => setState(() => _draft.cigarettesPerDay = v),
         ),
       ),
-      OnboardingStep.yearsSmoking => _question(
-        question: 'Kaç yıldır sigara içiyorsun?',
-        why:
-            'Alışkanlığın ne kadar süredir devam ettiği, sana uygun bir tempo '
-            'önermemize yardım eder.',
-        answer: NumberStepper(
-          value: _draft.yearsSmoking,
-          min: 0,
-          max: 70,
-          startValue: 5,
-          unit: 'yıl',
-          zeroLabel: '1 yıldan az',
-          onChanged: (v) => setState(() => _draft.yearsSmoking = v),
-        ),
-      ),
       OnboardingStep.firstCigarette => _question(
         question: 'Sabah uyandıktan ne kadar sonra ilk sigaranı içiyorsun?',
         why:
             'Bu, nikotin bağımlılığını ölçmek için yaygın kullanılan '
             'Fagerström testinin sorularından biridir. Uyanınca sigaraya ne '
             'kadar çabuk ihtiyaç duyulduğu, bağımlılığın en güçlü '
-            'göstergelerinden biri kabul edilir. Azaltma planını buna göre '
-            'ayarlayacağız.',
+            'göstergelerinden biri kabul edilir. Ölçüm haftasının sonunda '
+            'cevabını, kılıfın gördüğü ilk sigara saatlerinle birlikte '
+            'göstereceğim.',
         answer: OptionList<FirstCigaretteTime>(
           options: FirstCigaretteTime.values,
           selected: _draft.firstCigarette,
@@ -322,91 +276,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         question: 'Hangi durumlarda canın daha çok sigara istiyor?',
         note: 'Birden fazla seçebilirsin.',
         why:
-            'Sigara isteği çoğu zaman belirli anlara bağlıdır. Bu anları '
-            'bilirsek sana tam o anlara uygun öneriler hazırlayabiliriz '
-            '(ör. kahveden sonra kısa bir yürüyüş).',
+            'Bir sigaranın nedenini işaretlerken burada seçtiklerin listenin '
+            'en başında çıkar; çoğu zaman tek dokunuşla işaretlersin.',
         answer: ChipMultiChoice<SmokingTrigger>(
           options: SmokingTrigger.values,
           selected: _draft.triggers,
           labelOf: (t) => t.label,
           onChanged: (v) => setState(() => _draft.triggers = v),
-        ),
-      ),
-      OnboardingStep.goal => _question(
-        question: 'Hedefin ne?',
-        why:
-            'Sana göstereceğimiz adımlar buna göre değişir. Fikrini '
-            'istediğin zaman değiştirebilirsin.',
-        answer: OptionList<QuitGoal>(
-          options: QuitGoal.values,
-          selected: _draft.goal,
-          labelOf: (g) => g.label,
-          onChanged: (v) => setState(() => _draft.goal = v),
-        ),
-      ),
-      OnboardingStep.quitDesire => _question(
-        question: 'Sigarayı bırakmayı ne kadar istiyorsun?',
-        why:
-            'Ne kadar hazır hissettiğin, sana ne hızda bir plan '
-            'önereceğimizi belirler. Doğru ya da yanlış cevap yok.',
-        answer: ScalePicker(
-          value: _draft.quitDesire,
-          lowLabel: '1 · Hiç',
-          highLabel: '10 · Çok',
-          onChanged: (v) => setState(() => _draft.quitDesire = v),
-        ),
-      ),
-      OnboardingStep.ageRange => _question(
-        question: 'Biraz da seni tanıyayım. Yaş aralığın ne?',
-        note: 'Bu bölüm tamamen isteğe bağlı.',
-        why:
-            'Önerileri ve mesajları yaşına uygun bir dille hazırlamak için. '
-            'Tam yaşını sormuyoruz.',
-        answer: ChipChoice<AgeRange>(
-          options: AgeRange.values,
-          selected: _draft.ageRange,
-          labelOf: (a) => a.label,
-          onChanged: (v) => setState(() => _draft.ageRange = v),
-        ),
-      ),
-      OnboardingStep.gender => _question(
-        question: 'Cinsiyetin?',
-        why:
-            'Sadece "tahmini yaşam süresi etkisi" hesabında kullanılır: '
-            'araştırmalar erkeklerde ve kadınlarda farklı ortalamalar '
-            'buluyor. Belirtmezsen genel ortalamayı kullanırız.',
-        answer: OptionList<Gender>(
-          options: Gender.values,
-          selected: _draft.gender,
-          labelOf: (g) => g.label,
-          onChanged: (v) => setState(() => _draft.gender = v),
-        ),
-      ),
-      OnboardingStep.motivators => _question(
-        question: 'Seni en çok kim ya da ne motive ediyor?',
-        note: 'Birden fazla seçebilirsin.',
-        why:
-            'Zor anlarda sana neden başladığını hatırlatan mesajlar daha '
-            'etkili olur.',
-        answer: ChipMultiChoice<Motivator>(
-          options: Motivator.values,
-          selected: _draft.motivators,
-          labelOf: (m) => m.label,
-          onChanged: (v) => setState(() => _draft.motivators = v),
-        ),
-      ),
-      OnboardingStep.activities => _question(
-        question: 'Hangi aktiviteleri seviyorsun?',
-        note: 'Birden fazla seçebilirsin.',
-        why:
-            'Sevdiğin aktiviteleri sigarasız anlarla birleştiren öneriler '
-            'sunmak için (ör. "Yarın sabah koşacaksan bu akşam son sigarayı '
-            'erken içmeye ne dersin?").',
-        answer: ChipMultiChoice<Activity>(
-          options: Activity.values,
-          selected: _draft.activities,
-          labelOf: (a) => a.label,
-          onChanged: (v) => setState(() => _draft.activities = v),
         ),
       ),
     };
@@ -511,7 +387,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             'Sigarayı adım adım azaltman için yanındayım. Seni asla '
             'yargılamam; her küçük adımı birlikte kutlarız.\n\n'
-            'Önce birkaç kısa soru soracağım. Hepsi isteğe bağlı: istediğini '
+            'Önce 4 kısa soru soracağım. Hepsi isteğe bağlı: istediğini '
             'geçebilir ya da sağ üstten tamamen atlayabilirsin.',
             textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
@@ -519,11 +395,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               fontWeight: FontWeight.w600,
               height: 1.4,
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Yaklaşık 2 dakika sürer.',
-            style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
           ),
         ],
       ),
@@ -565,7 +436,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Icon(Icons.bolt, color: c.goldShadow),
                     const SizedBox(width: 4),
                     Text(
-                      '+$xpWelcome XP',
+                      '+$xpWelcome puan',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: c.goldShadow,
                       ),
@@ -575,10 +446,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'İlk hafta ölçüm haftası: sen sadece kılıfını yanında taşı, '
-                'ben de alışkanlıklarını tanıyayım. Bu hafta sana azaltma '
-                'görevi vermeyeceğim.\n\n'
-                'Her gün 3 küçük görevin olacak. Yaptıkça XP kazanır, '
+                'İlk hafta ölçüm haftası: hiçbir şeyi değiştirmeye çalışma, '
+                'kılıfını yanında taşı; ben de alışkanlıklarını tanıyayım. '
+                'Hafta bitince sonuçlarını birlikte göreceğiz.\n\n'
+                'Her gün 3 küçük görevin olacak. Yaptıkça puan kazanır, '
                 'serini büyütürsün. Sigara içmek serini asla bozmaz.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.titleMedium?.copyWith(

@@ -63,6 +63,18 @@ void main() {
     expect(formatSince(DateTime(2026, 11, 1)), '1 Kasım’dan beri');
   });
 
+  test('ondalık sayı virgülle, tek basamak', () {
+    expect(formatDecimal(17.33), '17,3');
+    expect(formatDecimal(15), '15');
+    expect(formatDecimal(14.96), '15');
+  });
+
+  test('saat ve saat aralığı', () {
+    expect(formatMinuteOfDay(465), '07:45');
+    expect(formatHourRange(10), '10:00–11:00');
+    expect(formatHourRange(23), '23:00–00:00');
+  });
+
   test('yüzde işareti sayıdan önce gelir', () {
     expect(formatPercent(-10.4), '%10');
     expect(formatPercent(12.6), '%13');

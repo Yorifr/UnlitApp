@@ -10,7 +10,8 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
   alınışını sayıp Bluetooth LE ile telefona gönderir; bu Flutter uygulaması
   tüketimi takip eder ve kullanıcıyı azaltmadan bırakmaya yönlendirir.
 - Kılıf henüz yok → `DemoDeviceService` gerçekçi sahte veri üretir.
-- Tasarım ve his **Duolingo'dan ilham** alır: günlük görevler, XP, seri,
+- Tasarım ve his **Duolingo'dan ilham** alır: günlük görevler, XP (ekranda
+  "puan"), seri,
   konfetili kutlamalar, maskot "Nefes", tok butonlar. Ama bağımlılığa
   uyarlandı: asla ceza/suçlama yok (SPEC.md → "Oyunlaştırma ilkeleri").
 - Şu anki durum: SPEC.md → "Aşama planı ve durum".
@@ -32,10 +33,16 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
    kaynaklı bilgi (SPEC.md Bölüm 7). Varsayımlar ekranda "varsayım",
    ortalamalar "ortalama tahmin" diye yazılır. Yeni kaynaklı bilgi eklersen
    SPEC.md'deki kaynak tablosuna da ekle.
-3. **Suçlama yok:** Sigaradan hemen sonra suçluluk mesajı yok; artışlar
-   kırmızıyla değil nötr renkle gösterilir.
-4. **Her soru isteğe bağlı:** Eksik bilgide değer uydurma; "—" göster ve
-   eklemeyi öner.
+3. **Suçlama ve korkutma yok:** Sigaradan hemen sonra suçluluk mesajı yok;
+   artışlar kırmızıyla değil nötr renkle gösterilir. Sürekli büyüyen bir
+   kayıp sayısı ("kaybedilen yaşam" gibi) gösterme; aynı kaynaklı bilgiyi
+   kazanım tarafında göster ("içmediğin sigaralarla korunan süre").
+4. **Her soru isteğe bağlı ve bir söz:** Eksik bilgide değer uydurma; "—"
+   göster ve eklemeyi öner. Bir soruyu ancak cevabı uygulamada GERÇEKTEN
+   bir şeyi değiştiriyorsa sor (ve sadece o zaman sakla); "Neden
+   soruyoruz?" metni de tam olarak bunu söylesin. Soruyu, cevabın
+   kullanılacağı ana koy (ör. hedef sorusu ölçüm haftası bitince).
+   Hangi sorunun ne zaman sorulacağı: SPEC.md → Özellik 1.
 5. **Oyunlaştırma ceza vermez:** XP asla düşmez; sigara içmek XP
    götürmez, seriyi bozmaz, kutlama/mesaj tetiklemez. Seri "sigarasız
    gün" değil "en az bir görev yapılan gün" sayar (dinlenme günüyle).
@@ -69,17 +76,26 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 - `lib/services/`: `DeviceService` (arayüz), `DemoDeviceService`,
   `demo_day_planner.dart`, `demo_activity.dart`, `StorageService`,
   `effects.dart` (ses + titreşim) ve ses oynatıcılar (`sound_player*.dart`).
-- `lib/logic/`: **saf** hesap fonksiyonları (`stats.dart`, `quests.dart`,
+- `lib/logic/`: **saf** hesap fonksiyonları (`stats.dart`,
+  `measurement.dart` (ölçüm haftası özeti + "Kazandıkların"), `quests.dart`,
   `rewards.dart`, `mascot_messages.dart`); `now`'ı parametre olarak alır →
   kolay test. Yeni hesapları buraya koy ve test yaz. XP miktarları
-  `rewards.dart`'ın başında.
+  `rewards.dart`'ın başında. (Kodda adı XP, ekranda "puan".)
 - `lib/utils/format.dart`: Türkçe tarih/para/süre/yüzde yazımı.
 - `lib/screens/`: onboarding, `main_screen` (alt menü) + `today_tab`,
-  `stats_tab`, `profile_tab`; erteleme, nefes, kutlama, ayarlar.
+  `stats_tab`, `profile_tab`; erteleme, nefes, kutlama, ölçüm haftası
+  özeti, ayarlar.
 - `lib/widgets/`: `chunky.dart` (tok buton/kart/çubuk), `mascot.dart`,
-  `confetti.dart`, `pickers.dart`, ...
+  `confetti.dart`, `pickers.dart`, `reason_note.dart` (kendine not), ...
 
 ## Tasarım dili (Duolingo tarzı)
+- **Sade ve anlaşılır:** Her işin TEK giriş noktası olsun (aynı şeyi iki
+  yerde gösterme). Bir ekranda tek seçici. Yeni özellik ilk günden değil,
+  anlamlı olduğu anda açılsın ("kademeli açılım": ör. erteleme görevi ve
+  "Kazandıkların" ölçüm haftası bitince). Ekranda "XP", "check-in" gibi
+  İngilizce/oyun jargonu yerine "puan", "Kendini dinle" gibi Türkçe kullan.
+- **Ölçekler soldan sağa olumsuzdan olumluya:** ruh hali "Çok zor" en
+  solda, "Harika" en sağda (sıra `Mood` enum'unda).
 - Renkler için her zaman `AppColors.of(context)` kullan (açık/koyu tema
   otomatik). Tema **"Nane"**: `mint` ana renk (ilerleme, ana buton),
   `blue` ikinci renk, `leaf` sadece seri/filiz (büyüme). Kırmızı (`red`)
@@ -133,6 +149,10 @@ paketsiz yazıldı.
   testlerinde test bitmeden `disconnect()` çağır (bkz.
   `test/app_flow_test.dart` → `testApp`). Erteleme ekranında saniyelik
   sayaç var: o ekran açıkken `pumpAndSettle()` bitmez, `pump()` kullan.
+- **Kullanıcının yazdığı metin (TextField):** Kullanıcı emoji vb. yazarsa
+  aynı yedek font sorunu olur. Serbest yazı alanlarında
+  `noteInputFormatter` (`widgets/reason_note.dart`) gibi, sadece Nunito'da
+  olan harflere izin veren bir süzgeç kullan.
 - **Testlerde yazı tipi:** Testler her harfi kare çizen bir font kullanır,
   yazılar gerçekte olduğundan geniş görünür. Bir `Row` taşıyorsa uzun
   yazıyı `Expanded`/`Flexible` içine al (bu, küçük telefonlarda da işe

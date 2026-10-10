@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import '../logic/measurement.dart';
+import '../logic/stats.dart';
 import '../models/user_profile.dart';
 
 /// İki sigara arasındaki en kısa süre (dakika).
@@ -14,6 +16,10 @@ const int demoMinGapMinutes = 20;
 /// 4. Hafta sonu daha geç uyanılır; cuma ve hafta sonu akşamları
 ///    (arkadaşlarla) biraz daha fazla içilir.
 /// 5. İki sigara arasında en az 20 dakika vardır, uykuda sigara yoktur.
+/// 6. [reduction] verilirse (ör. 0.10) o gün %10 daha az içilir. Demo
+///    kullanıcısı ölçüm haftasından sonra yavaş yavaş azaltır (bkz.
+///    [demoReduction]); böylece "Kazandıkların" ve haftalık karşılaştırma
+///    sunumda dolu görünür.
 ///
 /// [random] dışarıdan verilir: aynı tohumla (seed) oluşturulan Random
 /// her seferinde aynı günü üretir. Bu sayede testler tekrarlanabilir olur.
@@ -22,6 +28,7 @@ List<DateTime> planDemoDay(
   Random random, {
   int? usualPerDay,
   FirstCigaretteTime? firstCigarette,
+  double reduction = 0,
 }) {
   final weekend =
       day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
@@ -35,7 +42,8 @@ List<DateTime> planDemoDay(
 
   // 1) Bugün kaç sigara?
   final base = (usualPerDay ?? 16).clamp(10, 25);
-  final count = (base + jitter(3) + (weekend ? 2 : 0)).clamp(10, 25);
+  final usual = (base + jitter(3) + (weekend ? 2 : 0)).clamp(10, 25);
+  final count = (usual * (1 - reduction)).round();
 
   // 2) Uyanma ve uyuma saati
   final wake = (weekend ? 9 * 60 : 7 * 60) + jitter(30);
@@ -111,4 +119,21 @@ List<DateTime> planDemoDay(
     for (final m in minutes)
       DateTime(day.year, day.month, day.day, 0, m, random.nextInt(60)),
   ];
+}
+
+/// Demo kullanıcısı o gün ne kadar azaltmış olsun? (0.0 = hiç, 0.3 = %30)
+///
+/// Ölçüm haftasında hiç azaltmaz (gerçek bir kullanıcı gibi önce ölçülür).
+/// Sonra ilk gün %5, her gün %2 daha fazla, en fazla %30. Bu SAHTE bir
+/// demodur; gerçek bir kullanıcının ne kadar azaltacağına dair bir iddia
+/// değildir.
+double demoReduction(DateTime day, DateTime? trackingStart) {
+  if (trackingStart == null) return 0;
+  // Saat farkını 24'e bölüp yuvarlıyoruz: yaz saati geçişinde bir gün 23 ya
+  // da 25 saat sürse de doğru gün sayısı çıksın.
+  final daysAfter =
+      (startOfDay(day).difference(measurementEnd(trackingStart)).inHours / 24)
+          .round();
+  if (daysAfter < 0) return 0;
+  return min(0.30, 0.05 + 0.02 * daysAfter);
 }

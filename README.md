@@ -23,15 +23,22 @@ Tasarım ve kullanım hissi **Duolingo'dan ilham** alır, ama hiçbir zaman
 suçlamaz:
 
 - **Nefes** adında bir maskot seni karşılar, soruları sorar, yol gösterir.
-- **Günlük 3 görev** (check-in, sigaranın nedenini işaretleme, nefes molası,
-  bir isteği 10 dakika erteleme…) → **XP** ve **seri**.
-- **"CANIM SİGARA İSTİYOR"** butonu: 10 dakikalık erteleme, öneriler ve
-  nefes egzersizi.
+- **Sadece 4 kısa soru** (günde kaç sigara, uyanınca ilk sigara, paket
+  fiyatı, tetikleyiciler). Her cevap uygulamada bir şeyi değiştirir.
+- **Günlük 3 görev** (kendini dinle, sigaranın nedenini işaretleme, nefes
+  molası, bir isteği 10 dakika erteleme…) → **puan** ve **seri**.
+- **Ölçüm haftası:** ilk 7 gün sadece ölçülür; bitince "Ölçüm haftan
+  bitti!" özeti (günde ortalama, ilk sigara saati, en yoğun saat, en sık
+  neden) ve yeni özellikler açılır.
+- **"CANIM SİGARA İSTİYOR"** butonu: 10 dakikalık erteleme, öneriler,
+  nefes egzersizi ve kullanıcının **kendine yazdığı not**.
 - Her başarıda **konfetili kutlama ekranı**.
 - **Seri sigara içince bozulmaz**: kendine iyi baktığın günleri sayar,
   haftada bir kaçırılan gün affedilir.
-- **İstatistik:** bugünkü sayı, geçen haftayla karşılaştırma, grafik,
-  harcanan para, sigaraya giden süre, tahmini yaşam süresi etkisi.
+- **İstatistik:** bugünkü sayı, geçen haftayla karşılaştırma, son 7 günün
+  grafiği, harcanan para ve ölçüm haftasından sonra **"Kazandıkların"**:
+  içmediğin sigaralar, cebinde kalan para, korunan yaşam süresi (ortalama
+  tahmin). Sürekli büyüyen bir "kaybedilen yaşam" sayısı bilerek yok.
 - **Paket fiyatı:** Zam gelince İstatistik → "Paket fiyatı" kartından
   güncelle; eski günlerin harcaması eski fiyatla kalır.
 - **Ses ve titreşim:** görev "ding-ding"i, büyük başarıda fanfar, nefes
@@ -87,11 +94,11 @@ suçlamaz:
 lib/
 ├── main.dart              Uygulama buradan başlar
 ├── app.dart               Tema, Türkçe dil, ilk ekran seçimi
-├── app_state.dart         Profil, sigaralar, XP (uygulamanın beyni)
+├── app_state.dart         Profil, sigaralar, puan (uygulamanın beyni)
 ├── theme.dart             Renkler ve yazı tipi (Duolingo tarzı)
 ├── models/                Veri modelleri (sigara, profil, etkinlikler)
 ├── services/              Kılıf bağlantısı (demo), yerel kayıt
-├── logic/                 Hesaplar: sayılar, görevler, XP, seri
+├── logic/                 Hesaplar: sayılar, ölçüm haftası, görevler, puan, seri
 ├── utils/format.dart      Türkçe tarih/para/süre yazımı
 ├── screens/               Onboarding, Bugün, İstatistik, Profil, ...
 └── widgets/               Tok butonlar, maskot, konfeti, grafik
@@ -103,7 +110,7 @@ docs/SPEC.md               Şartname + aşama planı
 
 ## Kaynaklar
 
-- Sigara başına yaşam süresi tahmini: Jackson SE, Jarvis MJ, West R.
+- İçilmeyen sigara başına korunan yaşam süresi tahmini: Jackson SE, Jarvis MJ, West R.
   *"The price of a cigarette: 20 minutes of life?"* Addiction, 2024 (UCL).
 - Uyanınca ilk sigara sorusu: Fagerström Nikotin Bağımlılığı Testi
   (Heatherton ve ark., 1991).

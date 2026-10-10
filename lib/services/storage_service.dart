@@ -38,6 +38,7 @@ class StorageService {
   static const _kTrackingStartedAt = 'tracking_started_at';
   static const _kPrices = 'prices';
   static const _kPriceConfirmedAt = 'price_confirmed_at';
+  static const _kMeasurementSummarySeen = 'measurement_summary_seen';
 
   // ---------- Profil ----------
 
@@ -167,6 +168,15 @@ class StorageService {
   int? get demoSeed => _prefs.getInt(_kDemoSeed);
 
   Future<void> setDemoSeed(int seed) => _prefs.setInt(_kDemoSeed, seed);
+
+  // ---------- Ölçüm haftası ----------
+
+  /// "Ölçüm haftan bitti!" özeti görüldü mü?
+  bool get measurementSummarySeen =>
+      _prefs.getBool(_kMeasurementSummarySeen) ?? false;
+
+  Future<void> setMeasurementSummarySeen(bool value) =>
+      _prefs.setBool(_kMeasurementSummarySeen, value);
 
   // ---------- Küçük ayarlar (ses açık mı vb.) ----------
 
