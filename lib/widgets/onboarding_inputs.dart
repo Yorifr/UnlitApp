@@ -1,88 +1,108 @@
-// Onboarding sorularında kullanılan küçük giriş bileşenleri.
+// Onboarding sorularında kullanılan giriş bileşenleri (Duolingo tarzı).
 //
 // Hepsinin ortak özelliği: "cevap yok" (null) durumunu destekler. Kullanıcı
 // bir soruyu hiç cevaplamadan geçebilir; biz de varsayılan bir değer
 // uydurmayız.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-/// Bir soru + "Neden soruyoruz?" açıklaması + cevap alanı.
-class QuestionBlock extends StatefulWidget {
-  const QuestionBlock({
-    super.key,
-    required this.question,
-    required this.why,
-    required this.child,
-  });
+import '../theme.dart';
 
-  final String question;
-
-  /// "Neden soruyoruz?"a dokununca açılan açıklama.
-  final String why;
-
-  /// Cevap alanı (seçenekler, sayı seçici vb.).
-  final Widget child;
+/// "Neden soruyoruz?" bağlantısı; dokununca açıklama açılır.
+class WhyToggle extends StatefulWidget {
+  const WhyToggle({super.key, required this.text});
+  final String text;
 
   @override
-  State<QuestionBlock> createState() => _QuestionBlockState();
+  State<WhyToggle> createState() => _WhyToggleState();
 }
 
-class _QuestionBlockState extends State<QuestionBlock> {
-  bool _showWhy = false;
+class _WhyToggleState extends State<WhyToggle> {
+  bool _open = false;
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextButton.icon(
+          onPressed: () => setState(() => _open = !_open),
+          icon: Icon(_open ? Icons.expand_less : Icons.help_outline, size: 20),
+          label: const Text('Neden soruyoruz?'),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          alignment: Alignment.topCenter,
+          child: _open
+              ? Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: c.blueLight,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(widget.text, style: theme.textTheme.bodyMedium),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+      ],
+    );
+  }
+}
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.question,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+/// Seçilebilir, tok kutu. Seçilince mavi olur (Duolingo seçenekleri gibi).
+class SelectableBox extends StatelessWidget {
+  const SelectableBox({
+    super.key,
+    required this.selected,
+    required this.onTap,
+    required this.child,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  });
+
+  final bool selected;
+  final VoidCallback onTap;
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final edge = selected ? c.blue : c.border;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: padding,
+          decoration: BoxDecoration(
+            color: selected ? c.blueLight : c.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: edge, width: 2),
+            boxShadow: [BoxShadow(color: edge, offset: const Offset(0, 3))],
           ),
-          TextButton.icon(
-            onPressed: () => setState(() => _showWhy = !_showWhy),
-            icon: Icon(
-              _showWhy ? Icons.expand_less : Icons.help_outline,
-              size: 18,
+          child: DefaultTextStyle.merge(
+            style: TextStyle(
+              color: selected ? c.blueText : c.text,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
             ),
-            label: const Text('Neden soruyoruz?'),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              visualDensity: VisualDensity.compact,
-            ),
+            child: child,
           ),
-          // Açıklama kutusu, açılıp kapanırken yumuşakça büyür/küçülür.
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            alignment: Alignment.topCenter,
-            child: _showWhy
-                ? Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: scheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      widget.why,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSecondaryContainer,
-                      ),
-                    ),
-                  )
-                : const SizedBox(width: double.infinity),
-          ),
-          const SizedBox(height: 8),
-          widget.child,
-        ],
+        ),
       ),
     );
   }
@@ -117,48 +137,76 @@ class NumberStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final theme = Theme.of(context);
     final current = value;
 
-    String text;
+    final Widget center;
     if (current == null) {
-      text = 'Seçilmedi';
+      center = Text(
+        'Seçilmedi',
+        style: theme.textTheme.titleMedium?.copyWith(color: c.textMuted),
+      );
     } else if (current == 0 && zeroLabel != null) {
-      text = zeroLabel!;
+      center = Text(zeroLabel!, style: theme.textTheme.headlineSmall);
     } else {
-      text = '$current $unit';
+      center = Column(
+        children: [
+          Text(
+            '$current',
+            style: theme.textTheme.displaySmall?.copyWith(
+              color: c.blueText,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(unit, style: theme.textTheme.titleSmall),
+        ],
+      );
     }
 
     return Row(
       children: [
-        IconButton.filledTonal(
-          onPressed: () => onChanged(
+        _RoundButton(
+          icon: Icons.remove,
+          tooltip: 'Azalt',
+          onTap: () => onChanged(
             current == null ? startValue : (current - 1).clamp(min, max),
           ),
-          icon: const Icon(Icons.remove),
-          tooltip: 'Azalt',
         ),
-        Expanded(
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: current == null
-                ? theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  )
-                : theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-          ),
-        ),
-        IconButton.filledTonal(
-          onPressed: () => onChanged(
+        Expanded(child: Center(child: center)),
+        _RoundButton(
+          icon: Icons.add,
+          tooltip: 'Artır',
+          onTap: () => onChanged(
             current == null ? startValue : (current + 1).clamp(min, max),
           ),
-          icon: const Icon(Icons.add),
-          tooltip: 'Artır',
         ),
       ],
+    );
+  }
+}
+
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: SelectableBox(
+        selected: false,
+        onTap: onTap,
+        padding: const EdgeInsets.all(14),
+        child: Icon(icon, size: 30, color: AppColors.of(context).blueText),
+      ),
     );
   }
 }
@@ -181,51 +229,17 @@ class OptionList<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         for (final option in options)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Semantics(
-              button: true,
+            padding: const EdgeInsets.only(bottom: 10),
+            child: SelectableBox(
               selected: option == selected,
-              inMutuallyExclusiveGroup: true,
-              child: Material(
-                color: option == selected
-                    ? scheme.primaryContainer
-                    : scheme.surfaceContainerLow,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(
-                    color: option == selected
-                        ? scheme.primary
-                        : scheme.outlineVariant,
-                  ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: () => onChanged(option == selected ? null : option),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(labelOf(option))),
-                        Icon(
-                          option == selected
-                              ? Icons.check_circle
-                              : Icons.circle_outlined,
-                          color: option == selected
-                              ? scheme.primary
-                              : scheme.outline,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              onTap: () => onChanged(option == selected ? null : option),
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(labelOf(option)),
               ),
             ),
           ),
@@ -234,7 +248,7 @@ class OptionList<T> extends StatelessWidget {
   }
 }
 
-/// Yan yana "çip"lerle tek seçim (yaş aralığı, cinsiyet gibi kısa seçenekler).
+/// Yan yana kutucuklarla tek seçim (yaş aralığı gibi kısa seçenekler).
 class ChipChoice<T> extends StatelessWidget {
   const ChipChoice({
     super.key,
@@ -252,21 +266,21 @@ class ChipChoice<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 10,
+      runSpacing: 12,
       children: [
         for (final option in options)
-          ChoiceChip(
-            label: Text(labelOf(option)),
+          SelectableBox(
             selected: option == selected,
-            onSelected: (isSelected) => onChanged(isSelected ? option : null),
+            onTap: () => onChanged(option == selected ? null : option),
+            child: Text(labelOf(option)),
           ),
       ],
     );
   }
 }
 
-/// Yan yana "çip"lerle çoklu seçim (tetikleyiciler, aktiviteler gibi).
+/// Yan yana kutucuklarla çoklu seçim (tetikleyiciler, aktiviteler gibi).
 class ChipMultiChoice<T> extends StatelessWidget {
   const ChipMultiChoice({
     super.key,
@@ -286,25 +300,27 @@ class ChipMultiChoice<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 10,
+      runSpacing: 12,
       children: [
         for (final option in options)
-          FilterChip(
-            label: Text(labelOf(option)),
+          SelectableBox(
             selected: selected.contains(option),
-            onSelected: (isSelected) {
+            onTap: () {
               final updated = {...selected};
-              isSelected ? updated.add(option) : updated.remove(option);
+              updated.contains(option)
+                  ? updated.remove(option)
+                  : updated.add(option);
               onChanged(updated);
             },
+            child: Text(labelOf(option)),
           ),
       ],
     );
   }
 }
 
-/// 1'den 10'a kadar ölçek (bırakma isteği için).
+/// 1'den 10'a kadar ölçek (bırakma isteği için). İki sıra hâlinde.
 class ScalePicker extends StatelessWidget {
   const ScalePicker({
     super.key,
@@ -321,59 +337,37 @@ class ScalePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final hintStyle = theme.textTheme.bodySmall?.copyWith(
-      color: scheme.onSurfaceVariant,
+    final c = AppColors.of(context);
+    final hint = Theme.of(context).textTheme.bodySmall
+        ?.copyWith(color: c.textMuted);
+
+    Widget row(int from) => Row(
+      children: [
+        for (var i = from; i < from + 5; i++)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: SelectableBox(
+                selected: value == i,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                onTap: () => onChanged(value == i ? null : i),
+                child: Center(child: Text('$i')),
+              ),
+            ),
+          ),
+      ],
     );
 
     return Column(
       children: [
-        Row(
-          children: [
-            for (var i = 1; i <= 10; i++)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Semantics(
-                      button: true,
-                      selected: value == i,
-                      label: '$i / 10',
-                      child: Material(
-                        shape: const CircleBorder(),
-                        color: value == i
-                            ? scheme.primary
-                            : scheme.surfaceContainerHighest,
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => onChanged(value == i ? null : i),
-                          child: Center(
-                            child: Text(
-                              '$i',
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: value == i
-                                    ? scheme.onPrimary
-                                    : scheme.onSurface,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+        row(1),
+        row(6),
         const SizedBox(height: 6),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(lowLabel, style: hintStyle),
-            Text(highLabel, style: hintStyle),
+            Text(lowLabel, style: hint),
+            Text(highLabel, style: hint),
           ],
         ),
       ],

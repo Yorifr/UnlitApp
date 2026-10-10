@@ -1,26 +1,43 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../logic/rewards.dart';
 import '../models/user_profile.dart';
+import '../theme.dart';
+import '../widgets/chunky.dart';
+import '../widgets/confetti.dart';
+import '../widgets/mascot.dart';
 import '../widgets/onboarding_inputs.dart';
 import '../widgets/privacy_banner.dart';
 
-/// Onboarding'in adımları (sayfaları).
+/// Onboarding'in adımları. Duolingo gibi: her ekranda TEK soru.
 enum OnboardingStep {
   welcome,
-  habits,
-  cost,
+  cigarettesPerDay,
+  yearsSmoking,
+  firstCigarette,
+  packPrice,
   triggers,
   goal,
-  about,
-  motivation,
-  done,
+  quitDesire,
+  ageRange,
+  gender,
+  motivators,
+  activities,
+  done;
+
+  /// Soru sayfası mı? (Karşılama ve bitiş değil.)
+  bool get isQuestion => this != welcome && this != done;
+
+  /// İsteğe bağlı profil bölümünde mi? ("Bu bölümü atla" çıkar.)
+  bool get isOptionalProfile =>
+      index >= ageRange.index && index <= activities.index;
 }
 
 /// İlk açılıştaki kısa soru akışı. Her şey isteğe bağlı ve atlanabilir.
 ///
-/// [editMode] true ise (Ayarlar > Bilgilerimi düzenle) karşılama ve bitiş
-/// sayfaları gösterilmez; son sayfada "Kaydet" ile ayarlara dönülür.
+/// [editMode] true ise (Profil/Ayarlar > Bilgilerimi düzenle) karşılama ve
+/// bitiş sayfaları gösterilmez; "KAYDET" ile geri dönülür.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({
     super.key,
@@ -32,8 +49,8 @@ class OnboardingScreen extends StatefulWidget {
   final AppState state;
   final bool editMode;
 
-  /// Doluysa akış bu sayfadan başlar (ör. ana ekrandan "paket fiyatını
-  /// ekle"ye dokununca doğrudan Harcama sayfası açılır).
+  /// Doluysa akış bu sayfadan başlar (ör. "paket fiyatını ekle"ye
+  /// dokununca doğrudan fiyat sorusu açılır).
   final OnboardingStep? initialStep;
 
   @override
@@ -45,14 +62,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   late final UserProfile _draft = widget.state.profile.copy();
 
   late final List<OnboardingStep> _steps = [
-    if (!widget.editMode) OnboardingStep.welcome,
-    OnboardingStep.habits,
-    OnboardingStep.cost,
-    OnboardingStep.triggers,
-    OnboardingStep.goal,
-    OnboardingStep.about,
-    OnboardingStep.motivation,
-    if (!widget.editMode) OnboardingStep.done,
+    for (final step in OnboardingStep.values)
+      if (step.isQuestion || !widget.editMode) step,
   ];
 
   /// Şu an gösterilen sayfanın sırası (0'dan başlar).
@@ -66,11 +77,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   OnboardingStep get _step => _steps[_index];
   bool get _isLast => _index == _steps.length - 1;
-
-  /// Soru sayfaları (karşılama ve bitiş hariç) — ilerleme çubuğu için.
-  List<OnboardingStep> get _questionSteps => _steps
-      .where((s) => s != OnboardingStep.welcome && s != OnboardingStep.done)
-      .toList();
+  List<OnboardingStep> get _questions =>
+      _steps.where((s) => s.isQuestion).toList();
 
   @override
   void dispose() {
@@ -106,7 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  /// Cevapları kaydet ve bitir. (Atla da buraya gelir: o ana kadar
+  /// Cevapları kaydet ve bitir. ("ATLA" da buraya gelir: o ana kadar
   /// verilen cevaplar yine kaydedilir.)
   Future<void> _finish() async {
     if (widget.editMode) {
@@ -117,6 +125,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       await widget.state.completeOnboarding(_draft);
     }
   }
+
+  /// Bu soru cevaplandı mı? (Buton "DEVAM" mı "ŞİMDİLİK GEÇ" mi olsun?)
+  bool _answered(OnboardingStep step) => switch (step) {
+    OnboardingStep.cigarettesPerDay => _draft.cigarettesPerDay != null,
+    OnboardingStep.yearsSmoking => _draft.yearsSmoking != null,
+    OnboardingStep.firstCigarette => _draft.firstCigarette != null,
+    OnboardingStep.packPrice => _draft.packPrice != null,
+    OnboardingStep.triggers => _draft.triggers.isNotEmpty,
+    OnboardingStep.goal => _draft.goal != null,
+    OnboardingStep.quitDesire => _draft.quitDesire != null,
+    OnboardingStep.ageRange => _draft.ageRange != null,
+    OnboardingStep.gender => _draft.gender != null,
+    OnboardingStep.motivators => _draft.motivators.isNotEmpty,
+    OnboardingStep.activities => _draft.activities.isNotEmpty,
+    OnboardingStep.welcome || OnboardingStep.done => true,
+  };
 
   // ---------- Ekran ----------
 
@@ -132,8 +156,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 _buildTopBar(context),
                 const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
-                  child: PrivacyBanner(),
+                  padding: EdgeInsets.fromLTRB(20, 4, 20, 0),
+                  child: PrivacyBanner(compact: true),
                 ),
                 Expanded(
                   child: PageView(
@@ -153,57 +177,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildTopBar(BuildContext context) {
-    final questionIndex = _questionSteps.indexOf(_step);
-    final showProgress = questionIndex >= 0;
+    final c = AppColors.of(context);
+    final questionIndex = _questions.indexOf(_step);
+
+    final Widget? leading = _index > 0 && _step != OnboardingStep.done
+        ? IconButton(
+            onPressed: _back,
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Geri',
+          )
+        : widget.editMode
+        ? IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close),
+            tooltip: 'Kaydetmeden kapat',
+          )
+        : null;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 8, 0),
+      padding: const EdgeInsets.fromLTRB(4, 4, 8, 4),
       child: Row(
         children: [
-          // Geri butonu (ilk sayfada yok)
-          SizedBox(
-            width: 48,
-            child: _index > 0 && _step != OnboardingStep.done
-                ? IconButton(
-                    onPressed: _back,
-                    icon: const Icon(Icons.arrow_back),
-                    tooltip: 'Geri',
-                  )
-                : widget.editMode
-                ? IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                    tooltip: 'Kaydetmeden kapat',
-                  )
-                : null,
-          ),
+          SizedBox(width: 48, child: leading),
           Expanded(
-            child: showProgress
-                ? Column(
-                    children: [
-                      Text(
-                        'Adım ${questionIndex + 1} / ${_questionSteps.length}',
-                        style: Theme.of(context).textTheme.labelMedium,
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: (questionIndex + 1) / _questionSteps.length,
-                          minHeight: 6,
-                        ),
-                      ),
-                    ],
+            child: questionIndex >= 0
+                ? Semantics(
+                    label: 'Soru ${questionIndex + 1} / ${_questions.length}',
+                    child: ChunkyProgressBar(
+                      value: (questionIndex + 1) / _questions.length,
+                    ),
                   )
                 : const SizedBox.shrink(),
           ),
           SizedBox(
-            width: 72,
+            width: 84,
             child: _step == OnboardingStep.done
                 ? null
                 : TextButton(
                     onPressed: _finish,
-                    child: Text(widget.editMode ? 'Kaydet' : 'Atla'),
+                    style: TextButton.styleFrom(foregroundColor: c.textMuted),
+                    child: Text(widget.editMode ? 'KAYDET' : 'ATLA'),
                   ),
           ),
         ],
@@ -212,28 +225,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
+    final answered = _answered(_step);
     final label = switch (_step) {
-      OnboardingStep.welcome => 'Başlayalım',
-      OnboardingStep.done => 'Ana ekrana git',
-      _ when _isLast => 'Kaydet',
-      _ => 'İleri',
+      OnboardingStep.welcome => 'BAŞLAYALIM',
+      OnboardingStep.done => 'BAŞLA',
+      _ when _isLast => 'KAYDET',
+      _ when answered => 'DEVAM',
+      _ => 'ŞİMDİLİK GEÇ',
     };
-    final isOptionalSection =
-        _step == OnboardingStep.about || _step == OnboardingStep.motivation;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (isOptionalSection)
+          if (_step.isOptionalProfile)
             TextButton(
               onPressed: _skipSection,
-              child: const Text('Bu bölümü atla'),
+              child: const Text('BU BÖLÜMÜ ATLA'),
             ),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(onPressed: _next, child: Text(label)),
+          ChunkyButton(
+            label: label,
+            // Cevaplanmamış soruda buton beyaz: "geçmek de serbest".
+            variant: answered || _isLast
+                ? ChunkyVariant.primary
+                : ChunkyVariant.secondary,
+            onPressed: _next,
           ),
         ],
       ),
@@ -243,110 +260,199 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildStep(OnboardingStep step) {
     return switch (step) {
       OnboardingStep.welcome => _welcomePage(),
-      OnboardingStep.habits => _habitsPage(),
-      OnboardingStep.cost => _costPage(),
-      OnboardingStep.triggers => _triggersPage(),
-      OnboardingStep.goal => _goalPage(),
-      OnboardingStep.about => _aboutPage(),
-      OnboardingStep.motivation => _motivationPage(),
       OnboardingStep.done => _donePage(),
+      OnboardingStep.cigarettesPerDay => _question(
+        question: 'Günde ortalama kaç sigara içiyorsun?',
+        note: 'Emin değilsen tahmini bir sayı yeterli.',
+        why:
+            'Başlangıç noktanı bilmek, ilerlemeni doğru karşılaştırmamızı '
+            'sağlar. Kılıf birkaç gün ölçüm yapana kadar bu sayıyı referans '
+            'alırız.',
+        answer: NumberStepper(
+          value: _draft.cigarettesPerDay,
+          min: 1,
+          max: 80,
+          startValue: 15,
+          unit: 'sigara',
+          onChanged: (v) => setState(() => _draft.cigarettesPerDay = v),
+        ),
+      ),
+      OnboardingStep.yearsSmoking => _question(
+        question: 'Kaç yıldır sigara içiyorsun?',
+        why:
+            'Alışkanlığın ne kadar süredir devam ettiği, sana uygun bir tempo '
+            'önermemize yardım eder.',
+        answer: NumberStepper(
+          value: _draft.yearsSmoking,
+          min: 0,
+          max: 70,
+          startValue: 5,
+          unit: 'yıl',
+          zeroLabel: '1 yıldan az',
+          onChanged: (v) => setState(() => _draft.yearsSmoking = v),
+        ),
+      ),
+      OnboardingStep.firstCigarette => _question(
+        question: 'Sabah uyandıktan ne kadar sonra ilk sigaranı içiyorsun?',
+        why:
+            'Bu, nikotin bağımlılığını ölçmek için yaygın kullanılan '
+            'Fagerström testinin sorularından biridir. Uyanınca sigaraya ne '
+            'kadar çabuk ihtiyaç duyulduğu, bağımlılığın en güçlü '
+            'göstergelerinden biri kabul edilir. Azaltma planını buna göre '
+            'ayarlayacağız.',
+        answer: OptionList<FirstCigaretteTime>(
+          options: FirstCigaretteTime.values,
+          selected: _draft.firstCigarette,
+          labelOf: (o) => o.label,
+          onChanged: (v) => setState(() => _draft.firstCigarette = v),
+        ),
+      ),
+      OnboardingStep.packPrice => _pricePage(),
+      OnboardingStep.triggers => _question(
+        question: 'Hangi durumlarda canın daha çok sigara istiyor?',
+        note: 'Birden fazla seçebilirsin.',
+        why:
+            'Sigara isteği çoğu zaman belirli anlara bağlıdır. Bu anları '
+            'bilirsek sana tam o anlara uygun öneriler hazırlayabiliriz '
+            '(ör. kahveden sonra kısa bir yürüyüş).',
+        answer: ChipMultiChoice<SmokingTrigger>(
+          options: SmokingTrigger.values,
+          selected: _draft.triggers,
+          labelOf: (t) => t.label,
+          onChanged: (v) => setState(() => _draft.triggers = v),
+        ),
+      ),
+      OnboardingStep.goal => _question(
+        question: 'Hedefin ne?',
+        why:
+            'Sana göstereceğimiz adımlar buna göre değişir. Fikrini '
+            'istediğin zaman değiştirebilirsin.',
+        answer: OptionList<QuitGoal>(
+          options: QuitGoal.values,
+          selected: _draft.goal,
+          labelOf: (g) => g.label,
+          onChanged: (v) => setState(() => _draft.goal = v),
+        ),
+      ),
+      OnboardingStep.quitDesire => _question(
+        question: 'Sigarayı bırakmayı ne kadar istiyorsun?',
+        why:
+            'Ne kadar hazır hissettiğin, sana ne hızda bir plan '
+            'önereceğimizi belirler. Doğru ya da yanlış cevap yok.',
+        answer: ScalePicker(
+          value: _draft.quitDesire,
+          lowLabel: '1 · Hiç',
+          highLabel: '10 · Çok',
+          onChanged: (v) => setState(() => _draft.quitDesire = v),
+        ),
+      ),
+      OnboardingStep.ageRange => _question(
+        question: 'Biraz da seni tanıyayım. Yaş aralığın ne?',
+        note: 'Bu bölüm tamamen isteğe bağlı.',
+        why:
+            'Önerileri ve mesajları yaşına uygun bir dille hazırlamak için. '
+            'Tam yaşını sormuyoruz.',
+        answer: ChipChoice<AgeRange>(
+          options: AgeRange.values,
+          selected: _draft.ageRange,
+          labelOf: (a) => a.label,
+          onChanged: (v) => setState(() => _draft.ageRange = v),
+        ),
+      ),
+      OnboardingStep.gender => _question(
+        question: 'Cinsiyetin?',
+        why:
+            'Sadece "tahmini yaşam süresi etkisi" hesabında kullanılır: '
+            'araştırmalar erkeklerde ve kadınlarda farklı ortalamalar '
+            'buluyor. Belirtmezsen genel ortalamayı kullanırız.',
+        answer: OptionList<Gender>(
+          options: Gender.values,
+          selected: _draft.gender,
+          labelOf: (g) => g.label,
+          onChanged: (v) => setState(() => _draft.gender = v),
+        ),
+      ),
+      OnboardingStep.motivators => _question(
+        question: 'Seni en çok kim ya da ne motive ediyor?',
+        note: 'Birden fazla seçebilirsin.',
+        why:
+            'Zor anlarda sana neden başladığını hatırlatan mesajlar daha '
+            'etkili olur.',
+        answer: ChipMultiChoice<Motivator>(
+          options: Motivator.values,
+          selected: _draft.motivators,
+          labelOf: (m) => m.label,
+          onChanged: (v) => setState(() => _draft.motivators = v),
+        ),
+      ),
+      OnboardingStep.activities => _question(
+        question: 'Hangi aktiviteleri seviyorsun?',
+        note: 'Birden fazla seçebilirsin.',
+        why:
+            'Sevdiğin aktiviteleri sigarasız anlarla birleştiren öneriler '
+            'sunmak için (ör. "Yarın sabah koşacaksan bu akşam son sigarayı '
+            'erken içmeye ne dersin?").',
+        answer: ChipMultiChoice<Activity>(
+          options: Activity.values,
+          selected: _draft.activities,
+          labelOf: (a) => a.label,
+          onChanged: (v) => setState(() => _draft.activities = v),
+        ),
+      ),
     };
   }
 
-  // ---------- Sayfalar ----------
+  // ---------- Sayfa şablonları ----------
 
-  Widget _welcomePage() {
-    final theme = Theme.of(context);
-    return _CenteredMessage(
-      icon: Icons.smoke_free,
-      title: 'Unlit’e hoş geldin',
-      body:
-          'Akıllı kılıfın her sigarayı sayar; Unlit de sana kendi '
-          'verinle yol gösterir.\n\n'
-          'Birkaç kısa soru soracağız. Hepsi isteğe bağlı: istediğini boş '
-          'bırakabilir ya da sağ üstten tamamen atlayabilirsin.',
-      footer: Text(
-        'Yaklaşık 2 dakika sürer.',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
-
-  Widget _habitsPage() {
-    return _QuestionPage(
-      title: 'Sigara alışkanlığın',
-      subtitle: 'Emin değilsen tahmini bir cevap yeterli.',
+  /// Maskotun soruyu sorduğu, kaydırılabilir soru sayfası.
+  Widget _question({
+    required String question,
+    required String why,
+    required Widget answer,
+    String? note,
+  }) {
+    final c = AppColors.of(context);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       children: [
-        QuestionBlock(
-          question: 'Günde ortalama kaç sigara içiyorsun?',
-          why:
-              'Başlangıç noktanı bilmek, ilerlemeni doğru '
-              'karşılaştırmamızı sağlar. Kılıf birkaç gün ölçüm yapana kadar '
-              'bu sayıyı referans alırız.',
-          child: NumberStepper(
-            value: _draft.cigarettesPerDay,
-            min: 1,
-            max: 80,
-            startValue: 15,
-            unit: 'sigara',
-            onChanged: (v) => setState(() => _draft.cigarettesPerDay = v),
+        MascotSpeech(text: question, mood: MascotMood.think),
+        if (note != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            note,
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: c.textMuted),
           ),
-        ),
-        QuestionBlock(
-          question: 'Kaç yıldır sigara içiyorsun?',
-          why:
-              'Alışkanlığın ne kadar süredir devam ettiği, sana uygun bir '
-              'tempo önermemize yardım eder.',
-          child: NumberStepper(
-            value: _draft.yearsSmoking,
-            min: 0,
-            max: 70,
-            startValue: 5,
-            unit: 'yıl',
-            zeroLabel: '1 yıldan az',
-            onChanged: (v) => setState(() => _draft.yearsSmoking = v),
-          ),
-        ),
-        QuestionBlock(
-          question: 'Sabah uyandıktan ne kadar sonra ilk sigaranı içiyorsun?',
-          why:
-              'Bu, nikotin bağımlılığını ölçmek için yaygın kullanılan '
-              'Fagerström testinin sorularından biridir. Uyanınca sigaraya ne '
-              'kadar çabuk ihtiyaç duyulduğu, bağımlılığın en güçlü '
-              'göstergelerinden biri kabul edilir. Azaltma planını buna göre '
-              'ayarlayacağız.',
-          child: OptionList<FirstCigaretteTime>(
-            options: FirstCigaretteTime.values,
-            selected: _draft.firstCigarette,
-            labelOf: (o) => o.label,
-            onChanged: (v) => setState(() => _draft.firstCigarette = v),
-          ),
-        ),
+        ],
+        const SizedBox(height: 6),
+        WhyToggle(text: why),
+        const SizedBox(height: 18),
+        answer,
       ],
     );
   }
 
-  Widget _costPage() {
+  Widget _pricePage() {
     final priceText = _priceController.text.trim();
     final priceInvalid = priceText.isNotEmpty && _parsePrice(priceText) == null;
+    final theme = Theme.of(context);
 
-    return _QuestionPage(
-      title: 'Harcama',
-      children: [
-        QuestionBlock(
-          question: 'Bir paket sigara kaç lira?',
-          why:
-              'Sigaraya ne kadar para harcadığını ve azalttıkça ne kadar '
-              'biriktirdiğini hesaplamak için.',
-          child: TextField(
+    return _question(
+      question: 'Bir paket sigara kaç lira?',
+      why:
+          'Sigaraya ne kadar para harcadığını ve azalttıkça ne kadar '
+          'biriktirdiğini hesaplamak için. Paketteki adet de bir sigaranın '
+          'kaç liraya geldiğini bulmamızı sağlar.',
+      answer: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
             controller: _priceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: theme.textTheme.headlineSmall,
             decoration: InputDecoration(
               hintText: 'Örneğin 100',
               suffixText: '₺',
-              border: const OutlineInputBorder(),
               errorText: priceInvalid
                   ? 'Geçerli bir fiyat gir (ör. 95,50)'
                   : null,
@@ -354,13 +460,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onChanged: (text) =>
                 setState(() => _draft.packPrice = _parsePrice(text)),
           ),
-        ),
-        QuestionBlock(
-          question: 'Pakette kaç sigara var?',
-          why:
-              'Bir sigaranın kaç liraya geldiğini bulmak için. Türkiye’de '
-              'paketler genelde 20’liktir.',
-          child: ChipChoice<int>(
+          const SizedBox(height: 20),
+          Text('Pakette kaç sigara var?', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 10),
+          ChipChoice<int>(
             options: const [10, 20, 25],
             selected: _draft.cigarettesPerPack,
             labelOf: (n) => n == 10 ? '10’lu' : '$n’li',
@@ -368,151 +471,112 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onChanged: (v) =>
                 setState(() => _draft.cigarettesPerPack = v ?? 20),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _triggersPage() {
-    return _QuestionPage(
-      title: 'Tetikleyiciler',
-      children: [
-        QuestionBlock(
-          question: 'Hangi durumlarda canın daha çok sigara istiyor?',
-          why:
-              'Sigara isteği çoğu zaman belirli anlara bağlıdır. Bu anları '
-              'bilirsek sana tam o anlara uygun öneriler hazırlayabiliriz '
-              '(ör. kahveden sonra kısa bir yürüyüş).',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Birden fazla seçebilirsin.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 10),
-              ChipMultiChoice<SmokingTrigger>(
-                options: SmokingTrigger.values,
-                selected: _draft.triggers,
-                labelOf: (t) => t.label,
-                onChanged: (v) => setState(() => _draft.triggers = v),
-              ),
-            ],
+  Widget _welcomePage() {
+    final theme = Theme.of(context);
+    final c = AppColors.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          const Mascot(size: 170),
+          const SizedBox(height: 20),
+          Text(
+            'Merhaba! Ben $mascotName.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineMedium,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _goalPage() {
-    return _QuestionPage(
-      title: 'Hedefin',
-      children: [
-        QuestionBlock(
-          question: 'Ne yapmak istiyorsun?',
-          why:
-              'Sana göstereceğimiz adımlar buna göre değişir. Fikrini '
-              'istediğin zaman Ayarlar’dan değiştirebilirsin.',
-          child: OptionList<QuitGoal>(
-            options: QuitGoal.values,
-            selected: _draft.goal,
-            labelOf: (g) => g.label,
-            onChanged: (v) => setState(() => _draft.goal = v),
+          const SizedBox(height: 14),
+          Text(
+            'Sigarayı adım adım azaltman için yanındayım. Seni asla '
+            'yargılamam; her küçük adımı birlikte kutlarız.\n\n'
+            'Önce birkaç kısa soru soracağım. Hepsi isteğe bağlı: istediğini '
+            'geçebilir ya da sağ üstten tamamen atlayabilirsin.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: c.textMuted,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
           ),
-        ),
-        QuestionBlock(
-          question: 'Sigarayı bırakmayı ne kadar istiyorsun?',
-          why:
-              'Ne kadar hazır hissettiğin, sana ne hızda bir plan '
-              'önereceğimizi belirler. Doğru ya da yanlış cevap yok.',
-          child: ScalePicker(
-            value: _draft.quitDesire,
-            lowLabel: '1 · Hiç',
-            highLabel: '10 · Çok',
-            onChanged: (v) => setState(() => _draft.quitDesire = v),
+          const SizedBox(height: 16),
+          Text(
+            'Yaklaşık 2 dakika sürer.',
+            style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _aboutPage() {
-    return _QuestionPage(
-      title: 'Biraz da seni tanıyalım',
-      subtitle: 'Bu bölüm tamamen isteğe bağlı.',
-      children: [
-        QuestionBlock(
-          question: 'Yaş aralığın',
-          why:
-              'Önerileri ve mesajları yaşına uygun bir dille hazırlamak için. '
-              'Tam yaşını sormuyoruz.',
-          child: ChipChoice<AgeRange>(
-            options: AgeRange.values,
-            selected: _draft.ageRange,
-            labelOf: (a) => a.label,
-            onChanged: (v) => setState(() => _draft.ageRange = v),
-          ),
-        ),
-        QuestionBlock(
-          question: 'Cinsiyetin',
-          why:
-              'Sadece "tahmini yaşam süresi etkisi" hesabında kullanılır: '
-              'araştırmalar erkeklerde ve kadınlarda farklı ortalamalar '
-              'buluyor. Belirtmezsen genel ortalamayı kullanırız.',
-          child: ChipChoice<Gender>(
-            options: Gender.values,
-            selected: _draft.gender,
-            labelOf: (g) => g.label,
-            onChanged: (v) => setState(() => _draft.gender = v),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _motivationPage() {
-    return _QuestionPage(
-      title: 'Seni ne mutlu ediyor?',
-      subtitle: 'Bu bölüm de isteğe bağlı.',
-      children: [
-        QuestionBlock(
-          question: 'Seni en çok kim ya da ne motive ediyor?',
-          why:
-              'Zor anlarda sana neden başladığını hatırlatan mesajlar daha '
-              'etkili olur.',
-          child: ChipMultiChoice<Motivator>(
-            options: Motivator.values,
-            selected: _draft.motivators,
-            labelOf: (m) => m.label,
-            onChanged: (v) => setState(() => _draft.motivators = v),
-          ),
-        ),
-        QuestionBlock(
-          question: 'Hangi aktiviteleri seviyorsun?',
-          why:
-              'Sevdiğin aktiviteleri sigarasız anlarla birleştiren öneriler '
-              'sunmak için (ör. "Yarın sabah koşacaksan bu akşam son sigarayı '
-              'erken içmeye ne dersin?").',
-          child: ChipMultiChoice<Activity>(
-            options: Activity.values,
-            selected: _draft.activities,
-            labelOf: (a) => a.label,
-            onChanged: (v) => setState(() => _draft.activities = v),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _donePage() {
-    return const _CenteredMessage(
-      icon: Icons.check_circle_outline,
-      title: 'Hazırsın!',
-      body:
-          'İlk hafta sadece ölçüm yapacağız: sana öneri ya da mesaj '
-          'göndermeden alışkanlıklarını tanıyacağız.\n\n'
-          'Cevaplarını istediğin zaman Ayarlar’daki "Bilgilerimi düzenle" '
-          'bölümünden değiştirebilirsin.',
+    final theme = Theme.of(context);
+    final c = AppColors.of(context);
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            children: [
+              const Mascot(mood: MascotMood.cheer, size: 170),
+              const SizedBox(height: 16),
+              Text(
+                'Hazırsın!',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  color: c.greenText,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: c.goldLight,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: c.gold, width: 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.bolt, color: c.goldShadow),
+                    const SizedBox(width: 4),
+                    Text(
+                      '+$xpWelcome XP',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: c.goldShadow,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'İlk hafta ölçüm haftası: sen sadece kılıfını yanında taşı, '
+                'ben de alışkanlıklarını tanıyayım. Bu hafta sana azaltma '
+                'görevi vermeyeceğim.\n\n'
+                'Her gün 3 küçük görevin olacak. Yaptıkça XP kazanır, '
+                'serini büyütürsün. Sigara içmek serini asla bozmaz.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: c.textMuted,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_step == OnboardingStep.done)
+          const Positioned.fill(child: ConfettiBurst()),
+      ],
     );
   }
 }
@@ -533,102 +597,4 @@ String _priceToText(double price) {
     '.',
     ',',
   );
-}
-
-// ---------- Sayfa iskeletleri ----------
-
-/// Başlık + soru listesi olan, kaydırılabilir sayfa.
-class _QuestionPage extends StatelessWidget {
-  const _QuestionPage({
-    required this.title,
-    this.subtitle,
-    required this.children,
-  });
-
-  final String title;
-  final String? subtitle;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      children: [
-        Text(
-          title,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            subtitle!,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-        const SizedBox(height: 24),
-        ...children,
-      ],
-    );
-  }
-}
-
-/// Ortada büyük ikon + başlık + metin (karşılama ve bitiş sayfaları).
-class _CenteredMessage extends StatelessWidget {
-  const _CenteredMessage({
-    required this.icon,
-    required this.title,
-    required this.body,
-    this.footer,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-  final Widget? footer;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        children: [
-          const SizedBox(height: 24),
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 48, color: scheme.onPrimaryContainer),
-          ),
-          const SizedBox(height: 28),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-          if (footer != null) ...[const SizedBox(height: 20), footer!],
-        ],
-      ),
-    );
-  }
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/activity_log.dart';
 import '../models/smoking_event.dart';
 import '../models/user_profile.dart';
 
@@ -32,6 +33,8 @@ class StorageService {
   static const _kEvents = 'events';
   static const _kDemoLastSync = 'demo_last_sync';
   static const _kDemoSeed = 'demo_seed';
+  static const _kActivity = 'activity';
+  static const _kTrackingStartedAt = 'tracking_started_at';
 
   // ---------- Profil ----------
 
@@ -76,6 +79,32 @@ class StorageService {
     _kEvents,
     jsonEncode(events.map((e) => e.toJson()).toList()),
   );
+
+  // ---------- Etkinlikler (ruh hali, erteleme, nefes, XP) ----------
+
+  ActivityLog loadActivity() {
+    final text = _prefs.getString(_kActivity);
+    if (text == null) return ActivityLog();
+    try {
+      return ActivityLog.fromJson(jsonDecode(text) as Map<String, dynamic>);
+    } catch (_) {
+      return ActivityLog();
+    }
+  }
+
+  Future<void> saveActivity(ActivityLog activity) =>
+      _prefs.setString(_kActivity, jsonEncode(activity.toJson()));
+
+  // ---------- Takibin başladığı gün ----------
+
+  /// Kullanıcının takibe başladığı an (ölçüm haftası buradan sayılır).
+  DateTime? get trackingStartedAt {
+    final ms = _prefs.getInt(_kTrackingStartedAt);
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  Future<void> setTrackingStartedAt(DateTime time) =>
+      _prefs.setInt(_kTrackingStartedAt, time.millisecondsSinceEpoch);
 
   // ---------- Demo kılıfın küçük hafızası ----------
 
