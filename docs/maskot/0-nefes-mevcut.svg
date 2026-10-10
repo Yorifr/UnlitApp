@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" data-name="Nefes (şu anki)">
+  <!-- Şu anki maskotun (lib/widgets/mascot.dart) birebir SVG kopyası -->
+  <!-- Yer gölgesi -->
+  <ellipse cx="100" cy="186" rx="55" ry="7" fill="#000000" opacity="0.10"/>
+  <!-- Ayaklar -->
+  <ellipse cx="76" cy="176" rx="16" ry="8" fill="#1A9C90"/>
+  <ellipse cx="124" cy="176" rx="16" ry="8" fill="#1A9C90"/>
+  <!-- Kollar: normalde aşağıda -->
+  <g class="mood-happy mood-calm mood-think">
+    <ellipse cx="0" cy="0" rx="11" ry="22" fill="#1A9C90" transform="translate(34 124) rotate(-28.65)"/>
+    <ellipse cx="0" cy="0" rx="11" ry="22" fill="#1A9C90" transform="translate(166 124) rotate(28.65)"/>
+  </g>
+  <!-- Kollar: kutlamada havada -->
+  <g class="mood-cheer">
+    <ellipse cx="0" cy="0" rx="11" ry="22" fill="#1A9C90" transform="translate(34 84) rotate(40.1)"/>
+    <ellipse cx="0" cy="0" rx="11" ry="22" fill="#1A9C90" transform="translate(166 84) rotate(-40.1)"/>
+  </g>
+  <!-- Gövde (alttaki koyu ton gölge gibi) -->
+  <ellipse cx="100" cy="121" rx="70" ry="64" fill="#1A9C90"/>
+  <ellipse cx="100" cy="116" rx="70" ry="64" fill="#2EC4B6"/>
+  <!-- Karın -->
+  <ellipse cx="100" cy="140" rx="40" ry="30" fill="#C9F3EC"/>
+  <!-- Filiz -->
+  <line x1="100" y1="56" x2="100" y2="34" stroke="#4AA32A" stroke-width="6" stroke-linecap="round"/>
+  <path d="M0 0 Q15 -13.5 30 0 Q15 13.5 0 0 Z" fill="#6BCB3B" transform="translate(100 36) rotate(-34.4)"/>
+  <path d="M0 0 Q12 -10.8 24 0 Q12 10.8 0 0 Z" fill="#4AA32A" transform="translate(100 40) rotate(208.65)"/>
+  <!-- Yanaklar -->
+  <ellipse cx="58" cy="120" rx="10" ry="6" fill="#FF9EAA" opacity="0.7"/>
+  <ellipse cx="142" cy="120" rx="10" ry="6" fill="#FF9EAA" opacity="0.7"/>
+  <!-- Açık gözler -->
+  <g class="mood-happy mood-cheer mood-think">
+    <circle cx="76" cy="98" r="17" fill="#FFFFFF"/>
+    <circle cx="124" cy="98" r="17" fill="#FFFFFF"/>
+  </g>
+  <g class="mood-happy mood-cheer">
+    <circle cx="78" cy="100" r="10" fill="#233A3A"/>
+    <circle cx="126" cy="100" r="10" fill="#233A3A"/>
+    <circle cx="74.4" cy="96.4" r="3.2" fill="#FFFFFF"/>
+    <circle cx="122.4" cy="96.4" r="3.2" fill="#FFFFFF"/>
+  </g>
+  <g class="mood-think">
+    <circle cx="79" cy="93" r="10" fill="#233A3A"/>
+    <circle cx="127" cy="93" r="10" fill="#233A3A"/>
+    <circle cx="75.4" cy="89.4" r="3.2" fill="#FFFFFF"/>
+    <circle cx="123.4" cy="89.4" r="3.2" fill="#FFFFFF"/>
+    <circle cx="104" cy="124" r="5" fill="#233A3A"/>
+  </g>
+  <!-- Kapalı, huzurlu gözler -->
+  <g class="mood-calm" fill="none" stroke="#233A3A" stroke-width="6" stroke-linecap="round">
+    <path d="M64 100 Q76 86 88 100"/>
+    <path d="M112 100 Q124 86 136 100"/>
+  </g>
+  <!-- Gülümseme -->
+  <path class="mood-happy mood-calm" d="M86 120 Q100 134 114 120" fill="none" stroke="#233A3A" stroke-width="6" stroke-linecap="round"/>
+  <!-- Kocaman gülüş -->
+  <g class="mood-cheer">
+    <path d="M91 118 Q100 148 109 118 Z" fill="#8A2E3B"/>
+    <ellipse cx="100" cy="129" rx="8" ry="4" fill="#FF8A9A"/>
+  </g>
+</svg>

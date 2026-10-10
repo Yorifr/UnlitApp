@@ -1,0 +1,232 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" data-name="Ferah">
+  <!-- Ferah: nane renkli, sakin bir fil. Adı "ferah ferah nefes almak" deyiminden gelir. -->
+  <!-- Çizim sırası = katman sırası: önce arkadakiler (kulaklar), sonra gövde, kafa, yüz, aksesuarlar. -->
+  <!-- Ek renkler (paletin dışında, Flutter'da MascotColors tablosuna yazılacak):
+       #9B5DEB (bere koyu moru). Geri kalan her renk uygulamanın "Nane" paletinden. -->
+
+  <!-- Yer gölgesi -->
+  <ellipse cx="100" cy="186" rx="44" ry="6" fill="#000000" opacity="0.10"/>
+
+  <!-- Kulaklar (kafanın arkasında, yanlara sarkan yelpaze gibi; alt uçları dışa açık).
+       Sıra: koyu kenar, ana renk, koyu nane iç (pembe değil: daha olgun durur, küçükte fare gibi okunmaz) -->
+  <ellipse cx="0" cy="0" rx="29" ry="36" fill="#1A9C90" transform="translate(45 99) rotate(12)"/>
+  <ellipse cx="0" cy="0" rx="29" ry="36" fill="#1A9C90" transform="translate(155 99) rotate(-12)"/>
+  <ellipse cx="0" cy="0" rx="26" ry="33" fill="#2EC4B6" transform="translate(46 97) rotate(12)"/>
+  <ellipse cx="0" cy="0" rx="26" ry="33" fill="#2EC4B6" transform="translate(154 97) rotate(-12)"/>
+  <ellipse cx="0" cy="0" rx="14" ry="21" fill="#1A9C90" transform="translate(42 101) rotate(12)"/>
+  <ellipse cx="0" cy="0" rx="14" ry="21" fill="#1A9C90" transform="translate(158 101) rotate(-12)"/>
+
+  <!-- Kutlama: kollar havada (V biçimi). Gövdenin ARKASINDA çizilir ki omuzdan çıksın.
+       Koyu alt ton, kolu arkadaki kulaktan ayırır. Uçlarında ikişer tırnak. -->
+  <g class="mood-cheer">
+    <ellipse cx="0" cy="0" rx="11" ry="29.5" fill="#1A9C90" transform="translate(56 113) rotate(-34.8)"/>
+    <ellipse cx="0" cy="0" rx="11" ry="29.5" fill="#1A9C90" transform="translate(144 113) rotate(34.8)"/>
+    <ellipse cx="0" cy="0" rx="9.5" ry="28" fill="#2EC4B6" transform="translate(56 113) rotate(-34.8)"/>
+    <ellipse cx="0" cy="0" rx="9.5" ry="28" fill="#2EC4B6" transform="translate(144 113) rotate(34.8)"/>
+    <g fill="#D7F6F0">
+      <circle cx="45" cy="92" r="2.4"/>
+      <circle cx="40.1" cy="95.4" r="2.4"/>
+      <circle cx="155" cy="92" r="2.4"/>
+      <circle cx="159.9" cy="95.4" r="2.4"/>
+    </g>
+  </g>
+
+  <!-- Gövde: daha uzun ve ince bir oval. Koyu alt ton + ana renk -->
+  <ellipse cx="100" cy="153" rx="37" ry="33" fill="#1A9C90"/>
+  <ellipse cx="100" cy="150" rx="37" ry="33" fill="#2EC4B6"/>
+
+  <!-- Kollar: normalde aşağıda, gövdeye yapışık (koyu alt ton + ana renk) -->
+  <g class="mood-happy mood-calm mood-think">
+    <ellipse cx="0" cy="0" rx="10.5" ry="16.5" fill="#1A9C90" transform="translate(69 151.5) rotate(12)"/>
+    <ellipse cx="0" cy="0" rx="10.5" ry="16.5" fill="#1A9C90" transform="translate(131 151.5) rotate(-12)"/>
+    <ellipse cx="0" cy="0" rx="9" ry="15" fill="#2EC4B6" transform="translate(69 150) rotate(12)"/>
+    <ellipse cx="0" cy="0" rx="9" ry="15" fill="#2EC4B6" transform="translate(131 150) rotate(-12)"/>
+  </g>
+
+  <!-- Ayaklar (küçük, içe yakın) + tırnaklar -->
+  <ellipse cx="83" cy="177" rx="14" ry="10" fill="#1A9C90"/>
+  <ellipse cx="117" cy="177" rx="14" ry="10" fill="#1A9C90"/>
+  <ellipse cx="83" cy="175" rx="13" ry="9" fill="#2EC4B6"/>
+  <ellipse cx="117" cy="175" rx="13" ry="9" fill="#2EC4B6"/>
+  <g fill="#D7F6F0">
+    <circle cx="77.5" cy="179" r="2.3"/>
+    <circle cx="83" cy="180.5" r="2.3"/>
+    <circle cx="88.5" cy="179" r="2.3"/>
+    <circle cx="111.5" cy="179" r="2.3"/>
+    <circle cx="117" cy="180.5" r="2.3"/>
+    <circle cx="122.5" cy="179" r="2.3"/>
+  </g>
+
+  <!-- Kafa: koyu alt ton + ana renk + parlama -->
+  <ellipse cx="100" cy="93" rx="48" ry="44" fill="#1A9C90"/>
+  <ellipse cx="100" cy="90" rx="48" ry="44" fill="#2EC4B6"/>
+  <ellipse cx="0" cy="0" rx="13" ry="7" fill="#FFFFFF" opacity="0.22" transform="translate(77 62) rotate(-28)"/>
+
+  <!-- Yanaklar (yumuşak pembe) -->
+  <ellipse cx="67" cy="104" rx="8" ry="4.8" fill="#FF9EAA" opacity="0.85"/>
+  <ellipse cx="133" cy="104" rx="8" ry="4.8" fill="#FF9EAA" opacity="0.85"/>
+
+  <!-- Açık gözler (neşeli + kutlama) -->
+  <g class="mood-happy mood-cheer">
+    <ellipse cx="80" cy="86" rx="10" ry="12" fill="#233A3A"/>
+    <ellipse cx="120" cy="86" rx="10" ry="12" fill="#233A3A"/>
+    <circle cx="76.8" cy="81.5" r="3.4" fill="#FFFFFF"/>
+    <circle cx="116.8" cy="81.5" r="3.4" fill="#FFFFFF"/>
+    <circle cx="83" cy="91.5" r="1.5" fill="#FFFFFF"/>
+    <circle cx="123" cy="91.5" r="1.5" fill="#FFFFFF"/>
+  </g>
+  <!-- Düşünceli gözler: beyaz göz + yukarı-sağa kaymış göz bebeği (bakış yönü belli olsun) -->
+  <g class="mood-think">
+    <ellipse cx="80" cy="86" rx="10" ry="12" fill="#FFFFFF" stroke="#233A3A" stroke-width="2.5"/>
+    <ellipse cx="120" cy="86" rx="10" ry="12" fill="#FFFFFF" stroke="#233A3A" stroke-width="2.5"/>
+    <circle cx="83" cy="81.5" r="6" fill="#233A3A"/>
+    <circle cx="123" cy="81.5" r="6" fill="#233A3A"/>
+    <circle cx="84.8" cy="79.5" r="2" fill="#FFFFFF"/>
+    <circle cx="124.8" cy="79.5" r="2" fill="#FFFFFF"/>
+  </g>
+  <!-- Düşünceli kaşlar: iki yumuşak, simetrik, hafif kalkık kaş (meraklı; şüpheci değil).
+       Bere ya da kep takılıyken şapkanın altında kalacakları için gizlenir. -->
+  <g class="mood-think hide-acc-bere hide-acc-kep" fill="none" stroke="#233A3A" stroke-width="3.5" stroke-linecap="round">
+    <path d="M71 69 Q80 64 89 68"/>
+    <path d="M111 68 Q120 64 129 69"/>
+  </g>
+  <!-- Kapalı, huzurlu gözler (sakin) -->
+  <g class="mood-calm" fill="none" stroke="#233A3A" stroke-width="5" stroke-linecap="round">
+    <path d="M70 89 Q80 80 90 89"/>
+    <path d="M110 89 Q120 80 130 89"/>
+  </g>
+
+  <!-- Ağızlar (hortumun altında) -->
+  <path class="mood-happy" d="M86 123 Q100 137 114 123" fill="none" stroke="#233A3A" stroke-width="4.5" stroke-linecap="round"/>
+  <path class="mood-calm" d="M90 124 Q100 134 110 124" fill="none" stroke="#233A3A" stroke-width="4.5" stroke-linecap="round"/>
+  <g class="mood-cheer">
+    <path d="M85 119 Q100 146 115 119 Z" fill="#8A2E3B"/>
+    <ellipse cx="100" cy="127.5" rx="7.5" ry="4" fill="#FF8A9A"/>
+  </g>
+  <!-- Düşünceli: küçük "o" ağız (hortumdan uzakta, içinde dil tonu) -->
+  <g class="mood-think">
+    <ellipse cx="113" cy="126" rx="4.8" ry="5.6" fill="#8A2E3B"/>
+    <ellipse cx="113" cy="128.4" rx="2.8" ry="2.3" fill="#FF8A9A"/>
+  </g>
+
+  <!-- Hortum = kalın, uçları yuvarlak bir çizgi. Önce koyu ve daha kalın kopyası
+       (dış çizgi), sonra gövde renginde asıl hortum. Koyu kopya biraz aşağıdan başlar,
+       böylece hortumun kökü yüze yumuşakça karışır, dış çizgi alttan başlar. -->
+  <!-- Hortum: neşeli + sakin (kısa, ucu sağa-yukarı kıvrık) -->
+  <g class="mood-happy mood-calm" fill="none" stroke-linecap="round">
+    <path d="M100.5 101.4 Q101.8 108.9 106 111 Q112 113 114 106" stroke="#1A9C90" stroke-width="20"/>
+    <path d="M100 94 Q100 108 106 111 Q112 113 114 106" stroke="#2EC4B6" stroke-width="15"/>
+    <path d="M94.5 101 Q100 103.5 105.5 101 M95 106 Q100.5 108.5 106 105.5" stroke="#1A9C90" stroke-width="2" opacity="0.7"/>
+  </g>
+  <!-- Hortum: kutlama (yana açılıp ucu yukarı kalkık: sevinç işareti) -->
+  <g class="mood-cheer" fill="none" stroke-linecap="round">
+    <path d="M101.4 102.3 Q104.5 110.6 115 112 Q129 113.5 133.5 103.5" stroke="#1A9C90" stroke-width="20"/>
+    <path d="M100 94 Q100 110 115 112 Q129 113.5 133.5 103.5" stroke="#2EC4B6" stroke-width="15"/>
+    <path d="M94.5 101 Q100 103.5 105.5 101 M95.5 106 Q101 108.5 106.5 105" stroke="#1A9C90" stroke-width="2" opacity="0.7"/>
+  </g>
+  <!-- Hortum: düşünceli (ucu sol yanağa dokunur, "elini çenesine koymuş" gibi) -->
+  <g class="mood-think" fill="none" stroke-linecap="round">
+    <path d="M99.3 103.9 Q97.6 113.6 92 115 Q84 116 83 110" stroke="#1A9C90" stroke-width="20"/>
+    <path d="M100 94 Q100 113 92 115 Q84 116 83 110" stroke="#2EC4B6" stroke-width="15"/>
+    <path d="M94.5 101 Q100 103.5 105.5 101 M94 106 Q99.5 108.5 105 106" stroke="#1A9C90" stroke-width="2" opacity="0.7"/>
+  </g>
+
+  <!-- Kutlama parıltıları (dört köşeli yıldız) -->
+  <g class="mood-cheer" fill="#FFC21A">
+    <path d="M30 34 Q32 42 40 44 Q32 46 30 54 Q28 46 20 44 Q28 42 30 34 Z"/>
+    <path d="M170 28 Q171.5 34 178 35.5 Q171.5 37 170 43 Q168.5 37 162 35.5 Q168.5 34 170 28 Z"/>
+    <path d="M180 58 Q181 62 185 63 Q181 64 180 68 Q179 64 175 63 Q179 62 180 58 Z"/>
+  </g>
+
+  <!-- ===== Aksesuarlar ===== -->
+
+  <!-- Atkı: sarı, koyu-altın örgü çizgili; bir ucu sola eğik sarkar -->
+  <g class="acc-atki">
+    <path d="M62 122 Q100 152 138 122 L142 136 Q100 166 58 136 Z" fill="#FFC21A"/>
+    <path d="M75.5 132.5 L72.5 142.5 M88 137.5 L86.5 147 M100 139.5 L100 148.5 M112 137.5 L113.5 147 M124.5 132.5 L127.5 142.5" fill="none" stroke="#E09B00" stroke-width="3" stroke-linecap="butt"/>
+    <!-- Sarkan uç: kumaş gibi hafif eğik, ayağın üstüne binmez -->
+    <path d="M68 137 L87 142 Q86 151 82.5 160 L63.5 157 Q66 148 68 137 Z" fill="#FFC21A"/>
+    <path d="M74.5 145 L71.5 155 M80.5 147 L77.5 157" fill="none" stroke="#E09B00" stroke-width="2.5" stroke-linecap="butt"/>
+    <path d="M66 158.5 L65.5 162.5 M71 159.3 L70.5 163.3 M76 160 L75.5 164 M81 160.8 L80.5 164.2" fill="none" stroke="#E09B00" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Güneş gözlüğü: saplar kafanın kenarına kadar uzanır -->
+  <g class="acc-gozluk">
+    <line x1="53" y1="84" x2="64" y2="86" stroke="#233A3A" stroke-width="4" stroke-linecap="round"/>
+    <line x1="147" y1="84" x2="136" y2="86" stroke="#233A3A" stroke-width="4" stroke-linecap="round"/>
+    <line x1="96" y1="84" x2="104" y2="84" stroke="#2457D6" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+  <!-- Gözlük camları: neşeli, kutlama, düşünceli: koyu cam + parlama -->
+  <g class="acc-gozluk mood-happy mood-cheer mood-think">
+    <rect x="63" y="75" width="34" height="23" rx="9" fill="#233A3A" stroke="#2457D6" stroke-width="3"/>
+    <rect x="103" y="75" width="34" height="23" rx="9" fill="#233A3A" stroke="#2457D6" stroke-width="3"/>
+    <line x1="70" y1="91" x2="77" y2="81" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+    <line x1="110" y1="91" x2="117" y2="81" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+  </g>
+  <!-- Gözlük camları: sakin: yarı saydam cam, kapalı huzurlu gözler camın arkasından görünür -->
+  <g class="acc-gozluk mood-calm">
+    <rect x="63" y="75" width="34" height="23" rx="9" fill="#233A3A" fill-opacity="0.45" stroke="#2457D6" stroke-width="3"/>
+    <rect x="103" y="75" width="34" height="23" rx="9" fill="#233A3A" fill-opacity="0.45" stroke="#2457D6" stroke-width="3"/>
+  </g>
+  <!-- Kutlama + gözlük: kalkık hortumun ucu camın ÖNÜNDE kalsın diye ucu bir kez daha çizilir -->
+  <g class="acc-gozluk mood-cheer" fill="none" stroke-linecap="round">
+    <path d="M126.6 110.6 Q131.3 108.5 133.5 103.5" stroke="#1A9C90" stroke-width="20"/>
+    <path d="M115 112 Q129 113.5 133.5 103.5" stroke="#2EC4B6" stroke-width="15"/>
+  </g>
+
+  <!-- Yün bere: mor, örgü kenarlı, altın ponpon. Kenarı gözlerin üstünde biter. -->
+  <g class="acc-bere">
+    <path d="M58 60 Q58 26 100 26 Q142 26 142 60 Z" fill="#B27CF7"/>
+    <path d="M77 58 Q77 38 89 31 M100 58 L100 28 M123 58 Q123 38 111 31" fill="none" stroke="#9B5DEB" stroke-width="3" stroke-linecap="round"/>
+    <rect x="55" y="52" width="90" height="16" rx="8" fill="#9B5DEB"/>
+    <path d="M65 55.5 V64.5 M76 55.5 V64.5 M87 55.5 V64.5 M100 55.5 V64.5 M113 55.5 V64.5 M124 55.5 V64.5 M135 55.5 V64.5" fill="none" stroke="#B27CF7" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="100" cy="24" r="8.5" fill="#FFC21A"/>
+  </g>
+
+  <!-- Kulaklık: kafanın üstünden geçen bant + iki yastıklı kulaklık -->
+  <g class="acc-kulaklik">
+    <path d="M52 96 Q46 38 100 38 Q154 38 148 96" fill="none" stroke="#3D7BF7" stroke-width="7" stroke-linecap="round"/>
+    <rect x="37" y="80" width="19" height="32" rx="9.5" fill="#3D7BF7"/>
+    <rect x="144" y="80" width="19" height="32" rx="9.5" fill="#3D7BF7"/>
+    <rect x="51" y="83" width="8" height="26" rx="4" fill="#233A3A"/>
+    <rect x="141" y="83" width="8" height="26" rx="4" fill="#233A3A"/>
+    <circle cx="45" cy="96" r="3.5" fill="#E2ECFF"/>
+    <circle cx="155" cy="96" r="3.5" fill="#E2ECFF"/>
+  </g>
+
+  <!-- Mezuniyet kepi: kafaya oturan koyu bant + kalınlığı olan açık mavi tahta + altın püskül -->
+  <g class="acc-kep">
+    <path d="M70 56 Q100 46 130 56 L130 64 Q100 57 70 64 Z" fill="#2457D6"/>
+    <polygon points="100,31 152,45 100,59 48,45" fill="#2457D6"/>
+    <polygon points="100,28 152,42 100,56 48,42" fill="#3D7BF7"/>
+    <circle cx="100" cy="42" r="3" fill="#FFC21A"/>
+    <path d="M100 42 L140 49 L140 63" fill="none" stroke="#FFC21A" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="140" cy="66" rx="4" ry="6" fill="#FFC21A"/>
+  </g>
+
+  <!-- Yapraklardan taç (7 günlük seri): alnın üstünden geçen dal, dala yatık yapraklar
+       (defne tacı gibi) + tepede altın tomurcuklar -->
+  <g class="acc-tac">
+    <path d="M56 72 Q100 28 144 72" fill="none" stroke="#4AA32A" stroke-width="4" stroke-linecap="round"/>
+    <!-- Dış yapraklar -->
+    <ellipse cx="0" cy="0" rx="4.6" ry="9.2" fill="#4AA32A" transform="translate(62.9 61.8) rotate(23)"/>
+    <ellipse cx="0" cy="0" rx="4.6" ry="9.2" fill="#6BCB3B" transform="translate(73.4 54.6) rotate(30.8)"/>
+    <ellipse cx="0" cy="0" rx="4.6" ry="9.2" fill="#4AA32A" transform="translate(84 49.7) rotate(40.3)"/>
+    <ellipse cx="0" cy="0" rx="4.6" ry="9.2" fill="#6BCB3B" transform="translate(94.5 47.2) rotate(51.5)"/>
+    <ellipse cx="0" cy="0" rx="4.6" ry="9.2" fill="#4AA32A" transform="translate(137.1 61.8) rotate(-23)"/>
+    <ellipse cx="0" cy="0" rx="4.6" ry="9.2" fill="#6BCB3B" transform="translate(126.6 54.6) rotate(-30.8)"/>
+    <ellipse cx="0" cy="0" rx="4.6" ry="9.2" fill="#4AA32A" transform="translate(116 49.7) rotate(-40.3)"/>
+    <ellipse cx="0" cy="0" rx="4.6" ry="9.2" fill="#6BCB3B" transform="translate(105.5 47.2) rotate(-51.5)"/>
+    <!-- İç yapraklar (daha küçük) -->
+    <ellipse cx="0" cy="0" rx="3.6" ry="7.4" fill="#6BCB3B" transform="translate(70.8 62.5) rotate(80)"/>
+    <ellipse cx="0" cy="0" rx="3.6" ry="7.4" fill="#4AA32A" transform="translate(80.6 56.8) rotate(88.8)"/>
+    <ellipse cx="0" cy="0" rx="3.6" ry="7.4" fill="#6BCB3B" transform="translate(90.2 53.4) rotate(99.2)"/>
+    <ellipse cx="0" cy="0" rx="3.6" ry="7.4" fill="#6BCB3B" transform="translate(129.2 62.5) rotate(-80)"/>
+    <ellipse cx="0" cy="0" rx="3.6" ry="7.4" fill="#4AA32A" transform="translate(119.4 56.8) rotate(-88.8)"/>
+    <ellipse cx="0" cy="0" rx="3.6" ry="7.4" fill="#6BCB3B" transform="translate(109.8 53.4) rotate(-99.2)"/>
+    <!-- Altın tomurcuklar -->
+    <circle cx="100" cy="46" r="4.6" fill="#FFC21A"/>
+    <circle cx="92" cy="47.5" r="3.2" fill="#FFC21A"/>
+    <circle cx="108" cy="47.5" r="3.2" fill="#FFC21A"/>
+  </g>
+</svg>

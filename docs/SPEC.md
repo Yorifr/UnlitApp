@@ -626,6 +626,9 @@ birebir doğrulayın):
 ### Aşama 6 — Karakter
 - [ ] Enerji (azaltma) ve sağlık (sigarasız süre) göstergeleri; maskot
       asla ölmez, üzgün çizilmez
+- [ ] Maskot seçimi (docs/maskot/) ve Flutter'a taşıma; filizin büyüme
+      aşaması sadece toplam puana bağlı, asla geri gitmez (test ile)
+- [ ] (Öneri) Puanla açılan dolap: eşikle açılan aksesuarlar, harcama yok
 
 ### Aşama 7 — Bluetooth + CSV
 - [ ] Firmware ile protokol (yukarıdaki taslak) kesinleştirme
@@ -678,6 +681,15 @@ birebir doğrulayın):
 - **Maskotun adı ve görünüşü:** Şimdilik "Nefes" (`lib/widgets/mascot.dart`
   → `mascotName`). Ekip isterse değiştirebilir. Duolingo'nun adı, logosu
   veya baykuşu kullanılmaz; sadece tarzından ilham alınır.
+  **Yeni tasarım önerileri: [docs/maskot/](maskot/README.md)** (elle SVG, yapay
+  zekâ yok): Nefes 2.0 (öneri; başındaki filiz puanla büyür), Filiz, Balina,
+  Ferah (fil), Kaplumbağa. Balina ("Mavi Balina" çağrışımı) ve Ferah (hortum →
+  nargile) elenmeli. Karar ekipte; önce 5–8 yetişkin sigara içiciyle kısa test.
+- **Puanla açılan dolap (öneri, karar bekliyor):** Puanlar harcanmaz (toplam
+  puan hiç düşmez); eşyalar belli puanlarda ve anlamlı anlarda (ölçüm haftası
+  bitince kep, 7 günlük seride taç) açılır, bir daha kaybolmaz. Sürpriz kutu,
+  "sadece bugün", tetikleyici eşya yok. Ayrıntı: docs/maskot/README.md. Bu
+  yeni bir oyun mekaniği; uygulanırsa Bölüm 3'e kural olarak yazılmalı.
 - **Seslerin iPhone'da denenmesi:** Web Audio'nun iPhone Safari'de ilk
   dokunuşla açılması tasarlandı ve Chrome'da doğrulandı, ama gerçek bir
   iPhone'da denenmeli. iPhone sessiz moddaysa web'de ses duyulmaz (bilerek).
