@@ -6,7 +6,7 @@ publish_to: 'none' # pub.dev'e yayınlanmayacak
 
 # Sürüm: 0.1.0 = görünen sürüm, +1 = derleme numarası.
 # Değiştirirsen lib/app_info.dart içindeki appVersion'ı da güncelle.
-version: 0.3.0+3
+version: 0.4.0+4
 
 environment:
   sdk: ^3.13.5

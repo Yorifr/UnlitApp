@@ -86,3 +86,58 @@ String formatTimeAgo(DateTime time, DateTime now) {
 
 /// Yüzde: Türkçede yüzde işareti sayıdan ÖNCE gelir → "%12"
 String formatPercent(double percent) => '%${percent.abs().round()}';
+
+/// "1 Ekim" (gün + ay)
+String formatDayMonth(DateTime d) => '${d.day} ${_months[d.month - 1]}';
+
+// ---------- Paket fiyatı ----------
+
+/// Kullanıcının yazdığı fiyatı sayıya çevirir: "95,50" veya "95.50" → 95.5.
+/// Geçersizse (boş, sıfır, saçma büyük) null döner.
+double? parsePrice(String text) {
+  final value = double.tryParse(text.trim().replaceAll(',', '.'));
+  if (value == null || value <= 0 || value > 100000) return null;
+  return value;
+}
+
+/// Fiyatı yazı kutusuna koymak için: 95.5 → "95,5", 100.0 → "100"
+String priceToInput(double price) {
+  final isWhole = price == price.roundToDouble();
+  return (isWhole ? price.toStringAsFixed(0) : price.toString()).replaceAll(
+    '.',
+    ',',
+  );
+}
+
+/// Paket boyutu: 10 → "10’lu", 20 → "20’li", 25 → "25’li"
+///
+/// Türkçede ek, sayının OKUNUŞUNUN son sesli harfine uyar (on → -lu,
+/// yirmi → -li, beş → -li...). Bu yüzden son basamağa (ya da onluğa)
+/// göre hazır bir tablo kullanıyoruz.
+String perPackLabel(int n) {
+  // 1–9'un okunuşuna göre ek: bir, iki, üç, dört, beş, altı, yedi, sekiz, dokuz
+  const ones = ['', 'li', 'li', 'lü', 'lü', 'li', 'lı', 'li', 'li', 'lu'];
+  // 10–90: on, yirmi, otuz, kırk, elli, altmış, yetmiş, seksen, doksan
+  const tens = ['', 'lu', 'li', 'lu', 'lı', 'li', 'lı', 'li', 'li', 'lı'];
+  final String suffix;
+  if (n % 10 != 0) {
+    suffix = ones[n % 10];
+  } else if (n < 100) {
+    suffix = tens[n ~/ 10];
+  } else {
+    suffix = 'lü'; // yüz
+  }
+  return '$n’$suffix';
+}
+
+/// "5 Ekim’den beri", "10 Ağustos’tan beri"
+///
+/// Ek, ay adının son harfine göre değişir (Ekim’den, Kasım’dan,
+/// Ağustos’tan). Her ay için hazır yazdık.
+String formatSince(DateTime d) {
+  const suffixes = [
+    '’tan', '’tan', '’tan', '’dan', '’tan', '’dan', // Ocak … Haziran
+    '’dan', '’tan', '’den', '’den', '’dan', '’tan', // Temmuz … Aralık
+  ];
+  return '${formatDayMonth(d)}${suffixes[d.month - 1]} beri';
+}

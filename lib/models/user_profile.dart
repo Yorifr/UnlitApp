@@ -3,6 +3,9 @@
 /// Tüm sorular isteğe bağlı olduğu için alanların çoğu boş (null) olabilir.
 /// Uygulamanın her yeri "bu bilgi yoksa ne yaparım?" sorusunu düşünmeli.
 ///
+/// Paket fiyatı BURADA DEĞİL: sık değiştiği ve tarihiyle saklanması gerektiği
+/// için ayrı tutulur (bkz. models/pack_price.dart).
+///
 /// Not: Bu sınıfı bilerek "değiştirilebilir" (mutable) yazdık; onboarding
 /// ekranı cevapları doğrudan bu nesneye yazar. Kaydetmeden önce [copy] ile
 /// bir kopya üzerinde çalışırız ki yarım kalan değişiklikler asıl profili
@@ -12,8 +15,6 @@ class UserProfile {
     this.cigarettesPerDay,
     this.yearsSmoking,
     this.firstCigarette,
-    this.packPrice,
-    this.cigarettesPerPack = 20,
     Set<SmokingTrigger>? triggers,
     this.goal,
     this.quitDesire,
@@ -36,12 +37,6 @@ class UserProfile {
   /// Uyandıktan sonra ilk sigarayı ne zaman içtiği (Fagerström testi 1. soru).
   FirstCigaretteTime? firstCigarette;
 
-  /// Bir paketin fiyatı (₺).
-  double? packPrice;
-
-  /// Bir pakette kaç sigara olduğu (Türkiye'de genelde 20).
-  int cigarettesPerPack;
-
   /// Sigara isteğini tetikleyen durumlar (kahve, stres, ...).
   Set<SmokingTrigger> triggers;
 
@@ -63,13 +58,6 @@ class UserProfile {
   /// önerilerde kullanılacak).
   Set<Activity> activities;
 
-  /// Bir sigaranın fiyatı (₺). Paket fiyatı bilinmiyorsa null.
-  double? get pricePerCigarette {
-    final price = packPrice;
-    if (price == null || cigarettesPerPack <= 0) return null;
-    return price / cigarettesPerPack;
-  }
-
   /// Profilin bağımsız bir kopyasını üretir.
   UserProfile copy() => UserProfile.fromJson(toJson());
 
@@ -78,8 +66,6 @@ class UserProfile {
     'cigarettesPerDay': cigarettesPerDay,
     'yearsSmoking': yearsSmoking,
     'firstCigarette': firstCigarette?.name,
-    'packPrice': packPrice,
-    'cigarettesPerPack': cigarettesPerPack,
     'triggers': triggers.map((t) => t.name).toList(),
     'goal': goal?.name,
     'quitDesire': quitDesire,
@@ -99,8 +85,6 @@ class UserProfile {
         FirstCigaretteTime.values,
         json['firstCigarette'],
       ),
-      packPrice: (json['packPrice'] as num?)?.toDouble(),
-      cigarettesPerPack: _asInt(json['cigarettesPerPack']) ?? 20,
       triggers: _enumSet(SmokingTrigger.values, json['triggers']),
       goal: _enumByName(QuitGoal.values, json['goal']),
       quitDesire: _asInt(json['quitDesire']),

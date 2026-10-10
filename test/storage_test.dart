@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/models/activity_log.dart';
+import 'package:unlit/models/pack_price.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/services/storage_service.dart';
@@ -14,7 +15,6 @@ void main() {
       cigarettesPerDay: 18,
       yearsSmoking: 0,
       firstCigarette: FirstCigaretteTime.within30Min,
-      packPrice: 95.5,
       triggers: {SmokingTrigger.coffee, SmokingTrigger.stress},
       goal: QuitGoal.reduce,
       quitDesire: 7,
@@ -26,7 +26,40 @@ void main() {
 
     final loaded = storage.loadProfile();
     expect(loaded.toJson(), profile.toJson());
-    expect(loaded.pricePerCigarette, closeTo(95.5 / 20, 0.0001));
+  });
+
+  test('fiyat geçmişi kaydedilip sıralı geri okunur', () async {
+    final storage = await StorageService.create();
+    await storage.savePrices(
+      PriceHistory([
+        PackPrice(since: DateTime(2026, 10, 8), price: 115),
+        PackPrice(since: DateTime(2026, 10, 1), price: 105, perPack: 25),
+      ]),
+    );
+    final loaded = storage.loadPrices();
+    expect(loaded.entries.length, 2);
+    expect(loaded.entries.first.perPack, 25);
+    expect(loaded.current!.price, 115);
+  });
+
+  test('bozuk fiyat satırları atlanır', () {
+    final prices = PriceHistory.fromJson([
+      {'s': 1, 'p': 100},
+      {'s': 2, 'p': -5}, // negatif fiyat → geçersiz
+      'yanlış tip',
+    ]);
+    expect(prices.entries.length, 1);
+    expect(prices.current!.perPack, 20); // adet yoksa 20
+  });
+
+  test('eski sürümün profildeki fiyatı okunabilir (taşıma için)', () async {
+    SharedPreferences.setMockInitialValues({
+      'flutter.profile': '{"packPrice": 95.5, "cigarettesPerPack": 10}',
+    });
+    final storage = await StorageService.create();
+    final legacy = storage.loadLegacyPackPrice();
+    expect(legacy?.price, 95.5);
+    expect(legacy?.perPack, 10);
   });
 
   test('tanınmayan değerler uygulamayı çökertmez', () {
@@ -38,7 +71,6 @@ void main() {
     expect(profile.firstCigarette, isNull);
     expect(profile.triggers, {SmokingTrigger.coffee});
     expect(profile.cigarettesPerDay, isNull);
-    expect(profile.cigarettesPerPack, 20);
   });
 
   test('olaylar kaydedilip geri okunur', () async {

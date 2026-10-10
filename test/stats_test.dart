@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unlit/logic/stats.dart';
+import 'package:unlit/models/pack_price.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
 
@@ -78,10 +79,75 @@ void main() {
     expect(firstEventOfDay(events, now), DateTime(2026, 10, 10, 8, 10));
   });
 
-  test('para: paket fiyatı / paketteki adet', () {
-    final profile = UserProfile(packPrice: 100, cigarettesPerPack: 20);
-    expect(moneyFor(12, profile), 60); // 12 × 5 ₺
-    expect(moneyFor(12, UserProfile()), isNull); // fiyat bilinmiyor
+  group('para', () {
+    // 1 Ekim'den beri 100 ₺ (20'li → sigara 5 ₺),
+    // 8 Ekim'den beri 120 ₺ (20'li → sigara 6 ₺)
+    final prices = PriceHistory([
+      PackPrice(since: DateTime(2026, 10, 8), price: 120),
+      PackPrice(since: DateTime(2026, 10, 1), price: 100),
+    ]);
+
+    test('her sigara kendi tarihindeki fiyatla hesaplanır', () {
+      final events = [
+        at(DateTime(2026, 10, 7, 9)), // zamdan önce: 5 ₺
+        at(DateTime(2026, 10, 7, 21)), // zamdan önce: 5 ₺
+        at(DateTime(2026, 10, 8, 9)), // zamdan sonra: 6 ₺
+      ];
+      final money = moneyBetween(
+        events,
+        DateTime(2026, 10, 1),
+        DateTime(2026, 10, 9),
+        prices,
+      );
+      expect(money, closeTo(16, 0.0001));
+    });
+
+    test('ilk fiyattan önceki kayıtlar ilk fiyatla hesaplanır', () {
+      final events = [at(DateTime(2026, 9, 25, 9))];
+      expect(
+        moneyBetween(
+          events,
+          DateTime(2026, 9, 1),
+          DateTime(2026, 10, 1),
+          prices,
+        ),
+        closeTo(5, 0.0001),
+      );
+    });
+
+    test('fiyat yoksa tutar bilinmez (null), uydurulmaz', () {
+      expect(
+        moneyBetween([at(now)], DateTime(2026), now, PriceHistory()),
+        isNull,
+      );
+    });
+
+    test('dönem içinde fiyat değişti mi?', () {
+      expect(
+        priceChangedBetween(
+          prices,
+          DateTime(2026, 10, 5),
+          DateTime(2026, 10, 9),
+        ),
+        isTrue,
+      );
+      expect(
+        priceChangedBetween(
+          prices,
+          DateTime(2026, 10, 9),
+          DateTime(2026, 10, 10),
+        ),
+        isFalse,
+      );
+    });
+
+    test('paketteki adet hesaba katılır', () {
+      final tens = PriceHistory([
+        PackPrice(since: DateTime(2026), price: 60, perPack: 10),
+      ]);
+      expect(tens.current!.perCigarette, 6);
+      expect(tens.at(DateTime(2025, 1, 1))!.price, 60);
+    });
   });
 
   test('yaşam süresi: erkek 17, kadın 22, belirtilmemiş 20 dk', () {

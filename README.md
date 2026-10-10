@@ -32,6 +32,8 @@ suçlamaz:
   haftada bir kaçırılan gün affedilir.
 - **İstatistik:** bugünkü sayı, geçen haftayla karşılaştırma, grafik,
   harcanan para, sigaraya giden süre, tahmini yaşam süresi etkisi.
+- **Paket fiyatı:** Zam gelince İstatistik → "Paket fiyatı" kartından
+  güncelle; eski günlerin harcaması eski fiyatla kalır.
 - **Ses ve titreşim:** görev "ding-ding"i, büyük başarıda fanfar, nefes
   egzersizinde ipucu sesleri, erteleme bitince zil. Ayarlar'dan
   kapatılabilir. Telefonda sessiz moda uyar ve müziği durdurmaz.

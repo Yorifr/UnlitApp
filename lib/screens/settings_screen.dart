@@ -6,6 +6,8 @@ import '../services/demo_activity.dart';
 import '../services/demo_device_service.dart';
 import '../services/device_service.dart';
 import '../services/effects.dart';
+import '../utils/format.dart';
+import '../widgets/price_sheet.dart';
 import '../widgets/privacy_banner.dart';
 import 'onboarding_screen.dart';
 
@@ -91,7 +93,7 @@ class SettingsScreen extends StatelessWidget {
                 leading: const Icon(Icons.edit_outlined),
                 title: const Text('Bilgilerimi düzenle'),
                 subtitle: const Text(
-                  'Sigara alışkanlığı, paket fiyatı, hedef ve profil',
+                  'Sigara alışkanlığı, tetikleyiciler, hedef ve profil',
                 ),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -99,6 +101,25 @@ class SettingsScreen extends StatelessWidget {
                         OnboardingScreen(state: state, editMode: true),
                   ),
                 ),
+              ),
+              // Fiyat değişince güncel özeti göstersin diye state'i dinler.
+              ListenableBuilder(
+                listenable: state,
+                builder: (context, _) {
+                  final current = state.prices.current;
+                  return ListTile(
+                    leading: const Icon(Icons.sell_outlined),
+                    title: const Text('Paket fiyatı'),
+                    subtitle: Text(
+                      current == null
+                          ? 'Henüz girilmedi'
+                          : '${formatMoney(current.price)} · '
+                                '${perPackLabel(current.perPack)} · '
+                                '${formatSince(current.since)}',
+                    ),
+                    onTap: () => showPriceSheet(context, state),
+                  );
+                },
               ),
               const _SectionTitle('Gizlilik'),
               const Padding(
