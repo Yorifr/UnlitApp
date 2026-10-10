@@ -35,22 +35,6 @@ suçlamaz:
 
 ---
 
-## GitHub Pages'i açma (bir kez yapılır)
-
-Web sürümü, `main` dalına yapılan her push'ta GitHub Actions ile otomatik
-derlenip GitHub Pages'e yayınlanır (`.github/workflows/pages.yml`).
-İlk sefer için:
-
-1. GitHub'da repoyu aç → **Settings** (Ayarlar) → soldaki menüden **Pages**.
-2. **Build and deployment** → **Source** kısmında **GitHub Actions**'ı seç.
-   (Başka bir şey kaydetmen gerekmez.)
-3. Kodun `main` dalına gelmesini sağla: çalıştığımız dal için bir
-   **Pull Request** aç ve **Merge** et. (Ya da `main`'e doğrudan push et.)
-4. **Actions** sekmesinde "Web'i yayınla (GitHub Pages)" çalışmasını izle.
-   Yeşil tik olunca site şu adreste açılır:
-   **https://yorifr.github.io/UnlitApp/** (ilk yayın 1–2 dakika sürebilir).
-5. Elle yeniden yayınlamak için: **Actions** → "Web'i yayınla (GitHub
-   Pages)" → **Run workflow** (dal: `main`).
 
 **Sorun çıkarsa:**
 - Site 404 veriyorsa: 2. adımda kaynağın **GitHub Actions** seçili olduğundan
