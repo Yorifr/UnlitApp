@@ -47,7 +47,9 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
    götürmez, seriyi bozmaz, kutlama/mesaj tetiklemez. Seri "sigarasız
    gün" değil "en az bir görev yapılan gün" sayar (dinlenme günüyle).
    Maskot asla üzgün/kızgın çizilmez. "Can/kalp", lig, suçlayan bildirim
-   yok. Yeni bir oyun mekaniği eklerken önce SPEC.md Bölüm 3'e bak.
+   yok. Puan HARCANMAZ: "Nefes'in dolabı"ndaki eşyalar eşikle açılır ve
+   kaybolmaz; başındaki filiz sadece toplam puanla büyür, asla küçülmez.
+   Yeni bir oyun mekaniği eklerken önce SPEC.md Bölüm 3'e bak.
 6. **Kılıf erişimi sadece `DeviceService` üzerinden.** Ekranlar Bluetooth'u
    ya da demo detaylarını bilmez (tek istisna: ayarlardaki ve "Bugün" sekmesindeki
    demo butonları `is DemoDeviceService` kontrolüyle gösterilir).
@@ -78,15 +80,17 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
   `effects.dart` (ses + titreşim) ve ses oynatıcılar (`sound_player*.dart`).
 - `lib/logic/`: **saf** hesap fonksiyonları (`stats.dart`,
   `measurement.dart` (ölçüm haftası özeti + "Kazandıkların"), `quests.dart`,
-  `rewards.dart`, `mascot_messages.dart`); `now`'ı parametre olarak alır →
+  `rewards.dart`, `wardrobe.dart` (dolap: eşya açılma, filiz aşaması),
+  `mascot_messages.dart`); `now`'ı parametre olarak alır →
   kolay test. Yeni hesapları buraya koy ve test yaz. XP miktarları
   `rewards.dart`'ın başında. (Kodda adı XP, ekranda "puan".)
 - `lib/utils/format.dart`: Türkçe tarih/para/süre/yüzde yazımı.
 - `lib/screens/`: onboarding, `main_screen` (alt menü) + `today_tab`,
   `stats_tab`, `profile_tab`; erteleme, nefes, kutlama, ölçüm haftası
-  özeti, ayarlar.
-- `lib/widgets/`: `chunky.dart` (tok buton/kart/çubuk), `mascot.dart`,
-  `confetti.dart`, `pickers.dart`, `reason_note.dart` (kendine not), ...
+  özeti, Nefes'in dolabı, ayarlar.
+- `lib/widgets/`: `chunky.dart` (tok buton/kart/çubuk), `mascot.dart`
+  (+ `mascot_painter.dart`, `svg_path.dart`), `confetti.dart`,
+  `pickers.dart`, `reason_note.dart` (kendine not), ...
 
 ## Tasarım dili (Duolingo tarzı)
 - **Sade ve anlaşılır:** Her işin TEK giriş noktası olsun (aynı şeyi iki
@@ -107,6 +111,12 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
   "İLERİ"); kartlar `ChunkyCard`; ilerleme `ChunkyProgressBar`.
 - Maskotla konuşma: `MascotSpeech(text:, mood:)`. Cümle seçimi
   `logic/mascot_messages.dart`'ta, kurallara uygun (suçlama yok, kendi veri).
+- **Maskot çizimi:** Nefes 2.0, `docs/maskot/1-nefes-2.svg` tasarımının
+  birebir kod hâli (`widgets/mascot_painter.dart`; şekiller SVG'deki `d="..."`
+  yazılarıyla, `svgPath(...)` üzerinden). Çizimi değiştirirsen SVG'yi de
+  aynı koordinatlarla güncelle. Maskot, filiz aşamasını ve takılı eşyaları
+  uygulama kökündeki `MascotAppearance`'tan alır; ekranlara ayrıca bilgi
+  geçirme. Önizleme için `Mascot(look: ...)`.
 - Bir şey başarıldığında `CelebrationScreen.show(...)`; zor anlarda
   `calm: true` (konfetisiz, destekleyici).
 - Yazı tipi Nunito (`assets/fonts/`, gömülü). Ağırlıklar: 500/700/800/900.

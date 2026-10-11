@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/app_state.dart';
 import 'package:unlit/logic/rewards.dart';
 import 'package:unlit/models/activity_log.dart';
+import 'package:unlit/models/mascot_look.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/services/device_service.dart';
@@ -215,6 +216,149 @@ void main() {
       expect(saved.contains('quitDesire'), isFalse);
     },
   );
+
+  group('Nefes\'in dolabı', () {
+    /// Takibi başlatır ve dünkü tarihe [xp] puan yazar (eşiklere hızlı
+    /// yaklaşmak için).
+    Future<void> startWithXp(int xp) async {
+      await state.completeOnboarding(UserProfile());
+      await state.replaceAll(
+        events: [],
+        activity: ActivityLog(
+          xp: [
+            XpEntry(
+              time: now.subtract(const Duration(days: 1)),
+              amount: xp,
+              reason: XpReason.welcome,
+            ),
+          ],
+        ),
+        trackingStartedAt: now,
+      );
+    }
+
+    test('100 puanı geçince gözlük açılır, kutlanır ve takılır', () async {
+      await startWithXp(95);
+      expect(state.unlockedAccessories, isEmpty);
+      final reward = await state.logMood(Mood.good); // +10 görev
+      expect(reward.newAccessories, [Accessory.gozluk]);
+      expect(state.mascotLook.wears(Accessory.gozluk), isTrue);
+      // Aynı eşya bir daha "yeni" diye kutlanmaz.
+      final again = await state.logBreathing();
+      expect(again.newAccessories, isEmpty);
+    });
+
+    test('300 puanda filiz büyür; puan düşmediği için hiç küçülmez', () async {
+      await startWithXp(290);
+      expect(state.sproutStage, 1);
+      final reward = await state.logMood(Mood.okay);
+      expect(reward.grownToStage, 2);
+      expect(state.sproutStage, 2);
+      // Sigara içmek hiçbir şeyi değiştirmez.
+      device.emit(now);
+      await Future<void>.delayed(Duration.zero);
+      expect(state.sproutStage, 2);
+      expect(state.unlockedAccessories, contains(Accessory.gozluk));
+    });
+
+    test('takılan eşya kaydedilir; kilitli eşya takılamaz', () async {
+      await startWithXp(600);
+      await state.toggleOutfit(Accessory.kulaklik);
+      await state.toggleOutfit(Accessory.bere); // 1000 puan: kilitli
+      expect(state.mascotLook.accessories, {Accessory.kulaklik});
+
+      final reloaded = AppState(
+        storage: await StorageService.create(),
+        device: FakeDevice(),
+        clock: () => now,
+      );
+      await reloaded.start();
+      expect(reloaded.mascotLook.accessories, {Accessory.kulaklik});
+    });
+
+    test(
+      'ölçüm haftası özeti görülünce kep takılır (sadece ilk sefer)',
+      () async {
+        await state.completeOnboarding(UserProfile());
+        now = DateTime(2026, 10, 18, 9); // ölçüm haftası bitti
+        expect(state.unlockedAccessories, contains(Accessory.kep));
+        await state.markMeasurementSummarySeen();
+        expect(state.mascotLook.wears(Accessory.kep), isTrue);
+
+        // Kullanıcı kepi çıkarır; özeti tekrar açması kepi geri takmaz.
+        await state.toggleOutfit(Accessory.kep);
+        await state.markMeasurementSummarySeen();
+        expect(state.mascotLook.wears(Accessory.kep), isFalse);
+      },
+    );
+
+    test('taç bir gün önce takılmış olsa da özette kep takılır', () async {
+      await state.completeOnboarding(UserProfile());
+      for (var day = 11; day <= 16; day++) {
+        now = DateTime(2026, 10, day, 9);
+        device.emit(now); // ölçüm haftasında kayıt var: özet çıkacak
+        await Future<void>.delayed(Duration.zero);
+        await state.logMood(Mood.good);
+      }
+      expect(state.mascotLook.wears(Accessory.tac), isTrue); // 7 günlük seri
+      now = DateTime(2026, 10, 17, 9);
+      expect(state.measurementSummaryPending, isTrue);
+      await state.markMeasurementSummarySeen();
+      expect(state.mascotLook.wears(Accessory.kep), isTrue);
+      expect(state.mascotLook.wears(Accessory.tac), isFalse);
+      expect(state.unlockedAccessories, contains(Accessory.tac)); // kaybolmaz
+    });
+
+    test(
+      'ölçüm haftasında hiç kayıt yoksa kep ilk kutlamada haber verilir',
+      () async {
+        await state.completeOnboarding(UserProfile());
+        now = DateTime(2026, 10, 18, 9);
+        expect(
+          state.measurementSummaryPending,
+          isFalse,
+        ); // özetlenecek kayıt yok
+        final reward = await state.logMood(Mood.good);
+        expect(reward.newAccessories, contains(Accessory.kep));
+        expect(state.mascotLook.wears(Accessory.kep), isTrue);
+        // Bir kez: sonraki eylemde tekrar haber yok.
+        final again = await state.logBreathing();
+        expect(again.newAccessories, isEmpty);
+      },
+    );
+
+    test('eski sürümden gelen kullanıcıda açılmış eşyalar bir kez takılır', () async {
+      SharedPreferences.setMockInitialValues({
+        'flutter.onboarding_done': true,
+        'flutter.tracking_started_at': now.millisecondsSinceEpoch,
+        'flutter.activity':
+            '{"xp": [{"t": ${now.millisecondsSinceEpoch}, "a": 300, "r": "welcome"}]}',
+      });
+      final old = AppState(
+        storage: await StorageService.create(),
+        device: FakeDevice(),
+        clock: () => now,
+      );
+      await old.start();
+      expect(old.mascotLook.accessories, {Accessory.gozluk, Accessory.atki});
+    });
+
+    test('kayıtlar sıfırlanınca dolap ve filiz de baştan başlar', () async {
+      await startWithXp(1200);
+      await state.toggleOutfit(Accessory.bere);
+      expect(state.sproutStage, 3);
+      await state.resetEventsAndProgress();
+      expect(state.mascotLook, MascotLook.plain);
+      expect(state.storage.loadOutfit(), isEmpty); // bayat kayıt kalmasın
+    });
+
+    test('tüm veriler silinince dolap da boşalır', () async {
+      await startWithXp(600);
+      await state.toggleOutfit(Accessory.atki);
+      await state.deleteAllData();
+      expect(state.mascotLook, MascotLook.plain);
+    });
+  });
 
   group('paket fiyatı', () {
     test(

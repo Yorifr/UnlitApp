@@ -118,6 +118,9 @@ class _BreathingScreenState extends State<BreathingScreen>
                         : 'Rahat bir yere otur. Hazır olunca başlayalım.',
                     mood: MascotMood.calm,
                     mascotSize: 72,
+                    // Nefes de seninle nefes alır: daire büyürken gövdesi
+                    // hafifçe şişer (en fazla %6), küçülürken iner.
+                    mascotScale: _started ? 1 + 0.06 * (scale - 0.6) / 0.4 : 1,
                   ),
                   Expanded(
                     child: Center(

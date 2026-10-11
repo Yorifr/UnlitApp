@@ -82,7 +82,8 @@ class SettingsScreen extends StatelessWidget {
                   leading: const Icon(Icons.restart_alt),
                   title: const Text('Demo verisini sıfırla'),
                   subtitle: const Text(
-                    'Kayıtları, puanları ve seriyi siler. Cevapların kalır.',
+                    'Kayıtları, puanları, seriyi ve dolabı siler. Cevapların '
+                    'kalır.',
                   ),
                   onTap: () => _resetEvents(context),
                 ),
@@ -206,7 +207,8 @@ class SettingsScreen extends StatelessWidget {
         title: 'Demo verisi üretilsin mi?',
         message:
             'Mevcut sigara kayıtları, puanlar ve görevler silinip yerine son '
-            'iki haftanın yeni demo verisi oluşturulacak.',
+            'iki haftanın yeni demo verisi oluşturulacak. Dolaptaki eşyalar '
+            've filiz demo puanına göre yeniden hesaplanır.',
         action: 'Üret',
       );
       if (!ok) return;
@@ -222,7 +224,8 @@ class SettingsScreen extends StatelessWidget {
       context,
       title: 'Kayıtlar silinsin mi?',
       message:
-          'Tüm sigara kayıtları, puanlar, seri ve görevler silinecek. Onboarding '
+          'Tüm sigara kayıtları, puanlar, seri ve görevler silinecek; '
+          'Nefes\'in dolabı ve filiz de baştan başlar. Onboarding '
           'cevapların kalır.',
       action: 'Sil',
     );

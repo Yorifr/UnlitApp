@@ -74,7 +74,9 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
     final big =
         reward.has(XpReason.allQuests) ||
         reward.has(XpReason.delaySuccess) ||
-        reward.has(XpReason.welcome);
+        reward.has(XpReason.welcome) ||
+        reward.newAccessories.isNotEmpty ||
+        reward.grownToStage != null;
     Effects.celebrate(big: big, calm: widget.calm);
   }
 
@@ -190,6 +192,26 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
                                 ],
                               ],
                             ),
+                            if (reward.grownToStage != null) ...[
+                              const SizedBox(height: 12),
+                              _NewsBanner(
+                                icon: streakIcon,
+                                color: c.leaf,
+                                text:
+                                    'Filizin büyüdü: '
+                                    '${reward.grownToStage}. aşama!',
+                              ),
+                            ],
+                            for (final a in reward.newAccessories) ...[
+                              const SizedBox(height: 12),
+                              _NewsBanner(
+                                icon: Icons.checkroom,
+                                color: c.purple,
+                                text:
+                                    'Nefes\'in dolabında yeni eşya: '
+                                    '${a.label}!',
+                              ),
+                            ],
                             const SizedBox(height: 16),
                             for (final gain in reward.gains)
                               Padding(
@@ -283,6 +305,42 @@ class _RewardTile extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kutlamada "yeni eşya açıldı" / "filiz büyüdü" haberi.
+class _NewsBanner extends StatelessWidget {
+  const _NewsBanner({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color, width: 2),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 26),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text, style: Theme.of(context).textTheme.titleSmall),
           ),
         ],
       ),

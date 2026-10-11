@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/activity_log.dart';
+import '../models/mascot_look.dart';
 import '../models/pack_price.dart';
 import '../models/smoking_event.dart';
 import '../models/user_profile.dart';
@@ -39,6 +40,7 @@ class StorageService {
   static const _kPrices = 'prices';
   static const _kPriceConfirmedAt = 'price_confirmed_at';
   static const _kMeasurementSummarySeen = 'measurement_summary_seen';
+  static const _kMascotOutfit = 'mascot_outfit';
 
   // ---------- Profil ----------
 
@@ -177,6 +179,24 @@ class StorageService {
 
   Future<void> setMeasurementSummarySeen(bool value) =>
       _prefs.setBool(_kMeasurementSummarySeen, value);
+
+  // ---------- Nefes'in dolabı ----------
+
+  /// Maskotun taktığı eşyalar (adlarıyla saklanır; tanınmayanlar atlanır).
+  Set<Accessory> loadOutfit() {
+    final names = _prefs.getStringList(_kMascotOutfit) ?? const [];
+    final byName = Accessory.values.asNameMap();
+    return {
+      for (final n in names)
+        if (byName[n] != null) byName[n]!,
+    };
+  }
+
+  /// Dolap hiç kaydedildi mi? (Eski sürümden gelen kullanıcıyı anlamak için.)
+  bool get hasOutfit => _prefs.containsKey(_kMascotOutfit);
+
+  Future<void> saveOutfit(Set<Accessory> outfit) =>
+      _prefs.setStringList(_kMascotOutfit, [for (final a in outfit) a.name]);
 
   // ---------- Küçük ayarlar (ses açık mı vb.) ----------
 

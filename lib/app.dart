@@ -7,6 +7,7 @@ import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/effects.dart';
 import 'theme.dart';
+import 'widgets/mascot.dart';
 
 /// Uygulamanın kök bileşeni: tema, dil ve ilk ekran burada ayarlanır.
 class UnlitApp extends StatelessWidget {
@@ -32,8 +33,16 @@ class UnlitApp extends StatelessWidget {
       ],
       // Her dokunuşta sesi "açmayı" dene. (iPhone tarayıcısı sese ancak
       // dokunuş anında izin verir; bkz. services/sound_player_web.dart)
-      builder: (context, child) =>
-          Listener(onPointerUp: (_) => Effects.unlock(), child: child),
+      // MascotAppearance: her ekrandaki maskot, filizin aşamasını ve takılı
+      // eşyaları buradan öğrenir (bkz. widgets/mascot.dart).
+      builder: (context, child) => Listener(
+        onPointerUp: (_) => Effects.unlock(),
+        child: ListenableBuilder(
+          listenable: state,
+          builder: (context, _) =>
+              MascotAppearance(look: state.mascotLook, child: child!),
+        ),
+      ),
       home: _RootScreen(state: state),
     );
   }

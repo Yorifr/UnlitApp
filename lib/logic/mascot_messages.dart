@@ -69,8 +69,8 @@ MascotLine mascotGreeting({
   }
   if (canCompareWeeks && percent != null && percent >= 1) {
     return const MascotLine(
-      'Bu hafta biraz yoğun geçti, olur böyle. Bugün bir isteği ertelemeyi '
-      'denemeye ne dersin?',
+      'Bu hafta biraz yoğun geçti, olur böyle. Yavaş ama emin adımlarla: '
+      'bugün bir isteği ertelemeyi denemeye ne dersin?',
       MascotMood.happy,
     );
   }

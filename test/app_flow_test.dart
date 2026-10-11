@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/app.dart';
 import 'package:unlit/app_state.dart';
+import 'package:unlit/models/activity_log.dart';
+import 'package:unlit/models/mascot_look.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/services/demo_device_service.dart';
 import 'package:unlit/services/effects.dart';
@@ -422,6 +424,21 @@ void main() {
         await tester.pumpAndSettle();
       }
     }
+    // Nefes'in dolabı da taşmasın.
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 3000),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nefes\'in dolabı'));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 6; i++) {
+      await tester.drag(
+        find.byType(Scrollable).hitTestable().first,
+        const Offset(0, -400),
+      );
+      await tester.pumpAndSettle();
+    }
     // Taşma olsaydı Flutter test hata verirdi.
     expect(tester.takeException(), isNull);
   });
@@ -475,6 +492,85 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Sorun değil'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testApp('Nefes\'in dolabı: açılan eşya takılır, kilitli olan takılmaz', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    // 600 puan: gözlük, atkı, kulaklık açık; bere (1000) kilitli.
+    await state.replaceAll(
+      events: [],
+      activity: ActivityLog(
+        xp: [XpEntry(time: state.now, amount: 600, reason: XpReason.welcome)],
+      ),
+      trackingStartedAt: state.now,
+    );
+    await tester.tap(find.text('Profil'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Sonraki eşya: Bere'), findsOneWidget);
+
+    await tester.tap(find.text('Nefes\'in dolabı'));
+    await tester.pumpAndSettle();
+    expect(find.text('Filiz: 2. aşama (4 aşamadan)'), findsOneWidget);
+
+    // Ekran okuyucu her eşyayı ayrı okur (yan yana kartlar birleşmez).
+    final semantics = tester.ensureSemantics();
+    await tester.ensureVisible(find.text('Kulaklık'));
+    await tester.pumpAndSettle();
+    expect(tester.getSemantics(find.text('Kulaklık')).label, 'Kulaklık: açık');
+    semantics.dispose();
+
+    await scrollAndTap(tester, find.text('Kulaklık'));
+    await tester.pumpAndSettle();
+    expect(state.mascotLook.accessories, {Accessory.kulaklik});
+
+    // Aynı yere (baş) başka eşya: kulaklık çıkar. Bere kilitli: değişmez.
+    await scrollAndTap(tester, find.text('Bere'));
+    await tester.pumpAndSettle();
+    expect(state.mascotLook.accessories, {Accessory.kulaklik});
+    expect(find.textContaining('1000 puan · 400 kaldı'), findsOneWidget);
+
+    // Gözlük listenin başında: önce yukarı kaydır.
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 3000),
+    );
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('Güneş gözlüğü'));
+    await tester.pumpAndSettle();
+    expect(state.mascotLook.accessories, {
+      Accessory.kulaklik,
+      Accessory.gozluk,
+    });
+  });
+
+  testApp('yeni eşya açılınca kutlamada haber verilir', (tester, state) async {
+    await skipOnboarding(tester);
+    await state.replaceAll(
+      events: [],
+      activity: ActivityLog(
+        xp: [
+          XpEntry(
+            time: state.now.subtract(const Duration(days: 1)),
+            amount: 95,
+            reason: XpReason.welcome,
+          ),
+        ],
+      ),
+      trackingStartedAt: state.now,
+    );
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('Kendini dinle'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('İyi'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Nefes\'in dolabında yeni eşya: Güneş gözlüğü!'),
+      findsOneWidget,
+    );
+    expect(sounds.played.last, Sfx.fanfare.asset); // büyük kutlama
   });
 
   testApp('"Tüm verilerimi sil" uygulamayı ilk haline döndürür', (

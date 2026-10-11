@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../logic/wardrobe.dart';
 import '../theme.dart';
 import '../widgets/chunky.dart';
 import '../widgets/mascot.dart';
 import 'onboarding_screen.dart';
 import 'settings_screen.dart';
+import 'wardrobe_screen.dart';
 
 /// "Profil" sekmesi: seri, puan ve başarılar. Sadece OLUMLU sayılar.
 class ProfileTab extends StatelessWidget {
@@ -56,7 +58,9 @@ class ProfileTab extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.titleLarge,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            _WardrobeCard(state: state),
+            const SizedBox(height: 16),
             // İki sıra hâlinde 4 kutu. Kutular içeriğe göre uzar; büyük yazı
             // boyutunda da taşmaz (sabit oranlı ızgara yerine).
             _StatRow(
@@ -191,6 +195,62 @@ class _StatBox extends StatelessWidget {
             label,
             style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Nefes'in dolabı" kartı: sonraki eşyaya ilerleme. Dolabın tek giriş
+/// noktası burası.
+class _WardrobeCard extends StatelessWidget {
+  const _WardrobeCard({required this.state});
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    final xp = state.totalXp;
+    final next = nextPointUnlock(xp);
+    final points = next == null ? null : unlockRules[next.accessory]!.points!;
+
+    return ChunkyCard(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => WardrobeScreen(state: state)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.checkroom, color: c.purple, size: 32),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Nefes\'in dolabı', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 2),
+                Text(
+                  next == null
+                      ? 'Puanla açılan bütün eşyalar açıldı!'
+                      : 'Sonraki eşya: ${next.accessory.label} · '
+                            '${next.pointsLeft} puan kaldı',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: c.textMuted,
+                  ),
+                ),
+                if (points != null) ...[
+                  const SizedBox(height: 8),
+                  ChunkyProgressBar(
+                    value: xp / points,
+                    height: 10,
+                    color: c.purple,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right, color: c.textMuted),
         ],
       ),
     );

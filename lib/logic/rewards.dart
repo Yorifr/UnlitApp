@@ -9,6 +9,7 @@
 import 'dart:math';
 
 import '../models/activity_log.dart';
+import '../models/mascot_look.dart';
 import '../models/smoking_event.dart';
 import 'quests.dart';
 import 'stats.dart';
@@ -28,6 +29,8 @@ class Reward {
     required this.gains,
     required this.streak,
     required this.streakExtended,
+    this.newAccessories = const [],
+    this.grownToStage,
   });
 
   /// Boş ödül (hiçbir şey kazanılmadı).
@@ -40,6 +43,12 @@ class Reward {
 
   /// Bu eylem bugünün ilk kazancı mıydı? (Öyleyse seri bir gün uzadı.)
   final bool streakExtended;
+
+  /// Bu eylemle Nefes'in dolabında yeni açılan eşyalar (bkz. wardrobe.dart).
+  final List<Accessory> newAccessories;
+
+  /// Filiz bu eylemle büyüdüyse yeni aşaması (2–4); büyümediyse null.
+  final int? grownToStage;
 
   int get totalXp => gains.fold(0, (sum, g) => sum + g.amount);
   bool get isEmpty => gains.isEmpty;

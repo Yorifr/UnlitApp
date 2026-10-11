@@ -4,10 +4,10 @@
 > bağlam vermek için buradan başlayın. **Her aşama bitince "Aşama planı ve
 > durum" ile "Sürüm geçmişi" bölümlerini güncelleyin.**
 
-Son güncelleme: 10 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
+Son güncelleme: 11 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
 oyunlaştırma), ses/titreşim efektleri, tarihli paket fiyatı, kendi renk
-teması ("Nane") ve sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
-özeti, "Kazandıkların") tamamlandı.
+teması ("Nane"), sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
+özeti, "Kazandıkların") ve Nefes 2.0 + "Nefes'in dolabı" (0.7.0) tamamlandı.
 
 ---
 
@@ -135,14 +135,46 @@ suçluluk duymasın**.
      bitti!" ekranı açılır ve "İsteği ertele" görevi ile İstatistik'teki
      "Kazandıkların" bölümü o an "açılır". "CANIM SİGARA İSTİYOR" butonu
      ise her zaman açık (kural, bkz. madde 3).
-10. **Ses ve titreşim** (`lib/services/effects.dart`):
+10. **Nefes'in dolabı ve büyüyen filiz** (0.7.0, `lib/logic/wardrobe.dart`):
+   puanın harcanacağı değil, **anlam kazandığı** yer.
+   - **Puan harcanmaz.** Eşyalar belli puanlarda ya da anlamlı anlarda
+     **açılır**; toplam puan hiç düşmez. Açılan eşya **bir daha kaybolmaz**
+     (toplam puan, en uzun seri ve "ölçüm haftası bitti" bilgisi zamanla
+     sadece artar). Sigara içmek hiçbir şeyi kilitlemez ya da geri almaz.
+
+     | Eşya | Ne zaman açılır |
+     |---|---|
+     | Güneş gözlüğü | 100 puan |
+     | Atkı | 250 puan |
+     | Kep (mezuniyet) | Ölçüm haftası bitince (özet ekranında, baştaki eşyanın yerine takılır; haftada hiç kayıt yoksa ilk olumlu eylemin kutlamasında haber verilir) |
+     | Kulaklık | 500 puan |
+     | Yaprak taç | En uzun seri 7 gün olunca |
+     | Bere | 1000 puan |
+
+   - "Ayarlar → kayıtları sıfırla" puanları sildiği için dolap ve filiz de
+     baştan başlar (onay penceresinde yazıyor). 0.6.0'dan güncelleyen
+     kullanıcıda, o ana kadar açılmış eşyalar ilk açılışta bir kez takılır.
+   - Aynı anda **bir baş eşyası** (bere, kep, taç ya da kulaklık), **bir
+     gözlük**, **bir atkı**. Yeni açılan eşya, yeri boşsa otomatik takılır
+     (kutlamada görünsün); yeri doluysa kullanıcının seçimine dokunulmaz.
+   - **Filiz** sadece **toplam puanla** büyür: 1. aşama (başlangıç), 300
+     puanda 2., 1000 puanda 3., 2500 puanda 4. aşama (mor çiçek). Sigara
+     sayısına, sigarasız süreye ya da Aşama 6'daki göstergelere **bağlı
+     değildir**; asla küçülmez, asla solmaz (test ile korunuyor).
+   - Yeni eşya ve filizin büyümesi kutlama ekranında haber verilir (büyük
+     kutlama sesi).
+   - **Yok:** sürpriz kutu (kumar mekaniği), "sadece bugün" (kaçırma
+     korkusu), tetikleyici eşya (fincan, bardak, kadeh, pipo, ateş, duman).
+   - Dolabın tek giriş noktası: Profil → "Nefes'in dolabı" kartı (sonraki
+     eşyaya ilerleme çubuğu).
+11. **Ses ve titreşim** (`lib/services/effects.dart`):
    - Ses **sadece güzel anlarda** çalar; "hata/ceza" sesi yoktur. Sigara
      içmek (kılıftan gelen olay) **hiçbir ses ya da titreşim tetiklemez**.
 
      | An | Ses | Titreşim |
      |---|---|---|
      | Görev tamamlandı | `success` ("ding-ding") | başarı titreşimi |
-     | Büyük kutlama (günün görevleri, başarılı erteleme, "Hazırsın!") | `fanfare` | başarı titreşimi |
+     | Büyük kutlama (günün görevleri, başarılı erteleme, "Hazırsın!", yeni eşya, filiz büyüdü) | `fanfare` | başarı titreşimi |
      | Sakin an (zor gün, "yine de içeceğim") | `calm` (yumuşak çan) | hafif |
      | Nefes egzersizi: al / ver | `breath_in` / `breath_out` | hafif |
      | Erteleme süresi doldu | `bell` | güçlü |
@@ -299,11 +331,17 @@ hedefe ilerleme gösterilir (kutlama ekranıyla). Hesap 0.6.0'da hazır:
 `computeGains` (`lib/logic/measurement.dart`) parayı her gün **o günün
 fiyatıyla** ve net hesaplıyor; kumbara bunun üstüne kurulmalı.
 
-### Özellik 6 — Karakter ⏳ Aşama 6 (maskot Aşama 2'de geldi)
-Maskot **"Nefes"** Aşama 2'de görsel olarak eklendi. Bu aşamada: ödül
-odaklı, **asla ölmez**; **enerji** göstergesi azaltmaya, **sağlık**
-göstergesi **sadece sigarasız süreye** bağlı. Göstergeler düşük olsa bile
-maskot üzgün/hasta çizilmez; "dinleniyor" gibi nötr bir hâl alır.
+### Özellik 6 — Karakter ⏳ Aşama 6 (Nefes 2.0 ve dolap 0.7.0'da geldi)
+- ✅ **Nefes 2.0** (0.7.0): `docs/maskot/1-nefes-2.svg` tasarımının kodla
+  çizilmiş birebir hâli (`lib/widgets/mascot_painter.dart`). 4 ruh hali
+  (neşeli, kutlama, sakin, düşünceli: sağ üstte üç mavi nokta), başında 4
+  aşamada büyüyen filiz, 6 eşya. Nefes egzersizinde gövdesi nefesle hafifçe
+  şişip iner ("seninle nefes alıyorum").
+- ✅ **Nefes'in dolabı** (0.7.0): kurallar Bölüm 3, madde 10.
+- ⏳ Kalan: **enerji** göstergesi azaltmaya, **sağlık** göstergesi **sadece
+  sigarasız süreye** bağlı; maskot **asla ölmez**. Göstergeler düşük olsa
+  bile maskot üzgün/hasta çizilmez, filiz küçülmez; "dinleniyor" gibi nötr
+  bir hâl alır (ör. sakin mod).
 
 ### Özellik 7 — Gerçek Bluetooth + veri dışa aktarma ⏳ Aşama 7
 - `BleDeviceService` (flutter_blue_plus) — aynı `DeviceService` arayüzü.
@@ -324,6 +362,7 @@ lib/
 │   ├── smoking_event.dart     Sigara alma olayı (zaman, kaynak, neden)
 │   ├── user_profile.dart      Onboarding cevapları + seçenek listeleri
 │   ├── pack_price.dart        Tarihli paket fiyatı (PackPrice, PriceHistory)
+│   ├── mascot_look.dart       Maskotun görünüşü (filiz aşaması, eşyalar)
 │   └── activity_log.dart      Ruh hali, erteleme, nefes, XP kayıtları
 ├── services/
 │   ├── device_service.dart    Kılıf arayüzü (abstract class)
@@ -340,6 +379,7 @@ lib/
 │   ├── measurement.dart       Ölçüm haftası özeti + "Kazandıkların"
 │   ├── quests.dart            Günlük görevler, ölçüm haftası
 │   ├── rewards.dart           XP ödülleri, seri (dinlenme günü dahil)
+│   ├── wardrobe.dart          Nefes'in dolabı: eşya açılma, filiz aşaması
 │   └── mascot_messages.dart   Maskotun ana ekran cümlesi
 ├── utils/format.dart          Türkçe tarih/para/süre yazımı
 ├── screens/
@@ -347,15 +387,18 @@ lib/
 │   ├── main_screen.dart       Alt menü + 3 sekme
 │   ├── today_tab.dart         Bugün: maskot, görevler, erteleme
 │   ├── stats_tab.dart         İstatistik: sayılar, grafik, maliyet
-│   ├── profile_tab.dart       Profil: seri, XP, başarılar
+│   ├── profile_tab.dart       Profil: seri, puan, dolap kartı, başarılar
 │   ├── delay_screen.dart      10 dk erteleme
 │   ├── breathing_screen.dart  1 dk nefes egzersizi
 │   ├── celebration_screen.dart Konfetili kutlama
 │   ├── measurement_summary_screen.dart "Ölçüm haftan bitti!" özeti
+│   ├── wardrobe_screen.dart   Nefes'in dolabı (Profil'den açılır)
 │   └── settings_screen.dart   Demo, gizlilik, kaynaklar
 └── widgets/
     ├── chunky.dart            Tok buton, kart, ilerleme çubuğu, sayaç
-    ├── mascot.dart            Maskot "Nefes" (kodla çizilir)
+    ├── mascot.dart            Maskot "Nefes" + MascotAppearance + konuşma balonu
+    ├── mascot_painter.dart    Nefes 2.0 çizimi (SVG'nin birebir kod hâli)
+    ├── svg_path.dart          SVG "d" yazısını Path'e çeviren küçük okuyucu
     ├── confetti.dart          Konfeti animasyonu
     ├── pickers.dart           Ruh hali ve "neden?" pencereleri
     ├── price_sheet.dart       "Paket fiyatı" penceresi (fiyatın tek yeri)
@@ -393,7 +436,7 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   localStorage). Anahtarlar: `profile`, `onboarding_done`, `events`,
   `activity`, `tracking_started_at`, `demo_last_sync`, `demo_seed`,
   `sound_on`, `haptics_on`, `prices`, `price_confirmed_at`,
-  `measurement_summary_seen`.
+  `measurement_summary_seen`, `mascot_outfit`.
   - Taşıma: 0.3.0 ve öncesinde fiyat profilin içindeydi (`packPrice`,
     `cigarettesPerPack`). Açılışta bir kez, takip başlangıcından geçerli tek
     bir fiyata taşınır ve profilden silinir.
@@ -445,6 +488,10 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   — `at(zaman)` o andaki geçerli fiyatı verir.
 - `tracking_started_at`: ölçüm haftasının başlangıcı (onboarding bitince).
 - `measurement_summary_seen`: "Ölçüm haftan bitti!" özeti görüldü mü.
+- `mascot_outfit`: takılı eşyaların adları (`Accessory`: gozluk, atki, kep,
+  kulaklik, tac, bere). Açılan eşyalar ve filiz aşaması **saklanmaz**, her
+  seferinde toplam puan / en uzun seri / ölçüm haftasından hesaplanır
+  (`MascotLook { stage, accessories }`).
 
 ## 7. Ekranlar (Aşama 2 itibarıyla)
 
@@ -459,9 +506,14 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   varsa), son 7 gün grafiği, "Kazandıkların" (ölçüm haftasından sonra),
   "Para": paket fiyatı kartı (DEĞİŞTİR → fiyat penceresi, fiyat geçmişi),
   dönem seçici, harcanan para.
-- **Profil:** maskot, seri, en uzun seri, toplam puan, ertelenen istekler,
+- **Profil:** maskot, seri, "Nefes'in dolabı" kartı (sonraki eşyaya
+  ilerleme), en uzun seri, toplam puan, ertelenen istekler,
   "Seri nasıl işler?", bilgilerimi düzenle, ayarlar.
+- **Nefes'in dolabı:** büyük maskot önizlemesi, filizin aşaması ve sonraki
+  aşamaya ilerleme, 6 eşya (açık olana dokun → tak/çıkar; kilitli olan soluk
+  görünür ve ne zaman açılacağını yazar), "puan harcanmaz" notu.
 - **Erteleme / Nefes / Kutlama / Ölçüm haftası özeti:** tam ekran akışlar.
+  Kutlamada yeni eşya ve filizin büyümesi haber verilir.
   Erteleme ekranında kendine not (varsa sayacın altında, yoksa en altta
   öneri).
 - **Ayarlar:** kılıf durumu, demo verisi üret/simüle et/sıfırla, bilgilerim
@@ -534,6 +586,7 @@ birebir doğrulayın):
 | 1 | Temel: proje, dokümanlar, CI/Pages, `DeviceService` + demo kılıf, onboarding + yerel kayıt, ana ekran (Özellik 1–2) | ✅ Tamamlandı (10.10.2026) |
 | 2 | Duolingo tarzı tasarım + oyunlaştırma: görevler, XP, seri, erteleme, nefes, kutlama, maskot, sekmeler (Özellik 2b) | ✅ Tamamlandı (10.10.2026) |
 | 2+ | Sadeleştirme: 4 soruluk onboarding, ölçüm haftası özeti, "Kazandıkların", kendine not, tekrarların temizlenmesi (Özellik 1, 2, 2c) | ✅ Tamamlandı (10.10.2026, 0.6.0) |
+| 2++ | Nefes 2.0 (yeni maskot, büyüyen filiz) + Nefes'in dolabı (Özellik 6'nın bir kısmı) | ✅ Tamamlandı (11.10.2026, 0.7.0) |
 | 3 | Süreç aşamaları (Özellik 3) | ⏳ Sıradaki |
 | 4 | Mesaj motoru + bildirimler (Özellik 4) | ⏳ Planlandı |
 | 5 | Para kumbarası (Özellik 5) | ⏳ Planlandı |
@@ -626,6 +679,12 @@ birebir doğrulayın):
 ### Aşama 6 — Karakter
 - [ ] Enerji (azaltma) ve sağlık (sigarasız süre) göstergeleri; maskot
       asla ölmez, üzgün çizilmez
+- [x] Maskot seçimi (Nefes 2.0) ve Flutter'a birebir taşıma (SVG ile
+      piksel karşılaştırması yapıldı); filizin aşaması sadece toplam puana
+      bağlı, asla geri gitmez (test ile) — 0.7.0
+- [x] Nefes'in dolabı: eşikle açılan 6 eşya, harcama yok, kutlamada haber,
+      Profil'de kart — 0.7.0
+- [x] Nefes egzersizinde maskotun gövdesi nefesle şişip iner — 0.7.0
 
 ### Aşama 7 — Bluetooth + CSV
 - [ ] Firmware ile protokol (yukarıdaki taslak) kesinleştirme
@@ -678,6 +737,17 @@ birebir doğrulayın):
 - **Maskotun adı ve görünüşü:** Şimdilik "Nefes" (`lib/widgets/mascot.dart`
   → `mascotName`). Ekip isterse değiştirebilir. Duolingo'nun adı, logosu
   veya baykuşu kullanılmaz; sadece tarzından ilham alınır.
+  **Karar (0.7.0): Nefes 2.0** uygulandı. Diğer öneriler
+  ([docs/maskot/](maskot/README.md): Filiz, Balina, Ferah (fil), Kaplumbağa)
+  arşivde; Balina ("Mavi Balina" çağrışımı) ve Ferah (hortum → nargile)
+  bilerek eklenmedi. Yine de 5–8 yetişkin sigara içiciyle kısa bir "Ciddiye
+  alır mısın? Neyi hatırlatıyor?" testi önerilir.
+- **Karar — puanla açılan dolap (0.7.0):** Puanlar harcanmaz, eşyalar eşikle
+  açılır (kurallar Bölüm 3, madde 10). Para gibi harcamak "XP asla düşmez"
+  ilkesini bozardı, "biriktir mi harca mı" kararıyla karmaşıklık eklerdi ve
+  uygulamadaki gerçek parayla (harcanan / cebinde kalan) karışırdı. Eşikler
+  öneridir; değiştirilirse `lib/logic/wardrobe.dart` ve Bölüm 3 birlikte
+  güncellenmeli.
 - **Seslerin iPhone'da denenmesi:** Web Audio'nun iPhone Safari'de ilk
   dokunuşla açılması tasarlandı ve Chrome'da doğrulandı, ama gerçek bir
   iPhone'da denenmeli. iPhone sessiz moddaysa web'de ses duyulmaz (bilerek).
@@ -702,5 +772,6 @@ birebir doğrulayın):
 | 0.2.0 | Nefes ile oyunlaştırma | Duolingo tarzı tasarım (Nunito, tok butonlar, canlı renkler), maskot "Nefes", günlük görevler, XP, affedici seri, erteleme, nefes egzersizi, ruh hali, sigara nedenleri, konfetili kutlamalar, Bugün/İstatistik/Profil sekmeleri |
 | 0.3.0 | Ses ve titreşim | Sıfırdan sentezlenmiş 6 ses efekti (ding-ding, fanfar, sakin çan, nefes al/ver, zil), kutlama/nefes/erteleme titreşimleri, Ayarlar'da aç/kapat; telefonda sessiz moda uyar ve müziği durdurmaz; web'de iPhone uyumlu Web Audio |
 | 0.4.0 | Tarihli paket fiyatı | Fiyatın kendi yeri (İstatistik'te kart + pencere, Ayarlar'da kısayol), her sigara kendi tarihindeki fiyatla hesaplanır, fiyat geçmişi, "yanlış girmiştim" düzeltmesi, 90 günde bir "hâlâ aynı mı?", onboarding'de sadece fiyat (paket varsayılan 20), eski sürümden otomatik taşıma; fiyat internetten çekilmez |
-| 0.6.0 | Sade ve kişisel | Onboarding 11 → 4 soru (her cevap bir şeyi değiştirir; kullanılmayan eski cevaplar silinir), tetikleyiciler "Neden?" penceresinde başta, erteleme ekranında "kendine not", ölçüm haftası bitince özet ekranı ve kademeli açılım, "kaybedilen yaşam" yerine "Kazandıkların" (içmediğin sigara, cebinde kalan para, korunan yaşam süresi; net hesap), tekrarlar temizlendi (ikinci ruh hali kartı, görev çubukları, iki seçici, üst çubukta XP), ruh hali soldan sağa olumsuzdan olumluya, "XP" → "puan", "check-in" → "Kendini dinle" |
 | 0.5.0 | Nane teması | Duolingo'nun birebir renkleri yerine kendi paletimiz: nane (turkuaz) ana renk, mavi ikinci renk, yaprak yeşili seri; nane renkli, yeşil filizli maskot; seri ikonu alev yerine yaprak; alt menüde yumuşak kapsül; hafif nane tonlu zemin, lacivert koyu tema; buton kontrastı ~3,2'den ~3,5'e çıktı |
+| 0.6.0 | Sade ve kişisel | Onboarding 11 → 4 soru (her cevap bir şeyi değiştirir; kullanılmayan eski cevaplar silinir), tetikleyiciler "Neden?" penceresinde başta, erteleme ekranında "kendine not", ölçüm haftası bitince özet ekranı ve kademeli açılım, "kaybedilen yaşam" yerine "Kazandıkların" (içmediğin sigara, cebinde kalan para, korunan yaşam süresi; net hesap), tekrarlar temizlendi (ikinci ruh hali kartı, görev çubukları, iki seçici, üst çubukta XP), ruh hali soldan sağa olumsuzdan olumluya, "XP" → "puan", "check-in" → "Kendini dinle" |
+| 0.7.0 | Nefes 2.0 ve dolap | Yeni maskot Nefes 2.0 (SVG tasarımın kodla birebir çizimi): daha ifadeli yüz, düşünürken üç nokta, başında puanla 4 aşamada büyüyen filiz (asla küçülmez); "Nefes'in dolabı": puan harcanmadan eşikle açılan 6 eşya (gözlük, atkı, kep, kulaklık, taç, bere), kutlamada "yeni eşya / filiz büyüdü" haberi, Profil'de sonraki eşyaya ilerleme; ölçüm haftası bitince mezuniyet kepi; nefes egzersizinde maskot da nefes alır; "yavaş ama emin adımlarla" |
