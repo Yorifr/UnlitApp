@@ -8,8 +8,9 @@ Son güncelleme: 11 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
 oyunlaştırma), ses/titreşim efektleri, tarihli paket fiyatı, kendi renk
 teması ("Nane"), sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
 özeti, "Kazandıkların"), Nefes 2.0 + "Nefes'in dolabı" (0.7.0) ve haftalık
-rapor + "bir günlük veri ekle" demo seçeneği (0.8.0) ve erteleme
-ekranında kişisel cümle (0.8.1) tamamlandı.
+rapor + "bir günlük veri ekle" demo seçeneği (0.8.0), erteleme
+ekranında kişisel cümle (0.8.1) ve azaltma hedefi + "Hedefim" sayfası
+(0.9.0) tamamlandı.
 
 ---
 
@@ -108,6 +109,7 @@ suçluluk duymasın**.
    | Eylem | XP |
    |---|---|
    | Onboarding'i bitirmek / atlamak | +10 |
+   | İlk azaltma hedefini seçmek (bir kez; değiştirmek puan vermez) | +10 |
    | Her günlük görev | +10 |
    | Günün 3 görevi de bitince bonus | +20 |
    | Başarılı erteleme ("İSTEK GEÇTİ") | +15 |
@@ -199,6 +201,12 @@ suçluluk duymasın**.
    - Ses ve titreşim **Ayarlar'dan ayrı ayrı kapatılabilir**. (Toplum
      içinde sesli bir sigara uygulaması gizliliği bozabilir; kapatmak kolay
      olmalı.)
+12. **Azaltma hedefi ceza vermez** (0.9.0, `lib/logic/goal.dart`; ayrıntı
+   Özellik 2e): günlük sınırın üstüne çıkmak puan götürmez, seriyi bozmaz,
+   mesaj ya da ses tetiklemez, kırmızı gösterilmez (haftalık şeritte nötr
+   gri). "Hedefinde kaldığın gün" sayısı sadece artar. Nefes sınırı aşılan
+   günlerden hiç bahsetmez; süre dolduysa suçlamadan yeni bir süre önerir.
+   Hedef her an değiştirilebilir.
 
 ## 4. Özellikler (tam vizyon)
 
@@ -225,7 +233,8 @@ suçluluk duymasın**.
 
   | Soru | Karar |
   |---|---|
-  | Hedef (azaltmak/bırakmak), bırakma isteği 1–10 | Aşama 3'te, ölçüm haftası bitip plan kurulurken sorulacak |
+  | Hedef (azaltmak/bırakmak) | **0.9.0'da geldi:** ölçüm haftası özetinin sonunda (yüzde + süre; bkz. Özellik 2e) |
+  | Bırakma isteği 1–10 | Sorulmuyor: cevabı uygulamada hiçbir şeyi değiştirmiyor |
   | Sevilen aktiviteler | Aşama 4'te, mesaj motoru ("Yarın koşacaksan…") gelince |
   | Motivasyon (çocuk, eş…) | Hazır seçenek yerine **kendine not** (aşağıda) |
   | Kaç yıldır, yaş aralığı, cinsiyet | Uygulamada dürüst bir kullanımı yok; pilot için gerekirse bkz. Bölüm 11 |
@@ -360,7 +369,62 @@ en uzun seri, toplam puan, ertelenen istekler).
   | İşaretlenen nedenler | Ölçüm özeti (1. hafta), haftalık rapor (en sık neden + öneri) |
   | Ruh hali | O günün maskot cümlesi/kutlaması (zor gün → sakin), haftalık rapor (dağılım) |
   | Erteleme, nefes | Profil (toplam ertelenen istek), haftalık rapor, erteleme ekranında Nefes'in cümlesi (kaç isteği atlattın, genelde kaç dakikada geçti) |
-  | Kendine not | Erteleme ekranı |
+  | Kendine not | Erteleme ekranı (hedef seçerken de yazılabilir; aynı not) |
+  | Azaltma hedefi (0.9.0) | Bugün'deki "Hedefim" kartı, Hedefim sayfası (haftalık sınır, ilerleme, hedefinde kaldığın günler) |
+
+### Özellik 2e — Azaltma hedefi ve "Hedefim" sayfası ✅ (0.9.0)
+- **Ne zaman sorulur?** Ölçüm haftası özetinin sonunda (ilk seferde):
+  **HEDEFİMİ SEÇ** ya da **ŞİMDİLİK GEÇ**. Geçen kullanıcı için Bugün'de
+  küçük bir "Bir hedef seç" kartı durur. Soru, cevabın kullanılacağı ana
+  (başlangıç noktası belli olduğunda) konur.
+- **Akış** (Duolingo'daki hedef seçimi gibi, her ekranda tek soru):
+  1. *Ne kadar?* %25 / %50 / %75 azaltmak ya da bırakmak; her seçeneğin
+     yanında günlük karşılığı ("günde 9"). "Neden soruyoruz?" açıklaması
+     var.
+  2. *Ne kadar sürede?* Sayı (– / +) ve yanında **Hafta / Ay** seçimi
+     (hafta 1–12, ay 1–6). Altında **zorluk**: 4 çubuk + etiket (Rahat /
+     Dengeli / İddialı / Çok iddialı), somut anlamı ("Her hafta günde
+     yaklaşık 2 sigara azaltmak demek") ve bitiş günü. Önerilen süre her
+     yüzdede "Dengeli" (%25 → 2, %50 → 4, %75 → 6, %100 → 8 hafta).
+  3. *Kendine not* — sadece daha önce yazılmadıysa ve isteğe bağlı. Yeni
+     bir not türü değil: erteleme ekranındaki "Kendine not"un aynısı.
+     Hedef koyarken "neden?" diye düşünmek için en doğal an olduğu için
+     burada da soruluyor.
+  Sonunda "Hedefin hazır!" kutlaması (ilk hedefte bir kez +10 puan).
+- **Hesap** (`lib/logic/goal.dart`, saf ve testli):
+  - Hedef = başlangıç noktası (ölçüm haftasında günde ortalama) × kalan
+    yüzde, yuvarlanır. Yüzde hep başlangıç noktasına göredir.
+  - Azaltma **hafta hafta**: her haftanın bir günlük sınırı var. Sınırlar,
+    hedef konduğundaki seviyeden (son 7 tamamlanmış günün ortalaması) eşit
+    adımlarla iner, son hafta hedefe eşittir (yukarı yuvarlanır, rahat
+    başlar). "Ay" takvim ayıdır; tam haftaya bölünmeyen birkaç gün son
+    haftaya eklenir.
+  - **Şimdi** = son 7 tamamlanmış günün ortalaması (bugün sayılmaz;
+    sayı sigaradan hemen sonra değişmez). **İlerleme** = başlangıçtan
+    hedefe yolun yürünen kısmı (0–100 %, eksiye inmez).
+  - **Zorluk** = haftada başlangıcın yüzde kaçı kadar azaltılacağı: ≤ %10
+    Rahat, ≤ %20 Dengeli, ≤ %35 İddialı, üstü Çok iddialı. Bu eşikler
+    **ekibin varsayımıdır**, kaynaklı değildir; ekranda sayı olarak
+    gösterilmez, sadece etiketi seçer. Kırmızı yok: zorluk uyarı değil,
+    bilgi. "Çok iddialı"da "Zorlanırsan süreyi sonra uzatabilirsin" yazar.
+- **Hedefim sayfası** (tek giriş noktası: Bugün'deki "Hedefim" kartı;
+  kartta bu haftanın sınırı ve ilerleme çubuğu). Tek ekrana sığacak kadar
+  sade:
+  1. Nefes'in cümlesi (`goalLine`): önce olumlu olan (hedefe ulaştın →
+     yolun yarısı → ilerliyorsun); süre dolduysa suçlamadan yeni süre önerisi.
+  2. Yol kartı: "%50 azaltmak · 4 hafta · Bitiş", ilerleme çubuğu,
+     Başlangıç / Şimdi / Hedef.
+  3. Bu hafta: "Günde en fazla 12 sigara" ve 7 günlük şerit (hedefinde
+     kalınan gün nane renkli + onay; diğerleri nötr gri; bugün mavi
+     çerçevede bugünkü sayı; gelecek günler boş) + "Hedefinde kaldığın gün".
+  4. Bırakma hedefinde: ALO 171 ve MHRS'den sigara bırakma polikliniği
+     bilgisi (T.C. Sağlık Bakanlığı).
+  5. HEDEFİ DEĞİŞTİR (süre dolduysa YENİ HEDEF SEÇ).
+- Takip baştan başlarsa (demo verisi üret, kayıtları sıfırla) hedef silinir
+  (başlangıç noktası değişti). Demo'daki "bir gün ekle" hedefi de bir gün
+  geriye kaydırır.
+- Kod: `lib/models/goal.dart`, `lib/logic/goal.dart`,
+  `lib/screens/goal_setup_screen.dart`, `lib/screens/goal_screen.dart`.
 
 ### Özellik 3 — Süreç aşamaları ⏳ Aşama 3
 Ölçüm → Farkındalık → Azaltma → Bırakma günü → Sürdürme
@@ -369,6 +433,7 @@ en uzun seri, toplam puan, ertelenen istekler).
 - **Farkındalık:** kullanıcıya kendi örüntüsü gösterilir (en yoğun saatler,
   işaretlenen nedenlerin dağılımı, sabah ilk sigara saati).
 - **Azaltma:** kademeli günlük hedefler (ölçüm haftası ortalamasından).
+  ✅ 0.9.0'da geldi (Özellik 2e).
 - **Bırakma günü:** kullanıcı tarih seçer; **ALO 171** (Sigara Bırakma
   Danışma Hattı) ve **sigara bırakma polikliniği** (MHRS üzerinden randevu)
   yönlendirmesi.
@@ -434,6 +499,7 @@ lib/
 │   ├── user_profile.dart      Onboarding cevapları + seçenek listeleri
 │   ├── pack_price.dart        Tarihli paket fiyatı (PackPrice, PriceHistory)
 │   ├── mascot_look.dart       Maskotun görünüşü (filiz aşaması, eşyalar)
+│   ├── goal.dart              Azaltma hedefi (yüzde, süre, başlangıç)
 │   └── activity_log.dart      Ruh hali, erteleme, nefes, XP kayıtları
 ├── services/
 │   ├── device_service.dart    Kılıf arayüzü (abstract class)
@@ -452,6 +518,7 @@ lib/
 │   ├── quests.dart            Günlük görevler, ölçüm haftası
 │   ├── rewards.dart           XP ödülleri, seri (dinlenme günü dahil)
 │   ├── wardrobe.dart          Nefes'in dolabı: eşya açılma, filiz aşaması
+│   ├── goal.dart              Hedef: haftalık sınır, ilerleme, zorluk
 │   └── mascot_messages.dart   Maskotun cümleleri (ana ekran, haftalık rapor)
 ├── utils/format.dart          Türkçe tarih/para/süre yazımı
 ├── screens/
@@ -466,6 +533,8 @@ lib/
 │   ├── measurement_summary_screen.dart "Ölçüm haftan bitti!" özeti
 │   ├── weekly_report_screen.dart Haftalık rapor
 │   ├── wardrobe_screen.dart   Nefes'in dolabı (Profil'den açılır)
+│   ├── goal_setup_screen.dart Hedef seçme (yüzde, süre + zorluk, not)
+│   ├── goal_screen.dart       Hedefim: tek bakışta ilerleme
 │   └── settings_screen.dart   Demo, gizlilik, kaynaklar
 └── widgets/
     ├── chunky.dart            Tok buton, kart, ilerleme çubuğu, sayaç
@@ -570,6 +639,9 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   — `at(zaman)` o andaki geçerli fiyatı verir.
 - `tracking_started_at`: ölçüm haftasının başlangıcı (onboarding bitince).
 - `measurement_summary_seen`: "Ölçüm haftan bitti!" özeti görüldü mü.
+- `goal` (0.9.0): `Goal { start, baseline, from, percent, amount, unit:
+  week | month }`. Haftalık sınırlar ve ilerleme saklanmaz, her seferinde
+  kayıtlardan hesaplanır. Takip baştan başlarsa silinir.
 - `weekly_report_seen`: en son görülen haftalık raporun hafta numarası
   (0 = hiç). Raporların kendisi saklanmaz, her seferinde kayıtlardan
   hesaplanır.
@@ -586,8 +658,10 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   düzenleme modunda paket fiyatı sorusu YOKTUR (fiyatın kendi yeri var).
 - **Bugün:** ölçüm rozeti + seri; demo uyarısı (+1 sigara); maskot
   cümlesi (+ hafta bitince "SONUÇLARIMI GÖR", sonraki haftalarda "RAPORUMU
-  GÖR"); "CANIM SİGARA İSTİYOR";
+  GÖR"); "CANIM SİGARA İSTİYOR"; "Hedefim" kartı (ölçüm özeti görülünce;
+  hedef yoksa "Bir hedef seç");
   günlük görevler; bugünkü sigaralar ve "Neden?" etiketleri.
+- **Hedef seçme / Hedefim** (0.9.0): bkz. Özellik 2e.
 - **İstatistik:** bugün kartı, haftalık karşılaştırma (2 haftalık kayıt
   varsa), son 7 gün grafiği, "Haftalık raporların" (ölçüm haftasından
   sonra), "Kazandıkların" (ölçüm haftasından sonra),
@@ -649,8 +723,8 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 | Korku/tehdit mesajları ancak kişi "değiştirebilirim" diye hissederse işe yarar; yoksa kaçınma/savunma | Witte K. "Putting the fear back into fear appeals: The extended parallel process model." *Communication Monographs*, 1992; Peters GJY, Ruiter RAC, Kok G. "Threatening communication: a critical re-analysis and a revised meta-analytic test of fear appeal theory." *Health Psychology Review*, 2013 | Tasarım kararı: "kaybedilen yaşam" kartı kaldırıldı (ekranda sayı yok) |
 | İnsanlar kötü hissettiren ilerleme bilgisine bakmaktan kaçınabilir ("devekuşu sorunu") | Webb TL, Chang BPI, Benn Y. "'The Ostrich Problem': Motivated avoidance or rejection of information about goal progress." *Social and Personality Psychology Compass*, 2013 | Tasarım kararı: kayıp yerine kazanım çerçevesi (ekranda sayı yok) |
 | İyileşme takvimi (aşağıda) | WHO — "Tobacco: Health benefits of smoking cessation" (who.int) | Aşama 3 (Sürdürme), Aşama 4 (mesajlar) |
-| ALO 171 Sigara Bırakma Danışma Hattı | T.C. Sağlık Bakanlığı | Aşama 3 (Bırakma günü) |
-| Sigara bırakma poliklinikleri (MHRS randevu) | T.C. Sağlık Bakanlığı | Aşama 3 (Bırakma günü) |
+| ALO 171 Sigara Bırakma Danışma Hattı | T.C. Sağlık Bakanlığı | Hedefim sayfası, bırakma hedefinde (0.9.0); Aşama 3 (Bırakma günü) |
+| Sigara bırakma poliklinikleri (MHRS randevu) | T.C. Sağlık Bakanlığı | Hedefim sayfası, bırakma hedefinde (0.9.0); Aşama 3 (Bırakma günü) |
 | Nunito yazı tipi | The Nunito Project Authors, SIL Open Font License 1.1 (`assets/fonts/OFL.txt`) | Tüm arayüz |
 | Ses efektleri | Ekip tarafından sentezlendi (`tool/make_sounds.py`), telif yok | Kutlamalar, nefes, erteleme |
 
@@ -677,6 +751,7 @@ birebir doğrulayın):
 | 2+ | Sadeleştirme: 4 soruluk onboarding, ölçüm haftası özeti, "Kazandıkların", kendine not, tekrarların temizlenmesi (Özellik 1, 2, 2c) | ✅ Tamamlandı (10.10.2026, 0.6.0) |
 | 2++ | Nefes 2.0 (yeni maskot, büyüyen filiz) + Nefes'in dolabı (Özellik 6'nın bir kısmı) | ✅ Tamamlandı (11.10.2026, 0.7.0) |
 | 2+++ | Haftalık rapor + "bir günlük veri ekle" demo seçeneği (Özellik 2d) | ✅ Tamamlandı (11.10.2026, 0.8.0) |
+| 2+++++ | Azaltma hedefi + "Hedefim" sayfası (Özellik 2e; Aşama 3'ün bir kısmı) | ✅ Tamamlandı (11.10.2026, 0.9.0) |
 | 3 | Süreç aşamaları (Özellik 3) | ⏳ Sıradaki |
 | 4 | Mesaj motoru + bildirimler (Özellik 4) | ⏳ Planlandı |
 | 5 | Para kumbarası (Özellik 5) | ⏳ Planlandı |
@@ -750,15 +825,17 @@ birebir doğrulayın):
 ### Aşama 3 — Süreç aşamaları (sıradaki)
 - [ ] Aşama modeli ve kaydı (hangi aşamada, ne zaman başladı)
 - [x] Ölçüm haftası bitişi: "Ölçüm haftan bitti!" kutlaması + özet (0.6.0)
-- [ ] Ölçüm haftası bitince **hedef** (azaltmak/bırakmak) ve **bırakma
-      isteği** (1–10) sorusu: plan kurulurken, cevaplar planı değiştirir
+- [x] Ölçüm haftası bitince **hedef** (azaltmak/bırakmak) sorusu: yüzde +
+      süre, zorluk görünür (0.9.0). Bırakma isteği (1–10) bilerek
+      sorulmuyor (hiçbir şeyi değiştirmiyor).
 - [ ] Farkındalık ekranı: en yoğun saatler, işaretlenen nedenlerin
       dağılımı, ilk sigara saati ortalaması (sadece kullanıcının verisi;
       özet hesapları `measurement.dart`'ta hazır). Not: haftalık rapor
       (0.8.0) bunun haftalık hâlini zaten gösteriyor; ayrı ekran gerekir mi
       yeniden değerlendirilmeli.
-- [ ] Azaltma: haftalık kademeli hedef (ölçüm ortalamasından), hedef kartı;
-      hedefin altında kalınan gün için görev/rozet
+- [x] Azaltma: haftalık kademeli hedef (ölçüm ortalamasından), hedef kartı,
+      Hedefim sayfası (0.9.0)
+- [ ] Hedefin altında kalınan gün için görev/rozet (açık soru, Bölüm 11)
 - [ ] Bırakma günü: tarih seçimi, ALO 171 ve poliklinik (MHRS) bilgisi
 - [ ] Sürdürme: sigarasız süre sayacı + toplam sigarasız gün (sıfırlanmaz),
       WHO takvimi (metin doğrulanmalı)
@@ -825,6 +902,31 @@ birebir doğrulayın):
   Net hesap daha dürüst; toplam eksiye inmez, bugün sayılmaz (sayı gün
   içinde, sigaradan hemen sonra düşmez). Bir ağır gün sonrası sayı
   azalabilir; bu bilgi verir, suçlamaz (renk nötr, mesaj yok).
+- **Karar — azaltma hedefi (0.9.0):**
+  - *Yüzde + süre (sayı ve hafta/ay):* Kullanıcı hem "ne kadar" hem "ne
+    kadar sürede"yi kendisi seçer; zorluk hemen görünür. Hedef bir söz
+    değil, yol haritası: her an değiştirilir, sınırın üstü ceza değildir.
+  - *Neden hafta hafta?* Bir anda %50 azaltmak yerine küçük adımlar. Sınırlar
+    hedef konduğundaki seviyeden başlar; böylece hedef sonradan
+    değiştirilirse kullanıcı geriye itilmez.
+  - *Zorluk eşikleri ekibin varsayımı* (Özellik 2e). Birden bırakmak da
+    geçerli bir yol olduğu için "Çok iddialı" etiketi caydırıcı değil;
+    sadece "zorlanırsan süreyi uzatabilirsin" der.
+  - *Kendine not:* İkinci bir not türü eklenmedi; hedef seçerken, daha önce
+    yazılmadıysa, aynı not sorulur (tek kavram, tek kayıt).
+  - *İlk hedefe +10 puan, değiştirmeye puan yok:* Değiştirip durarak puan
+    toplanmasın.
+  - **Açık soru — hedefte kalınan güne puan/rozet?** Aşama 3 planında vardı
+    ama bilerek eklenmedi: sigarayla bağlantılı bir ödül, sınırı aşan günü
+    dolaylı olarak "ödülsüz gün" yapar (perhiz ihlali etkisi riski). Şimdilik
+    sadece sayaç var ("Hedefinde kaldığın gün", sadece artar). Ekip karar
+    vermeli.
+  - **Açık soru — "hedefi kaldır":** Hedef değiştirilebiliyor ama tamamen
+    kaldırılamıyor. Gerekirse Hedefim sayfasına küçük bir bağlantı
+    eklenebilir.
+  - **Açık soru — haftalık raporda hedef:** Rapor henüz hedeften bahsetmiyor
+    ("bu hafta 5 gün hedefinde kaldın" gibi). Eklenirse tek cümle olarak,
+    Nefes'in rapor cümlesinin içinde olmalı (kalabalık olmasın).
 - **Karar — kişisel geri bildirim az ve var olan yerlerde (0.8.1):**
   Kişisel geri bildirim yeni kartlarla değil, Nefes'in zaten söylediği
   cümlelerin içinde verilir; aşırıya kaçarsa arayüz kalabalıklaşır ve
@@ -913,3 +1015,4 @@ birebir doğrulayın):
 | 0.7.0 | Nefes 2.0 ve dolap | Yeni maskot Nefes 2.0 (SVG tasarımın kodla birebir çizimi): daha ifadeli yüz, düşünürken üç nokta, başında puanla 4 aşamada büyüyen filiz (asla küçülmez); "Nefes'in dolabı": puan harcanmadan eşikle açılan 6 eşya (gözlük, atkı, kep, kulaklık, taç, bere), kutlamada "yeni eşya / filiz büyüdü" haberi, Profil'de sonraki eşyaya ilerleme; ölçüm haftası bitince mezuniyet kepi; nefes egzersizinde maskot da nefes alır; "yavaş ama emin adımlarla" |
 | 0.8.0 | Haftalık rapor | Her hafta bitince kısa bir rapor: Nefes'in kişisel cümlesi (önce olumlu olan), bu hafta ve önceki hafta + 7 günün grafiği, örüntün (en yoğun saat, ilk sigara, en sık neden), kendine iyi baktığın anlar (görev günleri, ertelemeler, nefes, puan, ruh hali dağılımı), varsa haftanın kazancı ve en sık nedene göre "gelecek hafta için bir fikir"; Bugün'de bir kez "RAPORUMU GÖR", İstatistik'te "Haftalık raporların" listesi (1. hafta = ölçüm özeti); demo'ya "Bir günlük veri ekle" (sanki bir gün geçmiş gibi, ölçüm haftasını ve raporları gün gün izlemek için); onboarding'de yazı tipinde olmayan "→" karakteri kaldırıldı |
 | 0.8.1 | Kendi başarın | Erteleme ekranında Nefes, daha önce atlattığın istekleri senin verinle hatırlatır ("Daha önce 6 isteği atlattın; istekler genelde 7 dakika içinde geçti."); sadece başarılı ertelemeler sayılır, yeni kart eklenmedi; demo ertelemeleri artık 4–10 dakikada geçebiliyor |
+| 0.9.0 | Hedefim | Ölçüm haftası özetinin sonunda Duolingo tarzı hedef seçimi: ne kadar (%25 / %50 / %75 / bırakmak, yanında günlük karşılığı), ne kadar sürede (sayı + hafta/ay) ve hemen görünen zorluk (Rahat / Dengeli / İddialı / Çok iddialı + "her hafta günde yaklaşık 2 sigara"); isteğe bağlı kendine not (erteleme ekranındakiyle aynı not); ilk hedefe +10 puan. Hafta hafta inen günlük sınırlar. Tek bakışta "Hedefim" sayfası: Nefes'in cümlesi, başlangıç / şimdi / hedef ve ilerleme çubuğu, bu haftanın sınırı ve 7 günlük şerit (nane = hedefinde, gri = nötr), hedefinde kaldığın gün sayısı, bırakma hedefinde ALO 171 bilgisi. Bugün'de "Hedefim" kartı. Sınırın üstü asla ceza değil. Kutlamada uzun seri yazısı artık taşmıyor |

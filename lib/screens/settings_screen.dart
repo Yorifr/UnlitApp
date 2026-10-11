@@ -262,9 +262,9 @@ class SettingsScreen extends StatelessWidget {
       context,
       title: 'Kayıtlar silinsin mi?',
       message:
-          'Tüm sigara kayıtları, puanlar, seri ve görevler silinecek; '
-          'Nefes\'in dolabı ve filiz de baştan başlar. Onboarding '
-          'cevapların kalır.',
+          'Tüm sigara kayıtları, puanlar, seri, görevler ve hedefin '
+          'silinecek; Nefes\'in dolabı ve filiz de baştan başlar. '
+          'Onboarding cevapların kalır.',
       action: 'Sil',
     );
     if (!ok) return;

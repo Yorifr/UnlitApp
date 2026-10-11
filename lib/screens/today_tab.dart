@@ -17,6 +17,8 @@ import '../widgets/pickers.dart';
 import 'breathing_screen.dart';
 import 'celebration_screen.dart';
 import 'delay_screen.dart';
+import 'goal_screen.dart';
+import 'goal_setup_screen.dart';
 import 'measurement_summary_screen.dart';
 import 'weekly_report_screen.dart';
 
@@ -44,6 +46,9 @@ class TodayTab extends StatelessWidget {
   void _openBreathing(BuildContext context) => Navigator.of(context).push(
     MaterialPageRoute<void>(builder: (_) => BreathingScreen(state: state)),
   );
+
+  void _openGoal(BuildContext context) => Navigator.of(context)
+      .push(MaterialPageRoute<void>(builder: (_) => GoalScreen(state: state)));
 
   void _openMeasurementSummary(BuildContext context) => Navigator.of(context)
       .push(
@@ -188,6 +193,15 @@ class TodayTab extends StatelessWidget {
             const SizedBox(height: 20),
             _DelayEntry(state: state, onOpen: () => _openDelay(context)),
             const SizedBox(height: 24),
+            // Hedef kartı: ölçüm haftası bitip özet görülünce çıkar.
+            if (state.goal != null || state.canSetGoal) ...[
+              _GoalEntry(
+                state: state,
+                onOpen: () => _openGoal(context),
+                onChoose: () => GoalSetupScreen.open(context, state),
+              ),
+              const SizedBox(height: 24),
+            ],
             _QuestsCard(quests: quests, onTap: (q) => _onQuestTap(context, q)),
             const SizedBox(height: 24),
             _TodayCigarettes(
@@ -347,6 +361,87 @@ class _DelayEntry extends StatelessWidget {
               ?.copyWith(color: c.textMuted),
         ),
       ],
+    );
+  }
+}
+
+/// "Hedefim" kartı: bu haftanın sınırı ve ilerleme çubuğu; dokununca
+/// Hedefim sayfası açılır. Hedef yoksa küçük bir davet (seçmek isteğe
+/// bağlı).
+class _GoalEntry extends StatelessWidget {
+  const _GoalEntry({
+    required this.state,
+    required this.onOpen,
+    required this.onChoose,
+  });
+
+  final AppState state;
+  final VoidCallback onOpen;
+  final VoidCallback onChoose;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    final status = state.goalStatus;
+
+    if (status == null) {
+      return ChunkyCard(
+        onTap: onChoose,
+        child: Row(
+          children: [
+            Icon(Icons.flag_outlined, color: c.mintText, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Bir hedef seç', style: theme.textTheme.titleSmall),
+                  Text(
+                    'İstersen ölçüm haftana göre bir azaltma hedefi koy.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: c.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: c.textMuted),
+          ],
+        ),
+      );
+    }
+
+    return ChunkyCard(
+      onTap: onOpen,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.flag, color: c.mintText, size: 24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Hedefim', style: theme.textTheme.titleSmall),
+              ),
+              Text(
+                '%${(status.progress * 100).round()}',
+                style: theme.textTheme.titleSmall?.copyWith(color: c.mintText),
+              ),
+              Icon(Icons.chevron_right, color: c.textMuted),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            status.ended
+                ? 'Hedef süren doldu; yeni bir süre seçebilirsin.'
+                : 'Bu hafta günde en fazla ${status.limit} sigara',
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 10),
+          ChunkyProgressBar(value: status.progress),
+        ],
+      ),
     );
   }
 }

@@ -49,6 +49,8 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
    Maskot asla üzgün/kızgın çizilmez. "Can/kalp", lig, suçlayan bildirim
    yok. Puan HARCANMAZ: "Nefes'in dolabı"ndaki eşyalar eşikle açılır ve
    kaybolmaz; başındaki filiz sadece toplam puanla büyür, asla küçülmez.
+   Azaltma hedefinin günlük sınırını aşmak da ceza değildir (nötr gri,
+   mesaj yok; "hedefinde kaldığın gün" sadece artar).
    Yeni bir oyun mekaniği eklerken önce SPEC.md Bölüm 3'e bak.
 6. **Kılıf erişimi sadece `DeviceService` üzerinden.** Ekranlar Bluetooth'u
    ya da demo detaylarını bilmez (tek istisna: ayarlardaki ve "Bugün" sekmesindeki
@@ -80,7 +82,8 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
   `effects.dart` (ses + titreşim) ve ses oynatıcılar (`sound_player*.dart`).
 - `lib/logic/`: **saf** hesap fonksiyonları (`stats.dart`,
   `measurement.dart` (ölçüm haftası özeti + "Kazandıkların"),
-  `weekly_report.dart` (haftalık rapor; haftalar takipten sayılır), `quests.dart`,
+  `weekly_report.dart` (haftalık rapor; haftalar takipten sayılır),
+  `goal.dart` (azaltma hedefi: haftalık sınır, ilerleme, zorluk), `quests.dart`,
   `rewards.dart`, `wardrobe.dart` (dolap: eşya açılma, filiz aşaması),
   `mascot_messages.dart`); `now`'ı parametre olarak alır →
   kolay test. Yeni hesapları buraya koy ve test yaz. XP miktarları
@@ -88,7 +91,8 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 - `lib/utils/format.dart`: Türkçe tarih/para/süre/yüzde yazımı.
 - `lib/screens/`: onboarding, `main_screen` (alt menü) + `today_tab`,
   `stats_tab`, `profile_tab`; erteleme, nefes, kutlama, ölçüm haftası
-  özeti, haftalık rapor, Nefes'in dolabı, ayarlar.
+  özeti, haftalık rapor, Nefes'in dolabı, hedef seçme (`goal_setup_screen`)
+  ve Hedefim (`goal_screen`), ayarlar.
 - `lib/widgets/`: `chunky.dart` (tok buton/kart/çubuk), `mascot.dart`
   (+ `mascot_painter.dart`, `svg_path.dart`), `confetti.dart`,
   `pickers.dart`, `reason_note.dart` (kendine not), `change_chip.dart`

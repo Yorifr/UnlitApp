@@ -227,10 +227,13 @@ Future<void> addDemoDay(
   }
 
   final prices = state.prices;
+  final goal = state.goal;
   await state.replaceAll(
     events: events,
     activity: activity,
     trackingStartedAt: start,
+    // Hedef de bir gün geriye kayar; yoksa haftaları bir gün kayardı.
+    goal: goal?.copyWith(start: back(goal.start)),
     prices: prices.isEmpty
         ? null
         : PriceHistory([

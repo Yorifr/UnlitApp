@@ -11,6 +11,7 @@ import '../widgets/chunky.dart';
 import '../widgets/confetti.dart';
 import '../widgets/mascot.dart';
 import '../widgets/stat_tile.dart';
+import 'goal_setup_screen.dart';
 
 /// "Ölçüm haftan bitti!" ekranı.
 ///
@@ -23,6 +24,10 @@ import '../widgets/stat_tile.dart';
 /// haber veririz. Bu özet, aynı zamanda 1. haftanın raporudur (İstatistik →
 /// "Haftalık raporların" listesinde 1. hafta).
 /// Böylece ilk gün her şey birden ekrana dökülmez.
+///
+/// İlk seferde en altta "HEDEFİMİ SEÇ" çıkar: hedef sorusu, cevabının
+/// kullanılacağı ana (başlangıç noktası belli olduğunda) konur. Seçmemek
+/// de serbest ("ŞİMDİLİK GEÇ"); sonra Bugün'deki karttan seçilebilir.
 class MeasurementSummaryScreen extends StatefulWidget {
   const MeasurementSummaryScreen({super.key, required this.state});
 
@@ -54,6 +59,12 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
   Future<void> _done() async {
     await state.markMeasurementSummarySeen();
     if (mounted) Navigator.of(context).pop();
+  }
+
+  /// Özet görüldü; hedef seçme akışı bu ekranın yerine açılır.
+  Future<void> _chooseGoal() async {
+    await state.markMeasurementSummarySeen();
+    if (mounted) await GoalSetupScreen.open(context, state, replace: true);
   }
 
   @override
@@ -198,7 +209,30 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    ChunkyButton(label: 'DEVAM', onPressed: _done),
+                    // İlk seferde: başlangıç noktan belli, şimdi istersen
+                    // bir hedef seç. (Özet sonradan açılınca sadece DEVAM.)
+                    if (_firstTime && state.goal == null) ...[
+                      Text(
+                        'Şimdi istersen bir hedef seç: ne kadar azaltacağına '
+                        've ne kadar sürede yapacağına sen karar ver.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 12),
+                      ChunkyButton(
+                        label: 'HEDEFİMİ SEÇ',
+                        icon: Icons.flag_outlined,
+                        onPressed: _chooseGoal,
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: TextButton(
+                          onPressed: _done,
+                          child: const Text('ŞİMDİLİK GEÇ'),
+                        ),
+                      ),
+                    ] else
+                      ChunkyButton(label: 'DEVAM', onPressed: _done),
                   ],
                 ),
               ),

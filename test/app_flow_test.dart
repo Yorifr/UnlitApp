@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/app.dart';
 import 'package:unlit/app_state.dart';
+import 'package:unlit/logic/rewards.dart';
 import 'package:unlit/models/activity_log.dart';
+import 'package:unlit/models/goal.dart';
 import 'package:unlit/models/mascot_look.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/services/demo_device_service.dart';
@@ -250,7 +252,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ölçüm haftan bitti!'), findsOneWidget);
     expect(find.text('Günde ortalama'), findsOneWidget);
-    await scrollAndTap(tester, find.text('DEVAM'));
+    await scrollAndTap(tester, find.text('ŞİMDİLİK GEÇ'));
     await tester.pumpAndSettle();
     expect(state.measurementSummaryPending, isFalse);
     expect(find.text('SONUÇLARIMI GÖR'), findsNothing);
@@ -268,6 +270,91 @@ void main() {
     );
     expect(find.text('Kazandıkların'), findsOneWidget);
     expect(find.text('İçmediğin sigara'), findsOneWidget);
+  });
+
+  testApp('hedef: ölçüm özetinden seçilir, Bugün\'de kart, Hedefim sayfası', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    await scrollAndTap(tester, find.text('DEMO VERİSİ ÜRET'));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 3000), // en üste kaydır
+    );
+    await tester.pumpAndSettle();
+    // Hedef kartı, ölçüm özeti görülmeden çıkmaz.
+    expect(find.text('Bir hedef seç'), findsNothing);
+    await tester.tap(find.text('SONUÇLARIMI GÖR'));
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('HEDEFİMİ SEÇ'));
+    await tester.pumpAndSettle();
+
+    // 1. Ne kadar? Seçmeden buton "ŞİMDİLİK GEÇ".
+    expect(find.textContaining('Ne kadar azaltmak istersin?'), findsOneWidget);
+    expect(find.text('ŞİMDİLİK GEÇ'), findsOneWidget);
+    await tester.tap(find.text('%50 azaltmak'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
+    // 2. Ne kadar sürede? Önerilen 4 hafta "Dengeli"; 1 hafta "Çok iddialı".
+    expect(find.text('Dengeli'), findsOneWidget);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byTooltip('Azalt'));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Çok iddialı'), findsOneWidget);
+    await tester.tap(find.text('Ay'));
+    await tester.pumpAndSettle();
+    expect(find.text('ay'), findsOneWidget); // 1 ay
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
+    // 3. Kendine not (henüz yoktu) → erteleme ekranındaki notla aynı.
+    await tester.enterText(find.byType(TextField), 'Kızımla koşmak için');
+    await tester.tap(find.text('HEDEFİMİ KAYDET'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hedefin hazır!'), findsOneWidget);
+    expect(find.text('+$xpGoalSet'), findsOneWidget);
+    expect(state.goal!.percent, 50);
+    expect(state.goal!.unit, GoalUnit.month);
+    expect(state.profile.reasonNote, 'Kızımla koşmak için');
+    await tester.ensureVisible(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
+    // Bugün'deki kart → Hedefim sayfası.
+    await scrollAndTap(tester, find.text('Hedefim'));
+    await tester.pumpAndSettle();
+    expect(find.text('%50 azaltmak'), findsOneWidget);
+    expect(find.textContaining('Günde en fazla'), findsOneWidget);
+    expect(find.textContaining('Hedefin hazır!'), findsOneWidget);
+
+    // Hedefi değiştirmek: not zaten var, o adım yok; puan da yok.
+    final xp = state.totalXp;
+    await scrollAndTap(tester, find.text('HEDEFİ DEĞİŞTİR'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bırakmak'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('HEDEFİMİ KAYDET'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hedefin güncellendi'), findsOneWidget);
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    expect(state.totalXp, xp);
+    expect(state.goal!.isQuit, isTrue);
+    // Bırakma hedefinde destek bilgisi.
+    await tester.scrollUntilVisible(
+      find.text('Bırakırken yalnız değilsin'),
+      250,
+      scrollable: find.byType(Scrollable).hitTestable().first,
+    );
+    expect(find.textContaining('ALO 171'), findsOneWidget);
   });
 
   testApp('haftalık rapor: Bugün\'de bir kez duyurulur, İstatistik\'te kalır', (
@@ -292,7 +379,7 @@ void main() {
       250,
       scrollable: find.byType(Scrollable).hitTestable().first,
     );
-    await scrollAndTap(tester, find.text('DEVAM'));
+    await scrollAndTap(tester, find.text('ŞİMDİLİK GEÇ'));
     await tester.pumpAndSettle();
 
     // 15 günlük demo: 2. hafta bitti.
@@ -503,6 +590,25 @@ void main() {
       );
       await tester.pumpAndSettle();
     }
+    // Hedef seçme akışı da taşmasın: %50, süre (zorluk kartı), not.
+    await tester.tap(find.text('HEDEFİMİ SEÇ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('%50 azaltmak'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, -400),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('HEDEFİMİ KAYDET'));
+    await tester.pumpAndSettle();
+    // Kutlama: yeni eşya haberi çıkarsa DEVAM aşağıda kalabilir.
+    await tester.ensureVisible(find.text('DEVAM'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
 
@@ -517,6 +623,29 @@ void main() {
       await tester.pumpAndSettle();
     }
     await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
+    // Hedefim sayfası (Bugün'deki karttan).
+    // Karta kadar kaydır, sonra kartı ekranın üstüne getir (alt menünün
+    // arkasında kalırsa dokunuş menüye gider).
+    await tester.scrollUntilVisible(
+      find.text('Hedefim'),
+      200,
+      scrollable: find.byType(Scrollable).hitTestable().first,
+    );
+    await tester.ensureVisible(find.text('Hedefim'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hedefim'));
+    await tester.pumpAndSettle();
+    expect(find.text('%50 azaltmak'), findsOneWidget);
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(
+        find.byType(Scrollable).hitTestable().first,
+        const Offset(0, -400),
+      );
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.byTooltip('Geri'));
     await tester.pumpAndSettle();
 
     for (final tab in ['Bugün', 'İstatistik', 'Profil']) {
