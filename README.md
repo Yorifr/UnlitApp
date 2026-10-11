@@ -23,6 +23,10 @@ Tasarım ve kullanım hissi **Duolingo'dan ilham** alır, ama hiçbir zaman
 suçlamaz:
 
 - **Nefes** adında bir maskot seni karşılar, soruları sorar, yol gösterir.
+  Başındaki filiz puan topladıkça 4 aşamada büyür (asla küçülmez).
+- **Nefes'in dolabı:** puanlar harcanmaz; belli puanlarda ve anlamlı
+  anlarda gözlük, atkı, kep, kulaklık, taç, bere açılır ve Nefes'e
+  takılabilir. Açılan eşya kaybolmaz.
 - **Sadece 4 kısa soru** (günde kaç sigara, uyanınca ilk sigara, paket
   fiyatı, tetikleyiciler). Her cevap uygulamada bir şeyi değiştirir.
 - **Günlük 3 görev** (kendini dinle, sigaranın nedenini işaretleme, nefes

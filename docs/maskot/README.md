@@ -1,5 +1,11 @@
 # Maskot önerileri
 
+> **Karar (0.7.0):** **Nefes 2.0** seçildi ve uygulamaya eklendi
+> (`lib/widgets/mascot_painter.dart`, SVG ile piksel karşılaştırması
+> yapıldı). "Nefes'in dolabı" da uygulandı (`lib/logic/wardrobe.dart`,
+> kurallar: docs/SPEC.md → Bölüm 3, madde 10). Diğer tasarımlar arşiv
+> olarak burada duruyor.
+
 Unlit'in maskotu "Nefes" için 5 tasarım önerisi. Hepsi **elle yazılmış SVG
 kodu**; yapay zekâ ile görsel üretilmedi. Basit şekillerden (daire, elips,
 dikdörtgen, eğri) oluştukları için seçilen tasarım, uygulamadaki kodla çizilen
@@ -50,20 +56,20 @@ Dosyadaki sıra çizim sırasıdır (sonra gelen üstte). Sadece `g, circle, ell
 rect, path, line, polyline, polygon` kullanıldı; gradyan, filtre, maske, yazı
 yok.
 
-## Flutter'a taşırken (Nefes 2.0 seçilirse)
+## Flutter'da nasıl çiziliyor (Nefes 2.0)
 
-- Renkler koda tek tek yazılmasın; tek bir `MascotColors` tablosundan gelsin
-  (ör. kutlamadaki "gülen alt kapak" gövde rengiyle aynı olmalı).
-- Tekrarlanan çizimler tek fonksiyon olsun: yaprak (`drawLeaf`), kutlamada
-  biraz aşağı kayan atkı (`drawScarf(dy)`).
-- Filizin aşaması **saf bir fonksiyon** olsun (ör. `growthStage(totalXp)`,
-  `lib/logic/`): sadece toplam puana bağlı, **asla geri gitmez**; sigara
-  sayısına, sigarasız süreye ya da Aşama 6'daki enerji/sağlık göstergelerine
-  bağlanmaz. Bunu gösteren bir test yazılsın, eşikler SPEC.md'ye eklensin.
-- Painter okunaklı kalsın diye gövde, yüz, filiz ve aksesuarlar ayrı
-  fonksiyonlarda/dosyalarda olsun.
+- `lib/widgets/mascot_painter.dart`, `1-nefes-2.svg`'nin birebir kod hâli:
+  aynı sıra, aynı koordinatlar (200 × 200 alan). Şekiller SVG'deki
+  `d="..."` yazılarıyla, `lib/widgets/svg_path.dart`'taki küçük okuyucu
+  üzerinden çiziliyor; ikisi yan yana konunca karşılaştırılabiliyor.
+- Renkler tek yerde: `MascotColors`. Yaprak tek fonksiyon (`_leaf`); gövde,
+  yüz, aksesuarlar ve filiz ayrı fonksiyonlarda.
+- Filizin aşaması saf bir fonksiyon: `sproutStage(totalXp)`
+  (`lib/logic/wardrobe.dart`); sadece toplam puana bağlı, asla geri
+  gitmez (testi: `test/wardrobe_test.dart`).
+- Çizimi değiştirirseniz SVG'yi de aynı koordinatlarla güncelleyin.
 
-## Puanla açılan dolap (öneri, karar bekliyor)
+## Puanla açılan dolap (uygulandı, 0.7.0)
 
 Puanlar para gibi **harcanmaz**; toplam puan hiç düşmez. Belli puanlarda ve
 anlamlı anlarda eşyalar **açılır**, açılan eşya istenince takılır ve bir daha
@@ -81,4 +87,5 @@ kaybolmaz.
 Kurallar: aynı anda bir baş aksesuarı (bere, kep, taç ya da kulaklık) + bir
 gözlük + bir atkı; sigara içmek hiçbir şeyi kilitlemez; sürpriz kutu ve
 "sadece bugün" yok; tetikleyici eşya (fincan, bardak, kadeh, pipo, ateş) yok.
-Eşikler öneridir (aktif bir günde yaklaşık 50 puan kazanılıyor).
+Filiz 300 / 1000 / 2500 puanda büyür. Eşikler `lib/logic/wardrobe.dart`'ta
+(aktif bir günde yaklaşık 50 puan kazanılıyor).

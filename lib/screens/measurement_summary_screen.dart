@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../logic/quests.dart';
+import '../logic/wardrobe.dart';
+import '../models/mascot_look.dart';
 import '../services/effects.dart';
 import '../theme.dart';
 import '../utils/format.dart';
@@ -43,6 +45,10 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
     if (_firstTime) Effects.celebrate(big: true);
   }
 
+  /// Başı boşsa kep takılmış görünüş (DEVAM'da olacak olanın önizlemesi).
+  MascotLook _withCap(MascotLook look) =>
+      look.copyWith(accessories: autoEquip(look.accessories, [Accessory.kep]));
+
   Future<void> _done() async {
     await state.markMeasurementSummarySeen();
     if (mounted) Navigator.of(context).pop();
@@ -74,8 +80,14 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                   children: [
-                    const Center(
-                      child: Mascot(mood: MascotMood.cheer, size: 120),
+                    Center(
+                      // İlk seferde Nefes mezuniyet kepini takmış görünür
+                      // (başı boşsa DEVAM'a basınca gerçekten takılır).
+                      child: Mascot(
+                        mood: MascotMood.cheer,
+                        size: 120,
+                        look: _firstTime ? _withCap(state.mascotLook) : null,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -164,6 +176,13 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
                                 'İstatistik’te “Kazandıkların” açıldı: bu '
                                 'ortalamanın altında kaldıkça içmediğin '
                                 'sigaralar ve cebinde kalan para birikir.',
+                          ),
+                          const SizedBox(height: 12),
+                          const _Unlocked(
+                            icon: Icons.school_outlined,
+                            text:
+                                'Nefes’in dolabına mezuniyet kepi geldi: '
+                                'ölçüm haftasını bitirmenin hatırası.',
                           ),
                         ],
                       ),

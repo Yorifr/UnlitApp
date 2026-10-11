@@ -6,7 +6,10 @@ import 'logic/measurement.dart';
 import 'logic/quests.dart';
 import 'logic/rewards.dart';
 import 'logic/stats.dart';
+// Getter adlarıyla (sproutStage, unlockedAccessories) karışmasın diye önekli.
+import 'logic/wardrobe.dart' as wardrobe;
 import 'models/activity_log.dart';
+import 'models/mascot_look.dart';
 import 'models/pack_price.dart';
 import 'models/smoking_event.dart';
 import 'models/user_profile.dart';
@@ -44,6 +47,7 @@ class AppState extends ChangeNotifier {
   PriceHistory _prices = PriceHistory();
   DateTime? _priceConfirmedAt;
   bool _measurementSummarySeen = false;
+  Set<Accessory> _outfit = {};
   StreamSubscription<SmokingEvent>? _subscription;
 
   UserProfile get profile => _profile;
@@ -117,6 +121,34 @@ class AppState extends ChangeNotifier {
     prices: _prices,
   );
 
+  // ---------- Nefes'in dolabı (bkz. logic/wardrobe.dart) ----------
+
+  /// Başındaki filizin aşaması (1–4); sadece toplam puanla büyür.
+  int get sproutStage => wardrobe.sproutStage(totalXp);
+
+  /// Açılmış eşyalar. Açılan eşya bir daha kaybolmaz: toplam puan, en uzun
+  /// seri ve "ölçüm haftası bitti" bilgisi zamanla sadece artar.
+  Set<Accessory> get unlockedAccessories => wardrobe.unlockedAccessories(
+    totalXp: totalXp,
+    bestStreak: streak.best,
+    measurementDone: measurementOver(now, _trackingStartedAt),
+  );
+
+  /// Maskotun şu anki görünüşü (filiz aşaması + takılı eşyalar).
+  MascotLook get mascotLook => MascotLook(
+    stage: sproutStage,
+    accessories: wardrobe.wearable(_outfit, unlockedAccessories),
+  );
+
+  /// Bir eşyayı tak ya da çıkar (aynı yerdeki eşya çıkar). Kilitli eşya
+  /// takılamaz.
+  Future<void> toggleOutfit(Accessory accessory) async {
+    if (!unlockedAccessories.contains(accessory)) return;
+    _outfit = wardrobe.toggleAccessory(mascotLook.accessories, accessory);
+    await storage.saveOutfit(_outfit);
+    notifyListeners();
+  }
+
   /// Bugün seçilen son ruh hali (yoksa null).
   Mood? get todayMood {
     final today = _activity.moods.where(
@@ -141,6 +173,7 @@ class AppState extends ChangeNotifier {
     _prices = storage.loadPrices();
     _priceConfirmedAt = storage.priceConfirmedAt;
     _measurementSummarySeen = storage.measurementSummarySeen;
+    _outfit = storage.loadOutfit();
 
     // Eski sürümden gelen kullanıcı: takip başlangıcı kayıtlı değilse
     // ilk sigara kaydını (yoksa bugünü) başlangıç say.
@@ -267,9 +300,17 @@ class AppState extends ChangeNotifier {
   }
 
   /// "Ölçüm haftan bitti!" özeti görüldü: kart bir daha çıkmasın.
+  /// Ölçüm haftasıyla açılan kep, başı boşsa takılır ("mezuniyet").
   Future<void> markMeasurementSummarySeen() async {
+    final firstTime = !_measurementSummarySeen;
     _measurementSummarySeen = true;
     await storage.setMeasurementSummarySeen(true);
+    // Sadece ilk seferde: özet sonradan tekrar açılınca, kullanıcının
+    // çıkardığı kepi geri takmayalım.
+    if (firstTime && unlockedAccessories.contains(Accessory.kep)) {
+      _outfit = wardrobe.autoEquip(mascotLook.accessories, [Accessory.kep]);
+      await storage.saveOutfit(_outfit);
+    }
     notifyListeners();
   }
 
@@ -336,6 +377,8 @@ class AppState extends ChangeNotifier {
   /// kaydeder ve kutlama için sonucu döndürür.
   Future<Reward> _collect([List<XpEntry> actionGains = const []]) async {
     final wasActiveToday = streak.activeToday;
+    final stageBefore = sproutStage;
+    final unlockedBefore = unlockedAccessories;
     _activity.xp.addAll(actionGains);
     final questGains = pendingQuestRewards(
       now: now,
@@ -345,6 +388,18 @@ class AppState extends ChangeNotifier {
     );
     _activity.xp.addAll(questGains);
     await storage.saveActivity(_activity);
+
+    // Puan arttı: dolapta yeni eşya açıldı mı, filiz büyüdü mü?
+    final fresh = [
+      for (final a in Accessory.values)
+        if (unlockedAccessories.contains(a) && !unlockedBefore.contains(a)) a,
+    ];
+    if (fresh.isNotEmpty) {
+      // Yeri boşsa yeni eşyayı hemen tak: kullanıcı kutlamada görsün.
+      _outfit = wardrobe.autoEquip(mascotLook.accessories, fresh);
+      await storage.saveOutfit(_outfit);
+    }
+    final stageAfter = sproutStage;
     notifyListeners();
 
     final gains = [...actionGains, ...questGains];
@@ -352,6 +407,8 @@ class AppState extends ChangeNotifier {
       gains: gains,
       streak: streak.current,
       streakExtended: !wasActiveToday && gains.isNotEmpty,
+      newAccessories: fresh,
+      grownToStage: stageAfter > stageBefore ? stageAfter : null,
     );
   }
 
@@ -397,6 +454,7 @@ class AppState extends ChangeNotifier {
     _prices = PriceHistory();
     _priceConfirmedAt = null;
     _measurementSummarySeen = false;
+    _outfit = {};
     notifyListeners();
   }
 
