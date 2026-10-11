@@ -94,20 +94,26 @@ class WardrobeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                   ],
                   const SizedBox(height: 4),
+                  // Bilgi notu: mavi (yaprak yeşili sadece seri ve filiz için).
                   ChunkyCard(
-                    color: c.leafLight,
-                    borderColor: c.leaf,
+                    color: c.blueLight,
+                    borderColor: c.blue,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.lock_open_rounded, color: c.leaf, size: 26),
+                        Icon(
+                          Icons.lock_open_rounded,
+                          color: c.blueText,
+                          size: 26,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             'Puan harcanmaz: eşya açmak puanını azaltmaz. '
-                            'Açılan eşya bir daha kaybolmaz; sigara içmek '
-                            'hiçbir şeyi kilitlemez. Filiz de sadece puanla '
-                            'büyür, asla küçülmez.',
+                            'Açılan eşya kaybolmaz; sigara içmek hiçbir şeyi '
+                            'kilitlemez. Filiz de sadece puanla büyür, asla '
+                            'küçülmez. (Ayarlar\'dan kayıtlarını sıfırlarsan '
+                            'puanlarla birlikte dolap da baştan başlar.)',
                             style: theme.textTheme.bodyMedium,
                           ),
                         ),
@@ -236,8 +242,11 @@ class _AccessoryTile extends StatelessWidget {
 
     // excludeSemantics içerideki dokunmayı da gizlediği için dokunma eylemi
     // burada ayrıca veriliyor (ekran okuyucuyla da takılabilsin).
+    // container: yan yana iki kart ekran okuyucuda tek öğeye birleşmesin.
     return Semantics(
+      container: true,
       button: unlocked,
+      selected: worn,
       onTap: unlocked ? onTap : null,
       label: '${accessory.label}: $spoken',
       excludeSemantics: true,

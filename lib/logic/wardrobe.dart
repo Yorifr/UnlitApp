@@ -138,6 +138,13 @@ Set<Accessory> toggleAccessory(Set<Accessory> equipped, Accessory accessory) {
   };
 }
 
+/// Mezuniyet kepini takar: başta başka bir eşya varsa onun yerine (ölçüm
+/// haftası özetinde "kep geldi" denirken Nefes kep takıyor olsun).
+Set<Accessory> wearCap(Set<Accessory> equipped) =>
+    equipped.contains(Accessory.kep)
+    ? {...equipped}
+    : toggleAccessory(equipped, Accessory.kep);
+
 /// Yeni açılan eşyaları, YERİ BOŞSA otomatik takar (kullanıcı yeni eşyasını
 /// hemen görsün). Yeri doluysa dokunmaz: kullanıcının seçimine saygı.
 Set<Accessory> autoEquip(Set<Accessory> equipped, Iterable<Accessory> fresh) {

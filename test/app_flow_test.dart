@@ -515,6 +515,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Filiz: 2. aşama (4 aşamadan)'), findsOneWidget);
 
+    // Ekran okuyucu her eşyayı ayrı okur (yan yana kartlar birleşmez).
+    final semantics = tester.ensureSemantics();
+    await tester.ensureVisible(find.text('Kulaklık'));
+    await tester.pumpAndSettle();
+    expect(tester.getSemantics(find.text('Kulaklık')).label, 'Kulaklık: açık');
+    semantics.dispose();
+
     await scrollAndTap(tester, find.text('Kulaklık'));
     await tester.pumpAndSettle();
     expect(state.mascotLook.accessories, {Accessory.kulaklik});
@@ -525,6 +532,12 @@ void main() {
     expect(state.mascotLook.accessories, {Accessory.kulaklik});
     expect(find.textContaining('1000 puan · 400 kaldı'), findsOneWidget);
 
+    // Gözlük listenin başında: önce yukarı kaydır.
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 3000),
+    );
+    await tester.pumpAndSettle();
     await scrollAndTap(tester, find.text('Güneş gözlüğü'));
     await tester.pumpAndSettle();
     expect(state.mascotLook.accessories, {

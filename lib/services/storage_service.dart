@@ -192,6 +192,9 @@ class StorageService {
     };
   }
 
+  /// Dolap hiç kaydedildi mi? (Eski sürümden gelen kullanıcıyı anlamak için.)
+  bool get hasOutfit => _prefs.containsKey(_kMascotOutfit);
+
   Future<void> saveOutfit(Set<Accessory> outfit) =>
       _prefs.setStringList(_kMascotOutfit, [for (final a in outfit) a.name]);
 

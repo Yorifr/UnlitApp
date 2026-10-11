@@ -292,6 +292,66 @@ void main() {
       },
     );
 
+    test('taç bir gün önce takılmış olsa da özette kep takılır', () async {
+      await state.completeOnboarding(UserProfile());
+      for (var day = 11; day <= 16; day++) {
+        now = DateTime(2026, 10, day, 9);
+        device.emit(now); // ölçüm haftasında kayıt var: özet çıkacak
+        await Future<void>.delayed(Duration.zero);
+        await state.logMood(Mood.good);
+      }
+      expect(state.mascotLook.wears(Accessory.tac), isTrue); // 7 günlük seri
+      now = DateTime(2026, 10, 17, 9);
+      expect(state.measurementSummaryPending, isTrue);
+      await state.markMeasurementSummarySeen();
+      expect(state.mascotLook.wears(Accessory.kep), isTrue);
+      expect(state.mascotLook.wears(Accessory.tac), isFalse);
+      expect(state.unlockedAccessories, contains(Accessory.tac)); // kaybolmaz
+    });
+
+    test(
+      'ölçüm haftasında hiç kayıt yoksa kep ilk kutlamada haber verilir',
+      () async {
+        await state.completeOnboarding(UserProfile());
+        now = DateTime(2026, 10, 18, 9);
+        expect(
+          state.measurementSummaryPending,
+          isFalse,
+        ); // özetlenecek kayıt yok
+        final reward = await state.logMood(Mood.good);
+        expect(reward.newAccessories, contains(Accessory.kep));
+        expect(state.mascotLook.wears(Accessory.kep), isTrue);
+        // Bir kez: sonraki eylemde tekrar haber yok.
+        final again = await state.logBreathing();
+        expect(again.newAccessories, isEmpty);
+      },
+    );
+
+    test('eski sürümden gelen kullanıcıda açılmış eşyalar bir kez takılır', () async {
+      SharedPreferences.setMockInitialValues({
+        'flutter.onboarding_done': true,
+        'flutter.tracking_started_at': now.millisecondsSinceEpoch,
+        'flutter.activity':
+            '{"xp": [{"t": ${now.millisecondsSinceEpoch}, "a": 300, "r": "welcome"}]}',
+      });
+      final old = AppState(
+        storage: await StorageService.create(),
+        device: FakeDevice(),
+        clock: () => now,
+      );
+      await old.start();
+      expect(old.mascotLook.accessories, {Accessory.gozluk, Accessory.atki});
+    });
+
+    test('kayıtlar sıfırlanınca dolap ve filiz de baştan başlar', () async {
+      await startWithXp(1200);
+      await state.toggleOutfit(Accessory.bere);
+      expect(state.sproutStage, 3);
+      await state.resetEventsAndProgress();
+      expect(state.mascotLook, MascotLook.plain);
+      expect(state.storage.loadOutfit(), isEmpty); // bayat kayıt kalmasın
+    });
+
     test('tüm veriler silinince dolap da boşalır', () async {
       await startWithXp(600);
       await state.toggleOutfit(Accessory.atki);

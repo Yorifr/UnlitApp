@@ -45,9 +45,9 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
     if (_firstTime) Effects.celebrate(big: true);
   }
 
-  /// Başı boşsa kep takılmış görünüş (DEVAM'da olacak olanın önizlemesi).
+  /// Kep takılmış görünüş (DEVAM'da olacak olanın önizlemesi).
   MascotLook _withCap(MascotLook look) =>
-      look.copyWith(accessories: autoEquip(look.accessories, [Accessory.kep]));
+      look.copyWith(accessories: wearCap(look.accessories));
 
   Future<void> _done() async {
     await state.markMeasurementSummarySeen();
@@ -82,7 +82,7 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
                   children: [
                     Center(
                       // İlk seferde Nefes mezuniyet kepini takmış görünür
-                      // (başı boşsa DEVAM'a basınca gerçekten takılır).
+                      // (DEVAM'a basınca gerçekten takılır).
                       child: Mascot(
                         mood: MascotMood.cheer,
                         size: 120,

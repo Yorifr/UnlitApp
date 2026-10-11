@@ -174,6 +174,12 @@ class AppState extends ChangeNotifier {
     _priceConfirmedAt = storage.priceConfirmedAt;
     _measurementSummarySeen = storage.measurementSummarySeen;
     _outfit = storage.loadOutfit();
+    // 0.6.0 ve öncesinden gelen kullanıcı: puanı zaten varsa açılmış
+    // eşyaları (yerleri boşsa) bir kez tak; yoksa dolaptan habersiz kalır.
+    if (_onboardingDone && !storage.hasOutfit) {
+      _outfit = wardrobe.autoEquip({}, unlockedAccessories);
+      await storage.saveOutfit(_outfit);
+    }
 
     // Eski sürümden gelen kullanıcı: takip başlangıcı kayıtlı değilse
     // ilk sigara kaydını (yoksa bugünü) başlangıç say.
@@ -300,7 +306,9 @@ class AppState extends ChangeNotifier {
   }
 
   /// "Ölçüm haftan bitti!" özeti görüldü: kart bir daha çıkmasın.
-  /// Ölçüm haftasıyla açılan kep, başı boşsa takılır ("mezuniyet").
+  /// Ölçüm haftasıyla açılan kep takılır ("mezuniyet"); başta başka bir
+  /// eşya (ör. bir gün önce açılan taç) varsa onun yerine. Kullanıcı
+  /// dolaptan istediği zaman geri değiştirebilir.
   Future<void> markMeasurementSummarySeen() async {
     final firstTime = !_measurementSummarySeen;
     _measurementSummarySeen = true;
@@ -308,7 +316,7 @@ class AppState extends ChangeNotifier {
     // Sadece ilk seferde: özet sonradan tekrar açılınca, kullanıcının
     // çıkardığı kepi geri takmayalım.
     if (firstTime && unlockedAccessories.contains(Accessory.kep)) {
-      _outfit = wardrobe.autoEquip(mascotLook.accessories, [Accessory.kep]);
+      _outfit = wardrobe.wearCap(mascotLook.accessories);
       await storage.saveOutfit(_outfit);
     }
     notifyListeners();
@@ -394,6 +402,17 @@ class AppState extends ChangeNotifier {
       for (final a in Accessory.values)
         if (unlockedAccessories.contains(a) && !unlockedBefore.contains(a)) a,
     ];
+    // Kep zamanla (ölçüm haftası bitince) açılır ve normalde özet ekranında
+    // verilir. Ölçüm haftasında hiç kayıt yoksa özet çıkmaz; o zaman kep
+    // ilk olumlu eylemin kutlamasında bir kez haber verilsin.
+    if (measurementOver(now, _trackingStartedAt) &&
+        !_measurementSummarySeen &&
+        (measurementSummary?.total ?? 0) == 0 &&
+        unlockedAccessories.contains(Accessory.kep)) {
+      fresh.add(Accessory.kep);
+      _measurementSummarySeen = true;
+      await storage.setMeasurementSummarySeen(true);
+    }
     if (fresh.isNotEmpty) {
       // Yeri boşsa yeni eşyayı hemen tak: kullanıcı kutlamada görsün.
       _outfit = wardrobe.autoEquip(mascotLook.accessories, fresh);
@@ -440,8 +459,16 @@ class AppState extends ChangeNotifier {
 
   /// Sigara kayıtlarını ve tüm ilerlemeyi siler; profil (cevaplar) kalır.
   /// Takip bugünden yeniden başlar.
-  Future<void> resetEventsAndProgress() =>
-      replaceAll(events: [], activity: ActivityLog(), trackingStartedAt: now);
+  /// Puanlar sıfırlandığı için Nefes'in dolabı ve filiz de baştan başlar.
+  Future<void> resetEventsAndProgress() async {
+    _outfit = {};
+    await storage.saveOutfit(_outfit);
+    await replaceAll(
+      events: [],
+      activity: ActivityLog(),
+      trackingStartedAt: now,
+    );
+  }
 
   /// Profil dahil HER ŞEYİ siler; uygulama ilk açılış haline döner.
   Future<void> deleteAllData() async {

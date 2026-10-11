@@ -109,6 +109,14 @@ void main() {
       expect(worn.single.slot, AccessorySlot.head);
     });
 
+    test('mezuniyet kepi baştaki eşyanın yerine takılır', () {
+      expect(wearCap({Accessory.tac, Accessory.atki}), {
+        Accessory.kep,
+        Accessory.atki,
+      });
+      expect(wearCap({Accessory.kep}), {Accessory.kep});
+    });
+
     test('yeni eşya sadece yeri boşsa otomatik takılır', () {
       expect(autoEquip({}, [Accessory.gozluk]), {Accessory.gozluk});
       // Başta kulaklık var: yeni açılan bere kullanıcının seçimini bozmaz.
