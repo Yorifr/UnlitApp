@@ -7,7 +7,8 @@
 Son güncelleme: 11 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
 oyunlaştırma), ses/titreşim efektleri, tarihli paket fiyatı, kendi renk
 teması ("Nane"), sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
-özeti, "Kazandıkların") ve Nefes 2.0 + "Nefes'in dolabı" (0.7.0) tamamlandı.
+özeti, "Kazandıkların"), Nefes 2.0 + "Nefes'in dolabı" (0.7.0) ve haftalık
+rapor + "bir günlük veri ekle" demo seçeneği (0.8.0) tamamlandı.
 
 ---
 
@@ -124,7 +125,9 @@ suçluluk duymasın**.
 7. **Maskot cümleleri** (`lib/logic/mascot_messages.dart`): sadece
    kullanıcının kendi verisi; azalma varsa kutlar, artış varsa nazikçe
    erteleme önerir; ölçüm haftasında karşılaştırma yapmaz ("hiçbir şeyi
-   değiştirmeye çalışma, kılıfını taşı"); hafta bitince özeti önerir.
+   değiştirmeye çalışma, kılıfını taşı"); hafta bitince özeti, sonraki
+   haftalarda haftalık raporu önerir. Haftalık raporun cümlesi ve "gelecek
+   hafta için bir fikir" de burada seçilir (bkz. Özellik 2d).
 8. **Renkler:** Kırmızı sadece "tümünü sil" gibi tehlikeli işlemlerde.
    Kullanıcının sigara davranışı asla kırmızıyla gösterilmez.
 9. **Sadelik ve kademeli açılım** (0.6.0):
@@ -133,8 +136,8 @@ suçluluk duymasın**.
      durması gereksiz; kutlamalarda ve Profil'de görünür).
    - İlk gün her şey açık değil: **ölçüm haftası bitince** "Ölçüm haftan
      bitti!" ekranı açılır ve "İsteği ertele" görevi ile İstatistik'teki
-     "Kazandıkların" bölümü o an "açılır". "CANIM SİGARA İSTİYOR" butonu
-     ise her zaman açık (kural, bkz. madde 3).
+     "Kazandıkların" ve "Haftalık raporların" bölümleri o an "açılır".
+     "CANIM SİGARA İSTİYOR" butonu ise her zaman açık (kural, bkz. madde 3).
 10. **Nefes'in dolabı ve büyüyen filiz** (0.7.0, `lib/logic/wardrobe.dart`):
    puanın harcanacağı değil, **anlam kazandığı** yer.
    - **Puan harcanmaz.** Eşyalar belli puanlarda ya da anlamlı anlarda
@@ -254,7 +257,9 @@ suçluluk duymasın**.
     hiç azaltmayan birinin günlük dalgalanmasını bile kazanç gibi
     gösterirdi. Neden bugün yok? Gün bitmeden "bugün 15 sigara içmedin"
     demek yanlış olur; böylece sayı sigaradan hemen sonra da değişmez.
-  - Bu bölümün altında "ÖLÇÜM HAFTASI ÖZETİM" ile özet tekrar açılabilir.
+  - Ölçüm haftası özeti, "Haftalık raporların" listesinde "1. hafta"
+    olarak tekrar açılır (0.8.0'a kadar burada ayrı bir buton vardı; tek
+    giriş noktası kalsın diye listeye taşındı).
 - **Kaldırılanlar (0.6.0):** "Tahmini kaybedilen yaşam süresi" ve
   "Sigaraya giden süre (~6 dk varsayımı)" kartları. Gerekçe: Bölüm 11.
 - **Paket fiyatı (tarihli):** Fiyat profilin parçası değil; kendi yeri
@@ -293,6 +298,60 @@ en uzun seri, toplam puan, ertelenen istekler).
   Ölçüm haftasında hiç kayıt yoksa gösterilmez.
 - Kod: `lib/logic/measurement.dart` (saf hesaplar),
   `lib/screens/measurement_summary_screen.dart`.
+- Bu özet aynı zamanda **1. haftanın raporudur**; İstatistik → "Haftalık
+  raporların" listesinde "1. hafta · Ölçüm haftası" olarak durur.
+
+### Özellik 2d — Haftalık rapor ✅ (0.8.0)
+- **Neden?** 0.7.0'a kadar her gün topladığımız veri (ruh hali, işaretlenen
+  nedenler, ertelemeler, nefes molaları) ölçüm haftasından sonra kullanıcıya
+  hiçbir yerde geri dönmüyordu; "kişiselleştirilmiş geri bildirim" sadece
+  Bugün'deki tek maskot cümlesi ve bir kez gösterilen ölçüm özetiydi.
+  Haftalık rapor bu döngüyü kapatır: "verdiğin her bilgi sana geri döner".
+- **Haftalar takipten sayılır, takvimden değil:** 1. hafta = ölçüm haftası
+  (takibin 1.–7. günü), 2. hafta = 8.–14. gün... Kullanıcı çarşamba
+  başladıysa ilk takvim haftası yarım kalırdı; böylece her hafta tam 7
+  günle karşılaştırılır. Sadece **biten** haftalar raporlanır.
+- **Duyuru:** Hafta bitince Bugün'de maskot "2. haftan bitti! Haftalık
+  raporun hazır" der ve **RAPORUMU GÖR** butonu çıkar (açılır pencere ya da
+  bildirim değil). Sadece EN SON biten hafta duyurulur (uygulama üç hafta
+  açılmadıysa üç rapor üst üste gelmez). Ölçüm haftası özeti bekliyorsa
+  önce o çıkar. Haftada hiçbir şey olmadıysa (ne kayıt ne görev ne ruh
+  hali) duyurulmaz. Görülen hafta `weekly_report_seen`'de saklanır.
+- **Kalıcı yeri:** İstatistik → "Haftalık raporların" (en yenisi üstte, 4'ten
+  fazlası "TÜMÜNÜ GÖSTER" ile; sıradaki raporun tarihi yazar).
+- **İçerik** (sadece kullanıcının kendi verisi):
+  1. Nefes'in cümlesi: önce olumlu olan söylenir (önceki haftadan az →
+     başlangıç noktasının altında → aynı → artış). Artışta suçlama yok,
+     "olur böyle" + kendine iyi baktığı gün sayısı; maskot sakin.
+  2. Sigara: bu hafta ve önceki hafta (2. hafta için "Ölçüm haftası"), fark
+     rozeti (azalma nane, artış nötr gri), günde ortalama ve başlangıç
+     noktası, 7 günün grafiği.
+  3. Örüntün: en yoğun saat, günün ilk sigarası (önceki haftanınki yanında,
+     yorumsuz), en sık neden.
+  4. Kendine iyi baktığın anlar: görev yaptığın gün (x / 7), ertelenen
+     istek, nefes molası, kazanılan puan, ruh hali dağılımı (soldan sağa
+     olumsuzdan olumluya).
+  5. Bu hafta kazandıkların: **sadece içilmeyen sigara varsa** (net hesap,
+     `gainsBetween`, "Kazandıkların" ile aynı kural; "0" diye bir kart
+     göstermeyiz).
+  6. Gelecek hafta için bir fikir: en sık nedene göre tek, somut öneri
+     ("kahveden sonra gelen bir isteği 10 dakika ertelemeyi dene"; stres →
+     nefes molası; neden yoksa en yoğun saat). Öneriler hep uygulamanın
+     kendi araçlarına çıkar, sayı içermez.
+- Konfeti yok (rapor bir ödül değil, bir ayna); ilk açılışta hafif "ding".
+- Kod: `lib/logic/weekly_report.dart` (saf hesaplar),
+  `lib/logic/mascot_messages.dart` (`weeklyReportLine`, `weeklyTip`),
+  `lib/screens/weekly_report_screen.dart`.
+- **Toplanan veri nerede geri dönüyor? (0.8.0 itibarıyla)**
+
+  | Veri | Nerede kullanıcıya döner |
+  |---|---|
+  | Sigara sayısı/saati | İstatistik (bugün, haftalık karşılaştırma, grafik), ölçüm özeti, haftalık rapor, Bugün'deki maskot cümlesi |
+  | Onboarding tahminleri | Ölçüm özetinde ölçülenle yan yana |
+  | İşaretlenen nedenler | Ölçüm özeti (1. hafta), haftalık rapor (en sık neden + öneri) |
+  | Ruh hali | O günün maskot cümlesi/kutlaması (zor gün → sakin), haftalık rapor (dağılım) |
+  | Erteleme, nefes | Profil (toplam ertelenen istek), haftalık rapor |
+  | Kendine not | Erteleme ekranı |
 
 ### Özellik 3 — Süreç aşamaları ⏳ Aşama 3
 Ölçüm → Farkındalık → Azaltma → Bırakma günü → Sürdürme
@@ -315,6 +374,9 @@ Profil bilgisine göre seçilen 3 tür mesaj:
 2. **Geleceğe dönük fırsat:** "Yarın sabah koşacaksan bu akşam son sigarayı
    21:00'de içmeye ne dersin?"
 3. **Somut öneri:** "Kahveden sonra 10 dk yürü, sonra karar ver."
+
+(0.8.0: haftalık rapordaki "Gelecek hafta için bir fikir" bu "somut öneri"
+türünün ilk, bildirimsiz hâlidir.)
 
 Kurallar: günde **en fazla 3** bildirim; sigaradan **hemen sonra suçluluk
 mesajı yok**; hedef aşılınca **destekleyici** mesaj; **aynı tür üst üste
@@ -377,10 +439,11 @@ lib/
 ├── logic/                     Saf (test edilebilir) hesaplar
 │   ├── stats.dart             Sayılar, para, yaşam tahmini sabiti
 │   ├── measurement.dart       Ölçüm haftası özeti + "Kazandıkların"
+│   ├── weekly_report.dart     Haftalık rapor (haftalar, rapor hesabı)
 │   ├── quests.dart            Günlük görevler, ölçüm haftası
 │   ├── rewards.dart           XP ödülleri, seri (dinlenme günü dahil)
 │   ├── wardrobe.dart          Nefes'in dolabı: eşya açılma, filiz aşaması
-│   └── mascot_messages.dart   Maskotun ana ekran cümlesi
+│   └── mascot_messages.dart   Maskotun cümleleri (ana ekran, haftalık rapor)
 ├── utils/format.dart          Türkçe tarih/para/süre yazımı
 ├── screens/
 │   ├── onboarding_screen.dart Tek soru = tek ekran
@@ -392,6 +455,7 @@ lib/
 │   ├── breathing_screen.dart  1 dk nefes egzersizi
 │   ├── celebration_screen.dart Konfetili kutlama
 │   ├── measurement_summary_screen.dart "Ölçüm haftan bitti!" özeti
+│   ├── weekly_report_screen.dart Haftalık rapor
 │   ├── wardrobe_screen.dart   Nefes'in dolabı (Profil'den açılır)
 │   └── settings_screen.dart   Demo, gizlilik, kaynaklar
 └── widgets/
@@ -404,6 +468,7 @@ lib/
     ├── price_sheet.dart       "Paket fiyatı" penceresi (fiyatın tek yeri)
     ├── reason_note.dart       "Kendine bir not" penceresi + kartı
     ├── onboarding_inputs.dart Seçenek kutuları, sayı seçici, ölçek
+    ├── change_chip.dart       Fark rozeti ("2 az" nane / "3 fazla" nötr)
     ├── bar_chart.dart, stat_tile.dart, privacy_banner.dart
 assets/fonts/                  Nunito (SIL OFL), uygulamaya gömülü
 assets/sounds/                 Ses efektleri (sentez, telif yok)
@@ -432,11 +497,19 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   bir demodur, gerçek kullanıcı hakkında iddia değildir. "Demo verisi üret"
   ayrıca geçmiş günler için ruh hali, nedenler, nefes, erteleme ve XP üretir
   (bugün boş kalır; 10. gün bilerek boş: dinlenme gününü gösterir).
+- **"Bir günlük veri ekle"** (0.8.0, `addDemoDay`): gerçek saat ileri
+  alınamadığı için her kayıt (sigaralar, ruh hali, ertelemeler, puanlar,
+  fiyatlar, takip başlangıcı) bir gün GERİYE kaydırılır; boşalan son 24 saate
+  yeni demo sigaraları eklenir (yeni tohumla, yoksa her gün aynı saatler
+  tekrar ederdi). Dün hiç görev yapılmadıysa demo kullanıcısı yapar. Geçmiş
+  sadece kayar, değişmez; görülen özet/raporlar görülmüş kalır. Böylece
+  ölçüm haftası ve haftalık raporlar gün gün izlenebilir. Ayarlar'da "Şu an
+  takibin N. günü (M. hafta)" yazar.
 - **Kayıt:** `shared_preferences` (Android/iOS yerel dosya, web'de
   localStorage). Anahtarlar: `profile`, `onboarding_done`, `events`,
   `activity`, `tracking_started_at`, `demo_last_sync`, `demo_seed`,
   `sound_on`, `haptics_on`, `prices`, `price_confirmed_at`,
-  `measurement_summary_seen`, `mascot_outfit`.
+  `measurement_summary_seen`, `mascot_outfit`, `weekly_report_seen`.
   - Taşıma: 0.3.0 ve öncesinde fiyat profilin içindeydi (`packPrice`,
     `cigarettesPerPack`). Açılışta bir kez, takip başlangıcından geçerli tek
     bir fiyata taşınır ve profilden silinir.
@@ -488,6 +561,9 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   — `at(zaman)` o andaki geçerli fiyatı verir.
 - `tracking_started_at`: ölçüm haftasının başlangıcı (onboarding bitince).
 - `measurement_summary_seen`: "Ölçüm haftan bitti!" özeti görüldü mü.
+- `weekly_report_seen`: en son görülen haftalık raporun hafta numarası
+  (0 = hiç). Raporların kendisi saklanmaz, her seferinde kayıtlardan
+  hesaplanır.
 - `mascot_outfit`: takılı eşyaların adları (`Accessory`: gozluk, atki, kep,
   kulaklik, tac, bere). Açılan eşyalar ve filiz aşaması **saklanmaz**, her
   seferinde toplam puan / en uzun seri / ölçüm haftasından hesaplanır
@@ -500,10 +576,12 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   kaydedilir). Profil/Ayarlar'dan düzenleme modunda tekrar açılır;
   düzenleme modunda paket fiyatı sorusu YOKTUR (fiyatın kendi yeri var).
 - **Bugün:** ölçüm rozeti + seri; demo uyarısı (+1 sigara); maskot
-  cümlesi (+ hafta bitince "SONUÇLARIMI GÖR"); "CANIM SİGARA İSTİYOR";
+  cümlesi (+ hafta bitince "SONUÇLARIMI GÖR", sonraki haftalarda "RAPORUMU
+  GÖR"); "CANIM SİGARA İSTİYOR";
   günlük görevler; bugünkü sigaralar ve "Neden?" etiketleri.
 - **İstatistik:** bugün kartı, haftalık karşılaştırma (2 haftalık kayıt
-  varsa), son 7 gün grafiği, "Kazandıkların" (ölçüm haftasından sonra),
+  varsa), son 7 gün grafiği, "Haftalık raporların" (ölçüm haftasından
+  sonra), "Kazandıkların" (ölçüm haftasından sonra),
   "Para": paket fiyatı kartı (DEĞİŞTİR → fiyat penceresi, fiyat geçmişi),
   dönem seçici, harcanan para.
 - **Profil:** maskot, seri, "Nefes'in dolabı" kartı (sonraki eşyaya
@@ -512,11 +590,13 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 - **Nefes'in dolabı:** büyük maskot önizlemesi, filizin aşaması ve sonraki
   aşamaya ilerleme, 6 eşya (açık olana dokun → tak/çıkar; kilitli olan soluk
   görünür ve ne zaman açılacağını yazar), "puan harcanmaz" notu.
-- **Erteleme / Nefes / Kutlama / Ölçüm haftası özeti:** tam ekran akışlar.
+- **Erteleme / Nefes / Kutlama / Ölçüm haftası özeti / Haftalık rapor:**
+  tam ekran akışlar.
   Kutlamada yeni eşya ve filizin büyümesi haber verilir.
   Erteleme ekranında kendine not (varsa sayacın altında, yoksa en altta
   öneri).
-- **Ayarlar:** kılıf durumu, demo verisi üret/simüle et/sıfırla, bilgilerim
+- **Ayarlar:** kılıf durumu, demo verisi üret / bir günlük veri ekle /
+  simüle et / sıfırla, bilgilerim
   (düzenle, kendime notum, paket fiyatı), gizlilik + tüm verilerimi sil,
   kaynaklar, hakkında.
 
@@ -587,6 +667,7 @@ birebir doğrulayın):
 | 2 | Duolingo tarzı tasarım + oyunlaştırma: görevler, XP, seri, erteleme, nefes, kutlama, maskot, sekmeler (Özellik 2b) | ✅ Tamamlandı (10.10.2026) |
 | 2+ | Sadeleştirme: 4 soruluk onboarding, ölçüm haftası özeti, "Kazandıkların", kendine not, tekrarların temizlenmesi (Özellik 1, 2, 2c) | ✅ Tamamlandı (10.10.2026, 0.6.0) |
 | 2++ | Nefes 2.0 (yeni maskot, büyüyen filiz) + Nefes'in dolabı (Özellik 6'nın bir kısmı) | ✅ Tamamlandı (11.10.2026, 0.7.0) |
+| 2+++ | Haftalık rapor + "bir günlük veri ekle" demo seçeneği (Özellik 2d) | ✅ Tamamlandı (11.10.2026, 0.8.0) |
 | 3 | Süreç aşamaları (Özellik 3) | ⏳ Sıradaki |
 | 4 | Mesaj motoru + bildirimler (Özellik 4) | ⏳ Planlandı |
 | 5 | Para kumbarası (Özellik 5) | ⏳ Planlandı |
@@ -644,6 +725,19 @@ birebir doğrulayın):
 - [x] Testler (ölçüm/kazanç hesapları, demo azaltma, yeni akışlar);
       web'de dış istek yok (Playwright ile kontrol edildi)
 
+### Haftalık rapor (0.8.0) ✅
+- [x] Takipten sayılan haftalar; sadece biten haftalar raporlanır
+- [x] Rapor: maskot cümlesi, sigara (önceki hafta + grafik), örüntü, kendine
+      iyi baktığın anlar (ruh hali dağılımı dahil), haftanın kazancı (varsa),
+      gelecek hafta için bir fikir
+- [x] Bugün'de "RAPORUMU GÖR" (sadece en son hafta, bir kez); İstatistik'te
+      "Haftalık raporların" listesi (1. hafta = ölçüm özeti)
+- [x] Demo: "Bir günlük veri ekle" (her şey bir gün geriye kayar)
+- [x] Ortak hesaplar: `summarizePeriod`, `gainsBetween`, `daysBetween`
+- [x] Testler (rapor hesabı, maskot cümlesi, öneri, AppState duyuru
+      kuralları, demo gün ilerletme, arayüz akışı, büyük yazı boyutu);
+      web'de dış istek yok (Playwright ile kontrol edildi)
+
 ### Aşama 3 — Süreç aşamaları (sıradaki)
 - [ ] Aşama modeli ve kaydı (hangi aşamada, ne zaman başladı)
 - [x] Ölçüm haftası bitişi: "Ölçüm haftan bitti!" kutlaması + özet (0.6.0)
@@ -651,7 +745,9 @@ birebir doğrulayın):
       isteği** (1–10) sorusu: plan kurulurken, cevaplar planı değiştirir
 - [ ] Farkındalık ekranı: en yoğun saatler, işaretlenen nedenlerin
       dağılımı, ilk sigara saati ortalaması (sadece kullanıcının verisi;
-      özet hesapları `measurement.dart`'ta hazır)
+      özet hesapları `measurement.dart`'ta hazır). Not: haftalık rapor
+      (0.8.0) bunun haftalık hâlini zaten gösteriyor; ayrı ekran gerekir mi
+      yeniden değerlendirilmeli.
 - [ ] Azaltma: haftalık kademeli hedef (ölçüm ortalamasından), hedef kartı;
       hedefin altında kalınan gün için görev/rozet
 - [ ] Bırakma günü: tarih seçimi, ALO 171 ve poliklinik (MHRS) bilgisi
@@ -720,6 +816,21 @@ birebir doğrulayın):
   Net hesap daha dürüst; toplam eksiye inmez, bugün sayılmaz (sayı gün
   içinde, sigaradan hemen sonra düşmez). Bir ağır gün sonrası sayı
   azalabilir; bu bilgi verir, suçlamaz (renk nötr, mesaj yok).
+- **Karar — haftalık rapor var; günlük ve aylık rapor yok (0.8.0):**
+  - *Günlük rapor:* Bugün sekmesi ve İstatistik'teki "bugün" kartı zaten
+    günün sayılarını gösteriyor; her akşam gelen bir "gün karnesi", ağır bir
+    günden sonra her akşam kötü bir not gibi hissettirir (suçlama yok
+    ilkesi, perhiz ihlali etkisi). Tek bir gün de çok gürültülü: hafta içi /
+    hafta sonu farkı tek başına büyük dalgalanma yaratır.
+  - *Aylık rapor:* Şimdilik yok. İlk ay ölçüm haftası + 3 haftadan ibaret ve
+    haftalık rapor bunu zaten kapsıyor. Pilot uzarsa (≥ 4–5 haftalık rapor)
+    ayrı bir rapor yerine haftalık raporlara "son 4 hafta" eğilim grafiği
+    eklenmesi önerilir (aynı veri, tek giriş noktası).
+- **Açık soru — ölçüm haftasının ilk günü yarım:** Onboarding gün ortasında
+  biterse 1. gün eksik ölçülür; başlangıç noktası (günde ortalama) biraz
+  düşük çıkar ve 2. hafta raporu "biraz yoğun" diyebilir. Seçenekler:
+  ölçümü ertesi gün 00:00'dan başlatmak ya da ilk günü ortalamaya katmamak.
+  Ekip karar vermeli (`summarizeMeasurementWeek` tek yerden değişir).
 - **Karar — kullanılmayan sorular kaldırıldı (0.6.0):** Bkz. Özellik 1.
   **Pilot için demografi** (yaş aralığı, cinsiyet, kaç yıldır içtiği)
   gerekiyorsa uygulamada "kişiselleştirme" gibi sorulmamalı: ya pilot onam
@@ -774,4 +885,5 @@ birebir doğrulayın):
 | 0.4.0 | Tarihli paket fiyatı | Fiyatın kendi yeri (İstatistik'te kart + pencere, Ayarlar'da kısayol), her sigara kendi tarihindeki fiyatla hesaplanır, fiyat geçmişi, "yanlış girmiştim" düzeltmesi, 90 günde bir "hâlâ aynı mı?", onboarding'de sadece fiyat (paket varsayılan 20), eski sürümden otomatik taşıma; fiyat internetten çekilmez |
 | 0.5.0 | Nane teması | Duolingo'nun birebir renkleri yerine kendi paletimiz: nane (turkuaz) ana renk, mavi ikinci renk, yaprak yeşili seri; nane renkli, yeşil filizli maskot; seri ikonu alev yerine yaprak; alt menüde yumuşak kapsül; hafif nane tonlu zemin, lacivert koyu tema; buton kontrastı ~3,2'den ~3,5'e çıktı |
 | 0.6.0 | Sade ve kişisel | Onboarding 11 → 4 soru (her cevap bir şeyi değiştirir; kullanılmayan eski cevaplar silinir), tetikleyiciler "Neden?" penceresinde başta, erteleme ekranında "kendine not", ölçüm haftası bitince özet ekranı ve kademeli açılım, "kaybedilen yaşam" yerine "Kazandıkların" (içmediğin sigara, cebinde kalan para, korunan yaşam süresi; net hesap), tekrarlar temizlendi (ikinci ruh hali kartı, görev çubukları, iki seçici, üst çubukta XP), ruh hali soldan sağa olumsuzdan olumluya, "XP" → "puan", "check-in" → "Kendini dinle" |
+| 0.8.0 | Haftalık rapor | Her hafta bitince kısa bir rapor: Nefes'in kişisel cümlesi (önce olumlu olan), bu hafta ve önceki hafta + 7 günün grafiği, örüntün (en yoğun saat, ilk sigara, en sık neden), kendine iyi baktığın anlar (görev günleri, ertelemeler, nefes, puan, ruh hali dağılımı), varsa haftanın kazancı ve en sık nedene göre "gelecek hafta için bir fikir"; Bugün'de bir kez "RAPORUMU GÖR", İstatistik'te "Haftalık raporların" listesi (1. hafta = ölçüm özeti); demo'ya "Bir günlük veri ekle" (sanki bir gün geçmiş gibi, ölçüm haftasını ve raporları gün gün izlemek için); onboarding'de yazı tipinde olmayan "→" karakteri kaldırıldı |
 | 0.7.0 | Nefes 2.0 ve dolap | Yeni maskot Nefes 2.0 (SVG tasarımın kodla birebir çizimi): daha ifadeli yüz, düşünürken üç nokta, başında puanla 4 aşamada büyüyen filiz (asla küçülmez); "Nefes'in dolabı": puan harcanmadan eşikle açılan 6 eşya (gözlük, atkı, kep, kulaklık, taç, bere), kutlamada "yeni eşya / filiz büyüdü" haberi, Profil'de sonraki eşyaya ilerleme; ölçüm haftası bitince mezuniyet kepi; nefes egzersizinde maskot da nefes alır; "yavaş ama emin adımlarla" |

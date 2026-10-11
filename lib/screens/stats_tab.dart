@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../app_state.dart';
 import '../logic/stats.dart';
+import '../logic/weekly_report.dart';
 import '../models/smoking_event.dart';
 import '../theme.dart';
 import '../utils/format.dart';
 import '../widgets/bar_chart.dart';
+import '../widgets/change_chip.dart';
 import '../widgets/chunky.dart';
 import '../widgets/price_sheet.dart';
 import '../widgets/stat_tile.dart';
 import 'measurement_summary_screen.dart';
+import 'weekly_report_screen.dart';
 
 /// "Harcanan para" hangi dönem için hesaplansın?
 enum _Period {
@@ -22,7 +25,8 @@ enum _Period {
 }
 
 /// "İstatistik" sekmesi: bugünkü sayı, geçen haftayla karşılaştırma,
-/// son 7 günün grafiği, "Kazandıkların" ve harcanan para.
+/// son 7 günün grafiği, haftalık raporlar, "Kazandıkların" ve harcanan
+/// para.
 ///
 /// Bilerek SADE: sayfada tek bir dönem seçici var (para için). "Kaybedilen
 /// yaşam süresi" gibi sadece büyüyen bir kayıp sayısı göstermiyoruz; aynı
@@ -72,6 +76,11 @@ class _StatsTabState extends State<StatsTab> {
             ],
             const SizedBox(height: 16),
             _ChartCard(events: events, now: now),
+            // Ölçüm haftası bitince açılır (öncesinde hiç görünmez).
+            if (state.completedWeeks > 0) ...[
+              const SizedBox(height: 28),
+              _ReportsSection(state: state),
+            ],
             const SizedBox(height: 28),
             _GainsSection(state: state, onAddPrice: _openPriceSheet),
             const SizedBox(height: 28),
@@ -248,17 +257,6 @@ class _GainsSection extends StatelessWidget {
             onInfo: () => _showLifeInfo(context),
           ),
         ],
-        const SizedBox(height: 4),
-        Align(
-          child: TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => MeasurementSummaryScreen(state: state),
-              ),
-            ),
-            child: const Text('ÖLÇÜM HAFTASI ÖZETİM'),
-          ),
-        ),
       ],
     );
   }
@@ -284,6 +282,143 @@ class _GainsSection extends StatelessWidget {
             child: const Text('ANLADIM'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "Haftalık raporların": biten haftaların listesi, en yenisi üstte.
+/// 1. hafta ölçüm haftasıdır (onun raporu ölçüm haftası özeti). Raporların
+/// kalıcı yeri burası; "Bugün"deki "RAPORUMU GÖR" sadece yeni raporu bir
+/// kez duyurur.
+class _ReportsSection extends StatefulWidget {
+  const _ReportsSection({required this.state});
+  final AppState state;
+
+  @override
+  State<_ReportsSection> createState() => _ReportsSectionState();
+}
+
+class _ReportsSectionState extends State<_ReportsSection> {
+  /// Kapalıyken en son kaç hafta görünsün? (Pilot uzadıkça liste uzamasın.)
+  static const _collapsedCount = 4;
+  bool _expanded = false;
+
+  AppState get state => widget.state;
+
+  void _open(int week) => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => week == 1
+          ? MeasurementSummaryScreen(state: state)
+          : WeeklyReportScreen(state: state, week: week),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final c = AppColors.of(context);
+    final start = state.trackingStartedAt!;
+    final completed = state.completedWeeks;
+    // Ölçüm haftasında hiç kayıt yoksa özetlenecek bir şey yok (özet de
+    // hiç gösterilmedi); listede 1. hafta olmaz.
+    final hasMeasurement = (state.measurementSummary?.total ?? 0) > 0;
+    final weeks = [
+      for (var w = completed; w >= 1; w--)
+        if (w > 1 || hasMeasurement) w,
+    ];
+    final visible = _expanded ? weeks : weeks.take(_collapsedCount).toList();
+    final nextReady = weekStart(start, completed + 2);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Haftalık raporların', style: theme.textTheme.titleLarge),
+        const SizedBox(height: 4),
+        Text(
+          'Her hafta bitince kısa bir rapor gelir. Sıradaki: '
+          '${formatDayMonth(nextReady)}.',
+          style: theme.textTheme.bodyMedium?.copyWith(color: c.textMuted),
+        ),
+        if (weeks.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          ChunkyCard(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(
+              children: [
+                for (var i = 0; i < visible.length; i++) ...[
+                  if (i > 0) Divider(height: 2, color: c.border),
+                  _ReportRow(
+                    week: visible[i],
+                    start: weekStart(start, visible[i]),
+                    onTap: () => _open(visible[i]),
+                  ),
+                ],
+                if (weeks.length > _collapsedCount)
+                  TextButton(
+                    onPressed: () => setState(() => _expanded = !_expanded),
+                    child: Text(
+                      _expanded
+                          ? 'DAHA AZ GÖSTER'
+                          : 'TÜMÜNÜ GÖSTER (${weeks.length})',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Rapor listesinde tek satır: "3. hafta · 15–21 Ekim".
+class _ReportRow extends StatelessWidget {
+  const _ReportRow({
+    required this.week,
+    required this.start,
+    required this.onTap,
+  });
+
+  final int week;
+  final DateTime start;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final c = AppColors.of(context);
+    final range = formatDayRange(start, addDays(start, daysPerWeek - 1));
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+        child: Row(
+          children: [
+            Icon(
+              week == 1 ? Icons.school_outlined : Icons.event_note_outlined,
+              color: week == 1 ? c.purple : c.blue,
+              size: 26,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('$week. hafta', style: theme.textTheme.titleSmall),
+                  Text(
+                    week == 1 ? 'Ölçüm haftası · $range' : range,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: c.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: c.textMuted),
+          ],
+        ),
       ),
     );
   }
@@ -369,63 +504,6 @@ class _TodayCard extends StatelessWidget {
               style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Fark rozeti: "2 az" (nane) / "3 fazla" (nötr gri) / "aynı".
-///
-/// Bilerek kırmızı/uyarı rengi kullanmıyoruz: artış olduğunda kullanıcıyı
-/// suçlamak değil, sadece bilgi vermek istiyoruz.
-class ChangeChip extends StatelessWidget {
-  const ChangeChip({super.key, required this.difference, this.text});
-
-  /// Negatif = azalma (iyi), pozitif = artış.
-  final int difference;
-
-  /// Boş bırakılırsa "2 az" / "3 fazla" yazılır.
-  final String? text;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final (icon, label, background, foreground) = switch (difference) {
-      < 0 => (
-        Icons.south,
-        text ?? '${-difference} az',
-        c.mintLight,
-        c.mintText,
-      ),
-      > 0 => (
-        Icons.north,
-        text ?? '$difference fazla',
-        c.surfaceAlt,
-        c.textMuted,
-      ),
-      _ => (Icons.drag_handle, text ?? 'aynı', c.surfaceAlt, c.textMuted),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: foreground),
-          const SizedBox(width: 4),
-          // Flexible: yer kalmazsa yazı alt satıra geçsin, taşmasın.
-          Flexible(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.labelMedium
-                  ?.copyWith(color: foreground),
-            ),
-          ),
         ],
       ),
     );

@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:unlit/app_state.dart';
+import 'package:unlit/models/activity_log.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/logic/rewards.dart';
@@ -167,5 +169,80 @@ void main() {
     expect(streak.current, 13);
     expect(streak.activeToday, isFalse);
     demo.dispose();
+  });
+
+  group('"Bir günlük veri ekle"', () {
+    late AppState state;
+    late DemoDeviceService demo;
+    final now = DateTime(2026, 10, 10, 15);
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      final storage = await StorageService.create();
+      demo = DemoDeviceService(storage: storage, clock: () => now);
+      state = AppState(storage: storage, device: demo, clock: () => now);
+      await state.start();
+      await state.completeOnboarding(UserProfile());
+    });
+
+    tearDown(() => demo.disconnect());
+
+    test('her şey bir gün geriye kayar, son 24 saat dolar', () async {
+      await loadDemoHistory(state, demo);
+      await state.markMeasurementSummarySeen();
+      final before = [for (final e in state.events) e.time];
+      final priceSince = state.prices.entries.first.since;
+      final day = state.trackingDay!;
+      expect(state.streak.current, 13);
+
+      await addDemoDay(state, demo, random: Random(1));
+
+      expect(state.trackingDay, day + 1);
+      // Geçmiş değişmez, sadece bir gün kayar.
+      final times = {for (final e in state.events) e.time};
+      expect(before.every((t) => times.contains(addDays(t, -1))), isTrue);
+      expect(state.prices.entries.first.since, addDays(priceSince, -1));
+      // Boşalan son 24 saate yeni sigaralar geldi (bugün dahil).
+      expect(countToday(state.events, now), greaterThan(0));
+      expect(state.events.length, greaterThan(before.length + 10));
+      // Dün (eski bugün) görev yoktu → demo kullanıcısı yaptı: seri uzadı.
+      expect(state.streak.current, 14);
+      expect(state.todayXp, 0); // bugün yine kullanıcının
+      // Görülen ölçüm özeti görülmüş kalır.
+      expect(state.measurementSummaryPending, isFalse);
+    });
+
+    test('kullanıcının bugün yaptıkları düne kayar, üstüne eklenmez', () async {
+      await state.logMood(Mood.good);
+      await addDemoDay(state, demo, random: Random(2));
+      final yesterday = addDays(startOfDay(now), -1);
+      final moods = state.activity.moods.where(
+        (m) => startOfDay(m.time) == yesterday,
+      );
+      expect(moods.map((m) => m.mood), [Mood.good]);
+    });
+
+    test('gün gün ilerletince ölçüm özeti ve haftalık rapor çıkar', () async {
+      for (var i = 0; i < 7; i++) {
+        expect(state.measurementSummaryPending, isFalse, reason: 'gün $i');
+        await addDemoDay(state, demo, random: Random(i));
+      }
+      // Takibin 8. günü: ölçüm haftası bitti.
+      expect(state.trackingDay, 8);
+      expect(state.measurementSummaryPending, isTrue);
+      await state.markMeasurementSummarySeen();
+
+      for (var i = 0; i < 7; i++) {
+        expect(state.pendingWeeklyReport, isNull, reason: 'gün ${8 + i}');
+        await addDemoDay(state, demo, random: Random(10 + i));
+      }
+      // 15. gün: 2. haftanın raporu hazır ve dolu.
+      expect(state.trackingDay, 15);
+      expect(state.pendingWeeklyReport, 2);
+      final report = state.weeklyReport(2)!;
+      expect(report.total, greaterThan(50));
+      expect(report.activeDays, 7);
+      expect(report.successfulDelays + report.breaths, greaterThan(0));
+    });
   });
 }

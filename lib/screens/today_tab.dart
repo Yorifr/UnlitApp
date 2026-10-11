@@ -18,6 +18,7 @@ import 'breathing_screen.dart';
 import 'celebration_screen.dart';
 import 'delay_screen.dart';
 import 'measurement_summary_screen.dart';
+import 'weekly_report_screen.dart';
 
 /// "Bugün" sekmesi: maskot, erteleme butonu, günlük görevler ve bugünkü
 /// sigaralar. Uygulamanın kalbi burası.
@@ -48,6 +49,13 @@ class TodayTab extends StatelessWidget {
       .push(
         MaterialPageRoute<void>(
           builder: (_) => MeasurementSummaryScreen(state: state),
+        ),
+      );
+
+  void _openWeeklyReport(BuildContext context, int week) =>
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => WeeklyReportScreen(state: state, week: week),
         ),
       );
 
@@ -134,6 +142,7 @@ class TodayTab extends StatelessWidget {
         final now = state.now;
         final quests = state.todayQuests;
         final doneCount = quests.where((q) => q.done).length;
+        final reportWeek = state.pendingWeeklyReport;
         final greeting = mascotGreeting(
           now: now,
           questsDone: doneCount,
@@ -144,6 +153,7 @@ class TodayTab extends StatelessWidget {
           hardDay: state.todayMood?.isHard ?? false,
           delayActive: state.activeDelayStart != null,
           measurementSummaryPending: state.measurementSummaryPending,
+          weeklyReportWeek: reportWeek,
         );
         final todayEvents = _todayEvents();
 
@@ -163,6 +173,16 @@ class TodayTab extends StatelessWidget {
                 label: 'SONUÇLARIMI GÖR',
                 icon: Icons.insights,
                 onPressed: () => _openMeasurementSummary(context),
+              ),
+            ],
+            // Yeni haftalık rapor: açılır pencere değil, maskotun altında
+            // bir buton (rapor görülünce kaybolur; kalıcı yeri İstatistik).
+            if (reportWeek != null) ...[
+              const SizedBox(height: 12),
+              ChunkyButton(
+                label: 'RAPORUMU GÖR',
+                icon: Icons.event_note_outlined,
+                onPressed: () => _openWeeklyReport(context, reportWeek),
               ),
             ],
             const SizedBox(height: 20),

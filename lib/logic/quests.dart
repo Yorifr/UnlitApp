@@ -87,7 +87,7 @@ int? measurementDayNumber(DateTime day, DateTime? trackingStart) {
   if (trackingStart == null || !isMeasurementDay(day, trackingStart)) {
     return null;
   }
-  return startOfDay(day).difference(startOfDay(trackingStart)).inDays + 1;
+  return daysBetween(trackingStart, day) + 1;
 }
 
 /// O günün 3 görevi.

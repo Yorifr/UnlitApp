@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_info.dart';
 import '../app_state.dart';
+import '../logic/weekly_report.dart';
 import '../services/demo_activity.dart';
 import '../services/demo_device_service.dart';
 import '../services/device_service.dart';
@@ -66,6 +67,21 @@ class SettingsScreen extends StatelessWidget {
                     'puanlarını oluşturur. Mevcut kayıtların yerini alır.',
                   ),
                   onTap: () => _generateDemo(context, demo),
+                ),
+                // Takibin kaçıncı günü olduğunu göstersin diye dinler.
+                ListenableBuilder(
+                  listenable: state,
+                  builder: (context, _) => ListTile(
+                    leading: const Icon(Icons.fast_forward_outlined),
+                    title: const Text('Bir günlük veri ekle'),
+                    subtitle: Text(
+                      'Sanki bir gün geçmiş gibi: kayıtların bir gün geriye '
+                      'kayar, son 24 saatin demo verisi eklenir. Ölçüm '
+                      'haftasını ve haftalık raporları gün gün izlemek için.'
+                      '${_dayLabel()}',
+                    ),
+                    onTap: () => _addDay(context, demo),
+                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.add_circle_outline),
@@ -217,6 +233,28 @@ class SettingsScreen extends StatelessWidget {
     if (context.mounted) {
       _showSnack(context, '${state.events.length} demo kaydı oluşturuldu.');
     }
+  }
+
+  /// " Şu an takibin 9. günü (2. hafta)." (Takip başlamadıysa boş.)
+  String _dayLabel() {
+    final day = state.trackingDay;
+    if (day == null) return '';
+    return ' Şu an takibin $day. günü (${(day - 1) ~/ daysPerWeek + 1}. '
+        'hafta).';
+  }
+
+  Future<void> _addDay(BuildContext context, DemoDeviceService demo) async {
+    await addDemoDay(state, demo);
+    if (!context.mounted) return;
+    final news = state.measurementSummaryPending
+        ? ' Ölçüm haftası özeti hazır!'
+        : state.pendingWeeklyReport != null
+        ? ' Haftalık rapor hazır!'
+        : '';
+    _showSnack(
+      context,
+      'Bir gün geçti: takibin ${state.trackingDay}. günü.$news',
+    );
   }
 
   Future<void> _resetEvents(BuildContext context) async {

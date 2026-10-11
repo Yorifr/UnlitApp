@@ -327,8 +327,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       question: 'Bir paket sigara kaç lira?',
       why:
           'Sigaraya ne kadar para harcadığını ve azalttıkça ne kadar '
-          'biriktirdiğini hesaplamak için. Zam gelirse sonra İstatistik → '
-          'Paket fiyatı bölümünden kolayca güncelleyebilirsin; eski günlerin '
+          'biriktirdiğini hesaplamak için. Zam gelirse sonra İstatistik’teki '
+          '“Paket fiyatı” kartından kolayca güncelleyebilirsin; eski günlerin '
           'hesabı değişmez.',
       answer: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

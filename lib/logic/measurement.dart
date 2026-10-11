@@ -8,6 +8,9 @@
 //    sigaralar, cepte kalan para ve korunan yaşam süresi buna göre
 //    hesaplanır ("Kazandıkların").
 //
+// Aynı özet ve kazanç hesapları haftalık raporda da kullanılır (bkz.
+// weekly_report.dart); bu yüzden herhangi bir gün aralığı için yazıldılar.
+//
 // Her sayı kullanıcının KENDİ verisinden gelir (uydurma yok). Yaşam süresi
 // için tek kaynaklı sabit stats.dart'taki [lifeMinutesPerCigarette].
 
@@ -32,9 +35,11 @@ bool measurementOver(DateTime now, DateTime? trackingStart) =>
 /// bir önceki gecenin devamıdır (ör. 00:40'ta yatmadan önce içilen).
 const int dayStartsAtHour = 4;
 
-/// Ölçüm haftasının özeti.
-class MeasurementSummary {
-  const MeasurementSummary({
+/// Birkaç günün (ör. bir haftanın) özeti: toplam, en yoğun saat, en sık
+/// neden, günün ilk sigarasının ortalama saati.
+class PeriodSummary {
+  const PeriodSummary({
+    required this.days,
     required this.total,
     required this.peakHour,
     required this.topTrigger,
@@ -42,7 +47,10 @@ class MeasurementSummary {
     required this.averageFirstMinute,
   });
 
-  /// Ölçüm haftasında toplam sigara.
+  /// Özetlenen gün sayısı (bir hafta için 7).
+  final int days;
+
+  /// Bu günlerde toplam sigara.
   final int total;
 
   /// En çok sigara içilen saat (ör. 10 → 10:00–11:00). Kayıt yoksa null.
@@ -58,18 +66,20 @@ class MeasurementSummary {
   /// (ör. 465 → 07:45). Kayıt yoksa null.
   final int? averageFirstMinute;
 
-  /// Günde ortalama sigara (başlangıç noktası).
-  double get dailyAverage => total / measurementDays;
+  /// Günde ortalama sigara. (Ölçüm haftası için bu "başlangıç noktası".)
+  double get dailyAverage => days == 0 ? 0 : total / days;
 }
 
-/// Ölçüm haftasının özetini çıkarır. [events] eskiden yeniye sıralı olmalı.
-MeasurementSummary summarizeMeasurementWeek(
+/// [from] (00:00, dahil) ile [to] (00:00, hariç) arasındaki günlerin özeti.
+/// [events] eskiden yeniye sıralı olmalı.
+PeriodSummary summarizePeriod(
   List<SmokingEvent> events,
-  DateTime trackingStart,
+  DateTime from,
+  DateTime to,
 ) {
-  final start = measurementStart(trackingStart);
-  final end = measurementEnd(trackingStart);
-  final week = [
+  final start = startOfDay(from);
+  final end = startOfDay(to);
+  final period = [
     for (final e in events)
       if (!e.time.isBefore(start) && e.time.isBefore(end)) e,
   ];
@@ -77,7 +87,7 @@ MeasurementSummary summarizeMeasurementWeek(
   // 1) En yoğun saat: her saate düşen sigaraları say, en büyüğünü bul.
   //    (Eşitlikte daha erken saat seçilir.)
   final perHour = List<int>.filled(24, 0);
-  for (final e in week) {
+  for (final e in period) {
     perHour[e.time.hour]++;
   }
   int? peakHour;
@@ -90,7 +100,7 @@ MeasurementSummary summarizeMeasurementWeek(
 
   // 2) En sık neden.
   final perTrigger = <SmokingTrigger, int>{};
-  for (final e in week) {
+  for (final e in period) {
     final trigger = e.trigger;
     if (trigger != null) perTrigger[trigger] = (perTrigger[trigger] ?? 0) + 1;
   }
@@ -110,7 +120,7 @@ MeasurementSummary summarizeMeasurementWeek(
   for (var day = start; day.isBefore(end); day = addDays(day, 1)) {
     final dayStart = day.add(const Duration(hours: dayStartsAtHour));
     final nextDay = addDays(day, 1);
-    for (final e in week) {
+    for (final e in period) {
       // Liste sıralı: koşula uyan ilk olay o günün ilk sigarasıdır.
       if (!e.time.isBefore(dayStart) && e.time.isBefore(nextDay)) {
         firstMinutes.add(e.time.hour * 60 + e.time.minute);
@@ -122,14 +132,25 @@ MeasurementSummary summarizeMeasurementWeek(
       ? null
       : (firstMinutes.reduce((a, b) => a + b) / firstMinutes.length).round();
 
-  return MeasurementSummary(
-    total: week.length,
+  return PeriodSummary(
+    days: daysBetween(start, end),
+    total: period.length,
     peakHour: peakHour,
     topTrigger: topTrigger,
     topTriggerCount: topCount,
     averageFirstMinute: averageFirst,
   );
 }
+
+/// Ölçüm haftasının özeti. [events] eskiden yeniye sıralı olmalı.
+PeriodSummary summarizeMeasurementWeek(
+  List<SmokingEvent> events,
+  DateTime trackingStart,
+) => summarizePeriod(
+  events,
+  measurementStart(trackingStart),
+  measurementEnd(trackingStart),
+);
 
 /// "Kazandıkların": ölçüm haftasındaki ortalamaya göre içilmeyen sigaralar.
 class Gains {
@@ -183,22 +204,41 @@ Gains? computeGains({
   }
   final baseline = summarizeMeasurementWeek(events, trackingStart).dailyAverage;
   if (baseline == 0) return null;
+  return gainsBetween(
+    events: events,
+    baseline: baseline,
+    from: measurementEnd(trackingStart),
+    to: startOfDay(now),
+    prices: prices,
+  );
+}
 
-  // Önce ölçüm haftasından sonraki sigaraları güne göre say (tek geçiş;
-  // bir yıllık kayıtta bile hızlı kalsın).
-  final end = measurementEnd(trackingStart);
+/// [from] (00:00, dahil) ile [to] (00:00, hariç) arasındaki günlerin NET
+/// kazancı, [baseline]'a (günde ortalama) göre. Hesap kuralları için bkz.
+/// [computeGains]. Haftalık rapor da bunu tek bir hafta için kullanır.
+Gains gainsBetween({
+  required List<SmokingEvent> events,
+  required double baseline,
+  required DateTime from,
+  required DateTime to,
+  required PriceHistory prices,
+}) {
+  final start = startOfDay(from);
+  final end = startOfDay(to);
+
+  // Önce aralıktaki sigaraları güne göre say (tek geçiş; bir yıllık kayıtta
+  // bile hızlı kalsın).
   final perDay = <DateTime, int>{};
   for (final e in events) {
-    if (e.time.isBefore(end)) continue;
+    if (e.time.isBefore(start) || !e.time.isBefore(end)) continue;
     final day = startOfDay(e.time);
     perDay[day] = (perDay[day] ?? 0) + 1;
   }
 
-  final today = startOfDay(now);
   var net = 0.0; // içilmeyen sigara (kesirli: ortalama 17,3 olabilir)
   var money = 0.0;
   var days = 0;
-  for (var day = end; day.isBefore(today); day = addDays(day, 1)) {
+  for (var day = start; day.isBefore(end); day = addDays(day, 1)) {
     final difference = baseline - (perDay[day] ?? 0);
     net += difference;
     // Para, o GÜNÜN fiyatıyla hesaplanır: zam gelince geçmişte biriken
