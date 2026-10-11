@@ -188,6 +188,18 @@ void main() {
     expect(sounds.played.last, Sfx.fanfare.asset); // büyük kutlama
     expect(state.successfulDelays, 1);
     expect(state.activeDelayStart, isNull);
+
+    // Bir sonraki istekte Nefes, atlatılan isteği hatırlatır.
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CANIM SİGARA İSTİYOR'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(
+      find.textContaining('Daha önce bir isteği atlattın.'),
+      findsOneWidget,
+    );
+    await state.cancelDelay();
   });
 
   testApp('nefes egzersizi "al" ve "ver" anlarında ses verir', (

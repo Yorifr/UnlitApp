@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../logic/mascot_messages.dart';
 import '../logic/quests.dart';
 import '../models/activity_log.dart';
 import '../services/effects.dart';
@@ -144,11 +145,12 @@ class _DelayScreenState extends State<DelayScreen> {
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
               children: [
                 MascotSpeech(
+                  // Sayaç sürerken: daha önce atlattığı istekleri kendi
+                  // verisiyle hatırlatır (bkz. mascot_messages.dart).
                   text: done
                       ? '$delayMinutes dakika doldu! Harika iş çıkardın. '
                             'İstek geçti mi?'
-                      : 'Bu istek geçici. Birlikte $delayMinutes dakika '
-                            'bekleyelim, sonra karar senin.',
+                      : delayStartLine(state.activity.delays),
                   mood: done ? MascotMood.cheer : MascotMood.calm,
                   mascotSize: 76,
                 ),

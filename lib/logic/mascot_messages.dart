@@ -1,11 +1,15 @@
-// Maskotun ana ekranda ve haftalık raporda söylediği cümleleri seçer.
+// Maskotun ana ekranda, erteleme ekranında ve haftalık raporda söylediği
+// cümleleri seçer.
 //
 // Kurallar:
 // - Asla suçlama, asla "hayal kırıklığı". Artış olduğunda bile nazik ve
 //   çözüm öneren bir dil.
 // - Sayı sadece kullanıcının KENDİ verisinden gelir (uydurma istatistik yok).
 // - Ölçüm haftasında karşılaştırma/yorum yok; sadece bilgilendirme.
+// - Kişisel geri bildirim yeni bir kart olarak değil, Nefes'in zaten
+//   söylediği cümlenin içinde verilir (ekran kalabalıklaşmasın).
 
+import '../models/activity_log.dart';
 import '../models/user_profile.dart';
 import '../utils/format.dart';
 import '../widgets/mascot.dart' show MascotMood;
@@ -93,6 +97,65 @@ MascotLine mascotGreeting({
       ? 'Merhaba! Görevlerine bir göz atalım mı?'
       : 'İyi akşamlar! Günü güzel bitirelim.';
   return MascotLine(text, MascotMood.happy);
+}
+
+// ---------- Erteleme ekranı ----------
+
+/// "İstekler genelde kaç dakikada geçti?" bilgisi için en az kaç başarılı
+/// erteleme gerekir? (1–2 kayıtla "genelde" demek doğru olmaz.)
+const int _minDelaysForTypical = 3;
+
+/// Erteleme ekranının başında, sayaç sürerken Nefes'in cümlesi.
+///
+/// Kullanıcı daha önce bir isteği atlattıysa bunu KENDİ verisiyle hatırlatır:
+/// "Bu istek de geçebilir; sen bunu daha önce yaptın." İsteğin en zor anında
+/// genel bir öğütten daha güçlüdür.
+/// - Sadece başarılı ertelemeler ("İSTEK GEÇTİ") sayılır. "Yine de içtim"
+///   sayısı asla söylenmez.
+/// - En az 3 başarılı erteleme varsa isteklerin genelde kaç dakika içinde
+///   geçtiği de söylenir. Bu süre 10 dakikanın altında değilse söylenmez
+///   (zaten 10 dakika bekliyoruz, yeni bir bilgi olmaz).
+String delayStartLine(List<DelayAttempt> delays) {
+  final successes = [
+    for (final d in delays)
+      if (d.outcome == DelayOutcome.success) d,
+  ];
+  if (successes.isEmpty) {
+    return 'Bu istek geçici. Birlikte $delayMinutes dakika bekleyelim, '
+        'sonra karar senin.';
+  }
+
+  final count = successes.length == 1 ? 'bir' : '${successes.length}';
+  final typical = successes.length >= _minDelaysForTypical
+      ? typicalDelayMinutes(successes)
+      : null;
+  if (typical != null && typical < delayMinutes) {
+    return 'Daha önce $count isteği atlattın; istekler genelde $typical '
+        'dakika içinde geçti. Birlikte bekleyelim, sonra karar senin.';
+  }
+  return 'Daha önce $count isteği atlattın. Birlikte $delayMinutes dakika '
+      'bekleyelim, sonra karar senin.';
+}
+
+/// Başarılı ertelemelerde istek "genelde" kaç dakikada geçti?
+///
+/// Ortanca (sıraya dizince ortadaki) süre kullanılır: tek bir çok uzun ya
+/// da çok kısa kayıt sonucu bozmaz. Dakikaya YUKARI yuvarlanır ki "X dakika
+/// içinde geçti" cümlesi doğru kalsın. Ekrandan çıkıp çok sonra
+/// "İSTEK GEÇTİ"ye basılan ertelemeler 10 dakika sayılır (istek o sürede
+/// zaten geçmişti). Liste boşsa null.
+int? typicalDelayMinutes(List<DelayAttempt> successes) {
+  if (successes.isEmpty) return null;
+  const maxSeconds = delayMinutes * 60;
+  final seconds = [
+    for (final d in successes)
+      d.end.difference(d.start).inSeconds.clamp(0, maxSeconds),
+  ]..sort();
+  // Çift sayıda kayıtta ortadaki iki değerden büyüğü alınır; böylece
+  // isteklerin en az yarısı gerçekten bu süre içinde geçmiş olur.
+  final middle = seconds[seconds.length ~/ 2];
+  final minutes = (middle + 59) ~/ 60; // yukarı yuvarla
+  return minutes < 1 ? 1 : minutes;
 }
 
 // ---------- Haftalık rapor ----------

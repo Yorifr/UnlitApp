@@ -126,9 +126,12 @@ void addDemoDayActivity({
   if (!isMeasurementDay(day, trackingStart) && random.nextDouble() < 0.8) {
     final start = at(11 + random.nextInt(8), random.nextInt(50));
     final success = random.nextDouble() < 0.75;
-    final end = start.add(
-      Duration(minutes: success ? delayMinutes : 3 + random.nextInt(6)),
-    );
+    // Başarılı ertelemede istek bazen 10 dakika dolmadan geçer (4–10 dk);
+    // vazgeçilen ertelemede 3–8 dakika beklenir.
+    final minutes = success
+        ? 4 + random.nextInt(delayMinutes - 3)
+        : 3 + random.nextInt(6);
+    final end = start.add(Duration(minutes: minutes));
     activity.delays.add(
       DelayAttempt(
         start: start,

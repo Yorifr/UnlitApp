@@ -8,7 +8,8 @@ Son güncelleme: 11 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
 oyunlaştırma), ses/titreşim efektleri, tarihli paket fiyatı, kendi renk
 teması ("Nane"), sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
 özeti, "Kazandıkların"), Nefes 2.0 + "Nefes'in dolabı" (0.7.0) ve haftalık
-rapor + "bir günlük veri ekle" demo seçeneği (0.8.0) tamamlandı.
+rapor + "bir günlük veri ekle" demo seçeneği (0.8.0) ve erteleme
+ekranında kişisel cümle (0.8.1) tamamlandı.
 
 ---
 
@@ -117,6 +118,14 @@ suçluluk duymasın**.
    birine yaz…), nefes egzersizi kısayolu. İki çıkış da ödüllü:
    "İSTEK GEÇTİ" → konfetili kutlama; "YİNE DE İÇECEĞİM" → sakin ekran,
    "X dakika bekledin ve isteğini fark ettin. Bu da bir adım."
+   - **Kişisel cümle** (0.8.1, `delayStartLine`): Ekranın başında Nefes,
+     kullanıcının daha önce atlattığı istekleri kendi verisiyle hatırlatır:
+     "Daha önce 6 isteği atlattın; istekler genelde 7 dakika içinde geçti."
+     Sadece başarılı ertelemeler sayılır ("yine de içtim" sayısı asla
+     söylenmez). Süre en az 3 başarılı ertelemeden sonra ve 10 dakikadan
+     kısaysa söylenir (ortanca süre, yukarı yuvarlanır; 10 dakikadan uzun
+     bekleme 10 sayılır). Hiç başarılı erteleme yoksa genel cümle: "Bu
+     istek geçici." Yeni bir kart eklenmedi; var olan cümle kişiselleşti.
 6. **Kendini dinle (ruh hali):** Sadece görev satırından açılır (eskiden
    ayrıca bir kart vardı; aynı iş için iki giriş kafa karıştırıyordu).
    Seçenekler soldan sağa **olumsuzdan olumluya**: Çok zor, Zor, İdare
@@ -342,7 +351,7 @@ en uzun seri, toplam puan, ertelenen istekler).
 - Kod: `lib/logic/weekly_report.dart` (saf hesaplar),
   `lib/logic/mascot_messages.dart` (`weeklyReportLine`, `weeklyTip`),
   `lib/screens/weekly_report_screen.dart`.
-- **Toplanan veri nerede geri dönüyor? (0.8.0 itibarıyla)**
+- **Toplanan veri nerede geri dönüyor? (0.8.1 itibarıyla)**
 
   | Veri | Nerede kullanıcıya döner |
   |---|---|
@@ -350,7 +359,7 @@ en uzun seri, toplam puan, ertelenen istekler).
   | Onboarding tahminleri | Ölçüm özetinde ölçülenle yan yana |
   | İşaretlenen nedenler | Ölçüm özeti (1. hafta), haftalık rapor (en sık neden + öneri) |
   | Ruh hali | O günün maskot cümlesi/kutlaması (zor gün → sakin), haftalık rapor (dağılım) |
-  | Erteleme, nefes | Profil (toplam ertelenen istek), haftalık rapor |
+  | Erteleme, nefes | Profil (toplam ertelenen istek), haftalık rapor, erteleme ekranında Nefes'in cümlesi (kaç isteği atlattın, genelde kaç dakikada geçti) |
   | Kendine not | Erteleme ekranı |
 
 ### Özellik 3 — Süreç aşamaları ⏳ Aşama 3
@@ -816,6 +825,22 @@ birebir doğrulayın):
   Net hesap daha dürüst; toplam eksiye inmez, bugün sayılmaz (sayı gün
   içinde, sigaradan hemen sonra düşmez). Bir ağır gün sonrası sayı
   azalabilir; bu bilgi verir, suçlamaz (renk nötr, mesaj yok).
+- **Karar — kişisel geri bildirim az ve var olan yerlerde (0.8.1):**
+  Kişisel geri bildirim yeni kartlarla değil, Nefes'in zaten söylediği
+  cümlelerin içinde verilir; aşırıya kaçarsa arayüz kalabalıklaşır ve
+  kullanım zorlaşır. İlk adım erteleme ekranıdır (isteğin en zor anı;
+  bkz. Bölüm 3, madde 5). Değerlendirilip **şimdilik yapılmayanlar:**
+  - *Geçen haftanın fikrini takip etmek* ("kahve sonrası ertelemeyi
+    önermiştim…"): ertelemelerde neden kaydı yok, bu yüzden çoğu fikir
+    ölçülemiyor; ölçülebilenler raporda zaten olan sayıları tekrar ederdi.
+  - *Ruh hali ile sigara ilişkisi:* ruh hali günde bir kez ve isteğe bağlı
+    giriliyor; az veride sahte örüntü çıkar ve "kötü günde fazla içtin"
+    suçlama gibi okunabilir.
+  - *Kişisel rekorlar* ("ilk sigaran hiç bu kadar geç olmamıştı"): olabilir,
+    ama sadece Bugün'deki maskot cümlesi olarak ve ertesi gün (sigaradan
+    hemen sonra kutlama/mesaj yok kuralı).
+  - *Riskli saat kartı* ("genelde 15:00'te zorlanıyorsun"): Aşama 4 ile;
+    sigarayı hatırlatıp isteği tetikleyebileceği için önce denenmeli.
 - **Karar — haftalık rapor var; günlük ve aylık rapor yok (0.8.0):**
   - *Günlük rapor:* Bugün sekmesi ve İstatistik'teki "bugün" kartı zaten
     günün sayılarını gösteriyor; her akşam gelen bir "gün karnesi", ağır bir
@@ -885,5 +910,6 @@ birebir doğrulayın):
 | 0.4.0 | Tarihli paket fiyatı | Fiyatın kendi yeri (İstatistik'te kart + pencere, Ayarlar'da kısayol), her sigara kendi tarihindeki fiyatla hesaplanır, fiyat geçmişi, "yanlış girmiştim" düzeltmesi, 90 günde bir "hâlâ aynı mı?", onboarding'de sadece fiyat (paket varsayılan 20), eski sürümden otomatik taşıma; fiyat internetten çekilmez |
 | 0.5.0 | Nane teması | Duolingo'nun birebir renkleri yerine kendi paletimiz: nane (turkuaz) ana renk, mavi ikinci renk, yaprak yeşili seri; nane renkli, yeşil filizli maskot; seri ikonu alev yerine yaprak; alt menüde yumuşak kapsül; hafif nane tonlu zemin, lacivert koyu tema; buton kontrastı ~3,2'den ~3,5'e çıktı |
 | 0.6.0 | Sade ve kişisel | Onboarding 11 → 4 soru (her cevap bir şeyi değiştirir; kullanılmayan eski cevaplar silinir), tetikleyiciler "Neden?" penceresinde başta, erteleme ekranında "kendine not", ölçüm haftası bitince özet ekranı ve kademeli açılım, "kaybedilen yaşam" yerine "Kazandıkların" (içmediğin sigara, cebinde kalan para, korunan yaşam süresi; net hesap), tekrarlar temizlendi (ikinci ruh hali kartı, görev çubukları, iki seçici, üst çubukta XP), ruh hali soldan sağa olumsuzdan olumluya, "XP" → "puan", "check-in" → "Kendini dinle" |
-| 0.8.0 | Haftalık rapor | Her hafta bitince kısa bir rapor: Nefes'in kişisel cümlesi (önce olumlu olan), bu hafta ve önceki hafta + 7 günün grafiği, örüntün (en yoğun saat, ilk sigara, en sık neden), kendine iyi baktığın anlar (görev günleri, ertelemeler, nefes, puan, ruh hali dağılımı), varsa haftanın kazancı ve en sık nedene göre "gelecek hafta için bir fikir"; Bugün'de bir kez "RAPORUMU GÖR", İstatistik'te "Haftalık raporların" listesi (1. hafta = ölçüm özeti); demo'ya "Bir günlük veri ekle" (sanki bir gün geçmiş gibi, ölçüm haftasını ve raporları gün gün izlemek için); onboarding'de yazı tipinde olmayan "→" karakteri kaldırıldı |
 | 0.7.0 | Nefes 2.0 ve dolap | Yeni maskot Nefes 2.0 (SVG tasarımın kodla birebir çizimi): daha ifadeli yüz, düşünürken üç nokta, başında puanla 4 aşamada büyüyen filiz (asla küçülmez); "Nefes'in dolabı": puan harcanmadan eşikle açılan 6 eşya (gözlük, atkı, kep, kulaklık, taç, bere), kutlamada "yeni eşya / filiz büyüdü" haberi, Profil'de sonraki eşyaya ilerleme; ölçüm haftası bitince mezuniyet kepi; nefes egzersizinde maskot da nefes alır; "yavaş ama emin adımlarla" |
+| 0.8.0 | Haftalık rapor | Her hafta bitince kısa bir rapor: Nefes'in kişisel cümlesi (önce olumlu olan), bu hafta ve önceki hafta + 7 günün grafiği, örüntün (en yoğun saat, ilk sigara, en sık neden), kendine iyi baktığın anlar (görev günleri, ertelemeler, nefes, puan, ruh hali dağılımı), varsa haftanın kazancı ve en sık nedene göre "gelecek hafta için bir fikir"; Bugün'de bir kez "RAPORUMU GÖR", İstatistik'te "Haftalık raporların" listesi (1. hafta = ölçüm özeti); demo'ya "Bir günlük veri ekle" (sanki bir gün geçmiş gibi, ölçüm haftasını ve raporları gün gün izlemek için); onboarding'de yazı tipinde olmayan "→" karakteri kaldırıldı |
+| 0.8.1 | Kendi başarın | Erteleme ekranında Nefes, daha önce atlattığın istekleri senin verinle hatırlatır ("Daha önce 6 isteği atlattın; istekler genelde 7 dakika içinde geçti."); sadece başarılı ertelemeler sayılır, yeni kart eklenmedi; demo ertelemeleri artık 4–10 dakikada geçebiliyor |

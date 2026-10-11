@@ -113,6 +113,9 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
   "İLERİ"); kartlar `ChunkyCard`; ilerleme `ChunkyProgressBar`.
 - Maskotla konuşma: `MascotSpeech(text:, mood:)`. Cümle seçimi
   `logic/mascot_messages.dart`'ta, kurallara uygun (suçlama yok, kendi veri).
+- **Kişisel geri bildirim az ve sade:** Yeni kart/bölüm eklemek yerine
+  Nefes'in zaten söylediği cümleyi kişiselleştir (ör. erteleme ekranında
+  `delayStartLine`). Düşünülüp ertelenen fikirler: SPEC.md Bölüm 11.
 - **Maskot çizimi:** Nefes 2.0, `docs/maskot/1-nefes-2.svg` tasarımının
   birebir kod hâli (`widgets/mascot_painter.dart`; şekiller SVG'deki `d="..."`
   yazılarıyla, `svgPath(...)` üzerinden). Çizimi değiştirirsen SVG'yi de
