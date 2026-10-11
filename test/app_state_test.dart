@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/app_state.dart';
 import 'package:unlit/logic/rewards.dart';
 import 'package:unlit/models/activity_log.dart';
+import 'package:unlit/models/goal.dart';
 import 'package:unlit/models/mascot_look.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
@@ -531,6 +532,99 @@ void main() {
         expect(state.measurementSummaryPending, isTrue);
         await state.markMeasurementSummarySeen();
         expect(state.pendingWeeklyReport, 2);
+      },
+    );
+  });
+
+  group('azaltma hedefi', () {
+    /// Ölçüm haftası (10–16 Ekim): her gün [perDay] sigara.
+    Future<void> measure(int perDay) async {
+      await state.completeOnboarding(UserProfile());
+      await state.replaceAll(
+        events: [
+          for (var d = 0; d < 7; d++)
+            for (var h = 0; h < perDay; h++)
+              SmokingEvent(
+                time: DateTime(2026, 10, 10 + d, 8 + h),
+                source: EventSource.demo,
+              ),
+        ],
+        activity: state.activity,
+        trackingStartedAt: DateTime(2026, 10, 10, 9),
+      );
+    }
+
+    test('ölçüm haftası bitmeden ve özet görülmeden seçilemez', () async {
+      await measure(10);
+      expect(state.baseline, isNull);
+      expect(state.canSetGoal, isFalse);
+      final reward = await state.setGoal(
+        percent: 50,
+        amount: 4,
+        unit: GoalUnit.week,
+      );
+      expect(reward.isEmpty, isTrue);
+      expect(state.goal, isNull);
+
+      now = DateTime(2026, 10, 17, 9); // 8. gün
+      expect(state.baseline, 10);
+      expect(state.canSetGoal, isFalse); // önce özet
+      await state.markMeasurementSummarySeen();
+      expect(state.canSetGoal, isTrue);
+    });
+
+    test('ilk hedef bir kez puan kazandırır; hedef kaydedilir', () async {
+      await measure(10);
+      now = DateTime(2026, 10, 17, 9);
+      await state.markMeasurementSummarySeen();
+
+      final first = await state.setGoal(
+        percent: 50,
+        amount: 4,
+        unit: GoalUnit.week,
+      );
+      expect(first.has(XpReason.goalSet), isTrue);
+      expect(first.totalXp, xpGoalSet);
+      expect(state.goal!.start, DateTime(2026, 10, 17));
+      expect(state.goal!.from, 10); // son 7 gün = ölçüm haftası
+      expect(state.goalStatus!.target, 5);
+      expect(state.goalStatus!.limit, 9); // 5 + 5 × 3/4 → 9
+
+      // Değiştirmek puan kazandırmaz (değiştirip durarak puan toplanmasın).
+      final change = await state.setGoal(
+        percent: 75,
+        amount: 2,
+        unit: GoalUnit.month,
+      );
+      expect(change.has(XpReason.goalSet), isFalse);
+
+      final reloaded = AppState(
+        storage: await StorageService.create(),
+        device: FakeDevice(),
+        clock: () => now,
+      );
+      await reloaded.start();
+      expect(reloaded.goal!.percent, 75);
+      expect(reloaded.goal!.unit, GoalUnit.month);
+    });
+
+    test(
+      'takip sıfırlanınca ya da her şey silinince hedef de silinir',
+      () async {
+        await measure(10);
+        now = DateTime(2026, 10, 17, 9);
+        await state.markMeasurementSummarySeen();
+        await state.setGoal(percent: 50, amount: 4, unit: GoalUnit.week);
+
+        await state.resetEventsAndProgress();
+        expect(state.goal, isNull);
+
+        await measure(10);
+        await state.markMeasurementSummarySeen();
+        await state.setGoal(percent: 25, amount: 2, unit: GoalUnit.week);
+        expect(state.goal, isNotNull);
+        await state.deleteAllData();
+        expect(state.goal, isNull);
       },
     );
   });

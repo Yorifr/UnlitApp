@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/app_state.dart';
 import 'package:unlit/models/activity_log.dart';
+import 'package:unlit/models/goal.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/logic/rewards.dart';
@@ -204,12 +205,28 @@ void main() {
       expect(state.prices.entries.first.since, addDays(priceSince, -1));
       // Boşalan son 24 saate yeni sigaralar geldi (bugün dahil).
       expect(countToday(state.events, now), greaterThan(0));
-      expect(state.events.length, greaterThan(before.length + 10));
+      // (Kaç tane geleceği rastgele; demo kullanıcısı azaltıyor olabilir.)
+      expect(state.events.length, greaterThan(before.length));
       // Dün (eski bugün) görev yoktu → demo kullanıcısı yaptı: seri uzadı.
       expect(state.streak.current, 14);
       expect(state.todayXp, 0); // bugün yine kullanıcının
       // Görülen ölçüm özeti görülmüş kalır.
       expect(state.measurementSummaryPending, isFalse);
+    });
+
+    test('hedef de bir gün kayar; yeni demo verisi hedefi siler', () async {
+      await loadDemoHistory(state, demo);
+      await state.markMeasurementSummarySeen();
+      await state.setGoal(percent: 50, amount: 4, unit: GoalUnit.week);
+      final start = state.goal!.start;
+
+      await addDemoDay(state, demo, random: Random(3));
+      expect(state.goal!.start, addDays(start, -1));
+      expect(state.goalStatus!.daysSinceStart, 1);
+
+      // Demo verisi baştan üretilince başlangıç noktası değişir.
+      await loadDemoHistory(state, demo);
+      expect(state.goal, isNull);
     });
 
     test('kullanıcının bugün yaptıkları düne kayar, üstüne eklenmez', () async {

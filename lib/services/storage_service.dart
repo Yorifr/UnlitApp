@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/activity_log.dart';
+import '../models/goal.dart';
 import '../models/mascot_look.dart';
 import '../models/pack_price.dart';
 import '../models/smoking_event.dart';
@@ -42,6 +43,7 @@ class StorageService {
   static const _kMeasurementSummarySeen = 'measurement_summary_seen';
   static const _kMascotOutfit = 'mascot_outfit';
   static const _kWeeklyReportSeen = 'weekly_report_seen';
+  static const _kGoal = 'goal';
 
   // ---------- Profil ----------
 
@@ -188,6 +190,24 @@ class StorageService {
 
   Future<void> setWeeklyReportSeen(int week) =>
       _prefs.setInt(_kWeeklyReportSeen, week);
+
+  // ---------- Azaltma hedefi ----------
+
+  /// Kullanıcının seçtiği hedef (yoksa ya da kayıt bozuksa null).
+  Goal? loadGoal() {
+    final text = _prefs.getString(_kGoal);
+    if (text == null) return null;
+    try {
+      return Goal.fromJson(jsonDecode(text) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Hedefi kaydet; [goal] null ise hedef silinir.
+  Future<void> saveGoal(Goal? goal) => goal == null
+      ? _prefs.remove(_kGoal)
+      : _prefs.setString(_kGoal, jsonEncode(goal.toJson()));
 
   // ---------- Nefes'in dolabı ----------
 

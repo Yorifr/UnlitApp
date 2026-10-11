@@ -75,6 +75,7 @@ class _CelebrationScreenState extends State<CelebrationScreen> {
         reward.has(XpReason.allQuests) ||
         reward.has(XpReason.delaySuccess) ||
         reward.has(XpReason.welcome) ||
+        reward.has(XpReason.goalSet) ||
         reward.newAccessories.isNotEmpty ||
         reward.grownToStage != null;
     Effects.celebrate(big: big, calm: widget.calm);
@@ -294,14 +295,21 @@ class _RewardTile extends StatelessWidget {
               children: [
                 Icon(icon, color: color, size: 26),
                 const SizedBox(width: 4),
-                DefaultTextStyle(
-                  style: TextStyle(
-                    fontFamily: appFontFamily,
-                    color: color,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
+                // Flexible + FittedBox: uzun değer ("124 gün") dar ekranda
+                // biraz küçülsün, kutudan taşmasın.
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: DefaultTextStyle(
+                      style: TextStyle(
+                        fontFamily: appFontFamily,
+                        color: color,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      child: child,
+                    ),
                   ),
-                  child: child,
                 ),
               ],
             ),

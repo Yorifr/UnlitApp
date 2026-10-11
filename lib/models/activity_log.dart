@@ -92,6 +92,7 @@ class DelayAttempt {
 /// XP'nin neden kazanıldığı.
 enum XpReason {
   welcome('Yolculuğa başladın'),
+  goalSet('Hedefini seçtin'),
   questCheckIn('Görev: Kendini dinle'),
   questTag('Görev: Nedenini keşfet'),
   questBreathe('Görev: Nefes molası'),

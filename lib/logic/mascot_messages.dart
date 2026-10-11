@@ -13,6 +13,7 @@ import '../models/activity_log.dart';
 import '../models/user_profile.dart';
 import '../utils/format.dart';
 import '../widgets/mascot.dart' show MascotMood;
+import 'goal.dart';
 import 'quests.dart';
 import 'stats.dart';
 import 'weekly_report.dart';
@@ -156,6 +157,63 @@ int? typicalDelayMinutes(List<DelayAttempt> successes) {
   final middle = seconds[seconds.length ~/ 2];
   final minutes = (middle + 59) ~/ 60; // yukarı yuvarla
   return minutes < 1 ? 1 : minutes;
+}
+
+// ---------- Hedefim sayfası ----------
+
+/// Hedefim sayfasının başında Nefes'in cümlesi.
+///
+/// Önce olumlu olan söylenir (hedefe ulaşmak, yolun yarısı, ilerleme).
+/// Sınırın üstüne çıkılan günlerden hiç bahsedilmez; süre dolduysa
+/// suçlamadan yeni bir süre önerilir.
+MascotLine goalLine(GoalStatus status) {
+  final limit = status.limit;
+  if (status.daysSinceStart == 0) {
+    return MascotLine(
+      'Hedefin hazır! Bu hafta günde en fazla $limit sigara. Küçük '
+      'adımlarla, birlikte.',
+      MascotMood.cheer,
+    );
+  }
+  if (status.reached) {
+    return MascotLine(
+      status.target == 0
+          ? 'Son 7 günde kılıf hiç sigara saymadı. Hedefine ulaştın; bu '
+                'senin emeğin!'
+          : 'Hedefine ulaştın: son 7 günde günde ortalama '
+                '${formatDecimal(status.currentLevel)} sigara. Bu senin '
+                'emeğin!',
+      MascotMood.cheer,
+    );
+  }
+  if (status.ended) {
+    return MascotLine(
+      status.progress > 0
+          ? 'Hedef süren doldu ve yolun bir kısmını yürüdün. İstersen yeni '
+                'bir süre seçip kaldığın yerden devam edelim.'
+          : 'Hedef süren doldu. Olur böyle; istersen yeni bir süre seçip '
+                'birlikte yeniden deneyelim.',
+      MascotMood.calm,
+    );
+  }
+  if (status.progress >= 0.5) {
+    return MascotLine(
+      'Yolun yarısını geçtin! Bu hafta günde en fazla $limit sigara.',
+      MascotMood.cheer,
+    );
+  }
+  if (status.progress > 0) {
+    return MascotLine(
+      'İlerliyorsun! Bu hafta günde en fazla $limit sigara; her gün küçük '
+      'bir adım.',
+      MascotMood.happy,
+    );
+  }
+  return MascotLine(
+    'Her hafta küçük bir adım. Bu hafta günde en fazla $limit sigara; '
+    'zorlandığında “CANIM SİGARA İSTİYOR” butonu hep yanında.',
+    MascotMood.happy,
+  );
 }
 
 // ---------- Haftalık rapor ----------

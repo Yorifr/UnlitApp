@@ -17,6 +17,7 @@ import 'stats.dart';
 // ---------- XP miktarları (hepsi tek yerde, kolayca değiştirilebilir) ----------
 
 const int xpWelcome = 10; // Onboarding'i bitirmek / atlamak
+const int xpGoalSet = 10; // İlk azaltma hedefini seçmek (bir kez)
 const int xpPerQuest = 10; // Her günlük görev
 const int xpAllQuestsBonus = 20; // Günün 3 görevi de bitince bonus
 const int xpDelaySuccess = 15; // Başarılı her erteleme

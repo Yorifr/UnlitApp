@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'logic/goal.dart' as goals;
 import 'logic/measurement.dart';
 import 'logic/quests.dart';
 import 'logic/rewards.dart';
@@ -10,6 +11,7 @@ import 'logic/weekly_report.dart' as weekly;
 // Getter adlarıyla (sproutStage, unlockedAccessories) karışmasın diye önekli.
 import 'logic/wardrobe.dart' as wardrobe;
 import 'models/activity_log.dart';
+import 'models/goal.dart';
 import 'models/mascot_look.dart';
 import 'models/pack_price.dart';
 import 'models/smoking_event.dart';
@@ -50,6 +52,7 @@ class AppState extends ChangeNotifier {
   bool _measurementSummarySeen = false;
   int _weeklyReportSeen = 0;
   Set<Accessory> _outfit = {};
+  Goal? _goal;
   StreamSubscription<SmokingEvent>? _subscription;
 
   UserProfile get profile => _profile;
@@ -167,6 +170,72 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---------- Azaltma hedefi (bkz. logic/goal.dart) ----------
+
+  /// Kullanıcının seçtiği azaltma hedefi (seçmediyse null).
+  Goal? get goal => _goal;
+
+  /// Başlangıç noktası: ölçüm haftasında günde ortalama sigara. Ölçüm
+  /// haftası bitmediyse ya da haftada hiç kayıt yoksa null (hedefin
+  /// dayanacağı bir sayı yok; uydurmayız).
+  double? get baseline {
+    final summary = measurementSummary;
+    if (!measurementOver(now, _trackingStartedAt) ||
+        summary == null ||
+        summary.total == 0) {
+      return null;
+    }
+    return summary.dailyAverage;
+  }
+
+  /// Şu anki seviye: son 7 tamamlanmış günde günde ortalama sigara.
+  /// Yeni bir hedefin haftalık sınırları buradan başlar.
+  double get recentLevel {
+    final today = startOfDay(now);
+    return countBetween(_events, addDays(today, -7), today) / 7;
+  }
+
+  /// Hedef seçilebilir mi? (Ölçüm haftası bitti ve özeti görüldü.)
+  bool get canSetGoal =>
+      _onboardingDone &&
+      baseline != null &&
+      !measurementSummaryPending &&
+      _measurementSummarySeen;
+
+  /// Hedefin şu anki durumu (hedef yoksa null).
+  goals.GoalStatus? get goalStatus {
+    final current = _goal;
+    return current == null
+        ? null
+        : goals.goalStatus(goal: current, events: _events, now: now);
+  }
+
+  /// Yeni hedefi kaydet (varsa eskisinin yerine; hedef bugünden başlar).
+  /// İLK hedef bir kez +10 puan kazandırır; hedefi değiştirmek puan
+  /// kazandırmaz (değiştirip durarak puan toplanmasın).
+  Future<Reward> setGoal({
+    required int percent,
+    required int amount,
+    required GoalUnit unit,
+  }) async {
+    final start = baseline;
+    if (start == null) return Reward.none;
+    _goal = Goal(
+      start: startOfDay(now),
+      baseline: start,
+      from: recentLevel,
+      percent: percent,
+      amount: amount,
+      unit: unit,
+    );
+    await storage.saveGoal(_goal);
+    final first = !_activity.xp.any((x) => x.reason == XpReason.goalSet);
+    return _collect([
+      if (first)
+        XpEntry(time: now, amount: xpGoalSet, reason: XpReason.goalSet),
+    ]);
+  }
+
   // ---------- Nefes'in dolabı (bkz. logic/wardrobe.dart) ----------
 
   /// Başındaki filizin aşaması (1–4); sadece toplam puanla büyür.
@@ -221,6 +290,7 @@ class AppState extends ChangeNotifier {
     _measurementSummarySeen = storage.measurementSummarySeen;
     _weeklyReportSeen = storage.weeklyReportSeen;
     _outfit = storage.loadOutfit();
+    _goal = storage.loadGoal();
     // 0.6.0 ve öncesinden gelen kullanıcı: puanı zaten varsa açılmış
     // eşyaları (yerleri boşsa) bir kez tak; yoksa dolaptan habersiz kalır.
     if (_onboardingDone && !storage.hasOutfit) {
@@ -484,15 +554,17 @@ class AppState extends ChangeNotifier {
   /// [prices] verilirse fiyat geçmişi de değişir (verilmezse dokunulmaz).
   ///
   /// [newTracking]: takip baştan mı başlıyor? (Varsayılan evet: ölçüm
-  /// haftası özeti ve haftalık raporlar yeniden çıkar.) Demo'daki "bir gün
-  /// ilerlet" aynı takibi sürdürdüğü için false verir; görülen raporlar
-  /// görülmüş kalır.
+  /// haftası özeti ve haftalık raporlar yeniden çıkar, hedef silinir çünkü
+  /// başlangıç noktası değişti.) Demo'daki "bir gün ilerlet" aynı takibi
+  /// sürdürdüğü için false verir; görülen raporlar görülmüş kalır ve
+  /// kaydırılmış hedef [goal] olarak verilir.
   Future<void> replaceAll({
     required List<SmokingEvent> events,
     required ActivityLog activity,
     required DateTime trackingStartedAt,
     PriceHistory? prices,
     bool newTracking = true,
+    Goal? goal,
   }) async {
     _events = [...events]..sort(_byTime);
     _activity = activity;
@@ -507,6 +579,11 @@ class AppState extends ChangeNotifier {
       _weeklyReportSeen = 0;
       await storage.setMeasurementSummarySeen(false);
       await storage.setWeeklyReportSeen(0);
+      _goal = null;
+      await storage.saveGoal(null);
+    } else if (goal != null) {
+      _goal = goal;
+      await storage.saveGoal(goal);
     }
     if (prices != null) {
       _prices = prices;
@@ -541,6 +618,7 @@ class AppState extends ChangeNotifier {
     _measurementSummarySeen = false;
     _weeklyReportSeen = 0;
     _outfit = {};
+    _goal = null;
     notifyListeners();
   }
 
