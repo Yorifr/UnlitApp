@@ -79,7 +79,8 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
   `demo_day_planner.dart`, `demo_activity.dart`, `StorageService`,
   `effects.dart` (ses + titreşim) ve ses oynatıcılar (`sound_player*.dart`).
 - `lib/logic/`: **saf** hesap fonksiyonları (`stats.dart`,
-  `measurement.dart` (ölçüm haftası özeti + "Kazandıkların"), `quests.dart`,
+  `measurement.dart` (ölçüm haftası özeti + "Kazandıkların"),
+  `weekly_report.dart` (haftalık rapor; haftalar takipten sayılır), `quests.dart`,
   `rewards.dart`, `wardrobe.dart` (dolap: eşya açılma, filiz aşaması),
   `mascot_messages.dart`); `now`'ı parametre olarak alır →
   kolay test. Yeni hesapları buraya koy ve test yaz. XP miktarları
@@ -87,10 +88,11 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 - `lib/utils/format.dart`: Türkçe tarih/para/süre/yüzde yazımı.
 - `lib/screens/`: onboarding, `main_screen` (alt menü) + `today_tab`,
   `stats_tab`, `profile_tab`; erteleme, nefes, kutlama, ölçüm haftası
-  özeti, Nefes'in dolabı, ayarlar.
+  özeti, haftalık rapor, Nefes'in dolabı, ayarlar.
 - `lib/widgets/`: `chunky.dart` (tok buton/kart/çubuk), `mascot.dart`
   (+ `mascot_painter.dart`, `svg_path.dart`), `confetti.dart`,
-  `pickers.dart`, `reason_note.dart` (kendine not), ...
+  `pickers.dart`, `reason_note.dart` (kendine not), `change_chip.dart`
+  (fark rozeti: azalma nane, artış nötr), ...
 
 ## Tasarım dili (Duolingo tarzı)
 - **Sade ve anlaşılır:** Her işin TEK giriş noktası olsun (aynı şeyi iki

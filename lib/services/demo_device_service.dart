@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
+import '../logic/stats.dart';
 import '../models/smoking_event.dart';
 import 'demo_day_planner.dart';
 import 'device_service.dart';
@@ -152,6 +153,30 @@ class DemoDeviceService implements DeviceService {
     // Üretilen geçmişin ilk günü, takibin (ölçüm haftasının) başlangıcı olur
     // (bkz. loadDemoHistory).
     final times = plannedBetween(from, now, trackingStart: from);
+    _lastSync = now;
+    await storage.setDemoLastSync(now);
+    return [
+      for (final time in times)
+        SmokingEvent(time: time, source: EventSource.demo),
+    ];
+  }
+
+  /// "Bir günlük veri ekle" için: son 24 saatin (dün bu saatten şu ana)
+  /// sigaralarını üretir. Uygulama kayıtları bir gün geriye kaydırdıktan
+  /// sonra boşalan zamanı bununla doldurur (bkz. addDemoDay).
+  ///
+  /// Yeni bir tohum seçilir: yoksa bugünün planı, geriye kayan (dünkü) planın
+  /// aynısı olurdu ve her gün aynı saatlerde sigara görünürdü.
+  Future<List<SmokingEvent>> generateLastDay({
+    required DateTime trackingStart,
+  }) async {
+    await storage.setDemoSeed(Random().nextInt(1 << 30));
+    final now = _clock();
+    final times = plannedBetween(
+      addDays(now, -1),
+      now,
+      trackingStart: trackingStart,
+    );
     _lastSync = now;
     await storage.setDemoLastSync(now);
     return [

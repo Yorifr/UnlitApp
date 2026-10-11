@@ -258,6 +258,87 @@ void main() {
     expect(find.text('İçmediğin sigara'), findsOneWidget);
   });
 
+  testApp('haftalık rapor: Bugün\'de bir kez duyurulur, İstatistik\'te kalır', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    await scrollAndTap(tester, find.text('DEMO VERİSİ ÜRET'));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, 3000), // en üste kaydır
+    );
+    await tester.pumpAndSettle();
+
+    // Önce ölçüm haftası özeti; o bekliyorken rapor duyurulmaz.
+    expect(find.text('RAPORUMU GÖR'), findsNothing);
+    await tester.tap(find.text('SONUÇLARIMI GÖR'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.textContaining('Her hafta bitince'),
+      250,
+      scrollable: find.byType(Scrollable).hitTestable().first,
+    );
+    await scrollAndTap(tester, find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
+    // 15 günlük demo: 2. hafta bitti.
+    expect(find.textContaining('2. haftan bitti!'), findsOneWidget);
+    await tester.tap(find.text('RAPORUMU GÖR'));
+    await tester.pumpAndSettle();
+    expect(find.text('2. haftanın raporu'), findsOneWidget);
+    expect(find.text('Ölçüm haftası'), findsOneWidget); // önceki hafta
+    expect(sounds.played.last, Sfx.success.asset); // konfeti yok, hafif ding
+    await tester.scrollUntilVisible(
+      find.text('Gelecek hafta için bir fikir'),
+      250,
+      scrollable: find.byType(Scrollable).hitTestable().first,
+    );
+    await scrollAndTap(tester, find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    expect(state.pendingWeeklyReport, isNull);
+    expect(find.text('RAPORUMU GÖR'), findsNothing);
+
+    // Raporların kalıcı yeri İstatistik; 1. hafta = ölçüm haftası özeti.
+    await tester.tap(find.text('İstatistik'));
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('2. hafta'));
+    await tester.pumpAndSettle();
+    expect(find.text('2. haftanın raporu'), findsOneWidget);
+    await tester.tap(find.byTooltip('Kapat'));
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('1. hafta'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ölçüm haftan bitti!'), findsOneWidget);
+  });
+
+  testApp('"Bir günlük veri ekle" takibi bir gün ilerletir', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    expect(state.trackingDay, 1);
+    await tester.tap(find.text('Profil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Ayarlar'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Şu an takibin 1. günü (1. hafta).'),
+      findsOneWidget,
+    );
+
+    await scrollAndTap(tester, find.text('Bir günlük veri ekle'));
+    await tester.pumpAndSettle();
+    expect(state.trackingDay, 2);
+    expect(state.events, isNotEmpty);
+    expect(find.text('Bir gün geçti: takibin 2. günü.'), findsOneWidget);
+    expect(
+      find.textContaining('Şu an takibin 2. günü (1. hafta).'),
+      findsOneWidget,
+    );
+  });
+
   testApp('ölçüm haftasında "Kazandıkların" kapalı, ne zaman açılacağı yazar', (
     tester,
     state,
@@ -404,6 +485,19 @@ void main() {
     await tester.tap(find.text('SONUÇLARIMI GÖR'));
     await tester.pumpAndSettle();
     for (var i = 0; i < 6; i++) {
+      await tester.drag(
+        find.byType(Scrollable).hitTestable().first,
+        const Offset(0, -400),
+      );
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
+    // Sonra 2. haftanın raporu (aynı yerde, en üstte).
+    await tester.tap(find.text('RAPORUMU GÖR'));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 10; i++) {
       await tester.drag(
         find.byType(Scrollable).hitTestable().first,
         const Offset(0, -400),

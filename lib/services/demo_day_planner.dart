@@ -129,11 +129,7 @@ List<DateTime> planDemoDay(
 /// değildir.
 double demoReduction(DateTime day, DateTime? trackingStart) {
   if (trackingStart == null) return 0;
-  // Saat farkını 24'e bölüp yuvarlıyoruz: yaz saati geçişinde bir gün 23 ya
-  // da 25 saat sürse de doğru gün sayısı çıksın.
-  final daysAfter =
-      (startOfDay(day).difference(measurementEnd(trackingStart)).inHours / 24)
-          .round();
+  final daysAfter = daysBetween(measurementEnd(trackingStart), day);
   if (daysAfter < 0) return 0;
   return min(0.30, 0.05 + 0.02 * daysAfter);
 }

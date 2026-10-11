@@ -42,6 +42,12 @@ DateTime addDays(DateTime time, int days) => DateTime(
   time.millisecond,
 );
 
+/// [from] gününden [to] gününe kaç takvim günü var? (Aynı gün → 0.)
+/// Saat farkını 24'e bölüp yuvarlıyoruz: yaz saati geçişinde bir gün 23 ya
+/// da 25 saat sürse de doğru gün sayısı çıksın.
+int daysBetween(DateTime from, DateTime to) =>
+    (startOfDay(to).difference(startOfDay(from)).inHours / 24).round();
+
 // ---------- Sayma ----------
 
 /// [from] (dahil) ile [to] (hariç) arasındaki sigara sayısı.

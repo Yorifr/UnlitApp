@@ -105,6 +105,11 @@ String formatPercent(double percent) => '%${percent.abs().round()}';
 /// "1 Ekim" (gün + ay)
 String formatDayMonth(DateTime d) => '${d.day} ${_months[d.month - 1]}';
 
+/// Gün aralığı: "12–18 Ekim"; ay değişiyorsa "29 Eylül – 5 Ekim".
+String formatDayRange(DateTime from, DateTime to) => from.month == to.month
+    ? '${from.day}–${formatDayMonth(to)}'
+    : '${formatDayMonth(from)} – ${formatDayMonth(to)}';
+
 // ---------- Paket fiyatı ----------
 
 /// Kullanıcının yazdığı fiyatı sayıya çevirir: "95,50" veya "95.50" → 95.5.

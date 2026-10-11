@@ -439,4 +439,99 @@ void main() {
       expect(state.prices.isEmpty, isTrue);
     });
   });
+
+  group('haftalık rapor', () {
+    /// [from] gününden [days] gün boyunca her gün 10 sigara ve bir görev.
+    Future<void> fill(DateTime from, int days) async {
+      final events = <SmokingEvent>[];
+      final activity = ActivityLog();
+      for (var i = 0; i < days; i++) {
+        final day = DateTime(from.year, from.month, from.day + i);
+        for (var h = 0; h < 10; h++) {
+          events.add(
+            SmokingEvent(
+              time: DateTime(day.year, day.month, day.day, 8 + h),
+              source: EventSource.demo,
+            ),
+          );
+        }
+        activity.xp.add(
+          XpEntry(
+            time: DateTime(day.year, day.month, day.day, 9),
+            amount: 10,
+            reason: XpReason.questCheckIn,
+          ),
+        );
+      }
+      await state.replaceAll(
+        events: events,
+        activity: activity,
+        trackingStartedAt: from,
+      );
+    }
+
+    test(
+      'önce ölçüm özeti; sonra sadece en son biten hafta, bir kez',
+      () async {
+        await state.completeOnboarding(UserProfile());
+        // 19 Eylül'den 9 Ekim'e 3 tam hafta; bugün (10 Ekim) 22. gün.
+        await fill(DateTime(2026, 9, 19), 21);
+        expect(state.trackingDay, 22);
+        expect(state.completedWeeks, 3);
+
+        // Ölçüm haftası özeti beklerken haftalık rapor duyurulmaz.
+        expect(state.measurementSummaryPending, isTrue);
+        expect(state.pendingWeeklyReport, isNull);
+        await state.markMeasurementSummarySeen();
+
+        // Üç rapor üst üste gelmez: sadece en son biten hafta (3.).
+        expect(state.pendingWeeklyReport, 3);
+        expect(state.weeklyReport(2), isNotNull); // eskisi İstatistik'te
+        await state.markWeeklyReportSeen(3);
+        expect(state.pendingWeeklyReport, isNull);
+
+        // Bir hafta sonra 4. haftanın raporu (o hafta görev yapılmıştı).
+        await fill(DateTime(2026, 9, 19), 28);
+        await state.markMeasurementSummarySeen();
+        now = DateTime(2026, 10, 17, 10);
+        expect(state.completedWeeks, 4);
+        expect(state.pendingWeeklyReport, 4);
+      },
+    );
+
+    test('hiçbir şey olmayan hafta duyurulmaz', () async {
+      await state.completeOnboarding(UserProfile());
+      await fill(DateTime(2026, 9, 26), 7); // sadece ölçüm haftası dolu
+      await state.markMeasurementSummarySeen();
+      expect(state.completedWeeks, 2);
+      expect(state.weeklyReport(2)!.isEmpty, isTrue);
+      expect(state.pendingWeeklyReport, isNull);
+    });
+
+    test(
+      'takip baştan başlarsa raporlar yeniden çıkar; sürerse çıkmaz',
+      () async {
+        await state.completeOnboarding(UserProfile());
+        await fill(DateTime(2026, 9, 26), 14);
+        await state.markMeasurementSummarySeen();
+        await state.markWeeklyReportSeen(2);
+
+        // "Bir gün ilerlet" gibi: aynı takip sürüyor, görülenler görülmüş.
+        await state.replaceAll(
+          events: state.events,
+          activity: state.activity,
+          trackingStartedAt: state.trackingStartedAt!,
+          newTracking: false,
+        );
+        expect(state.measurementSummaryPending, isFalse);
+        expect(state.pendingWeeklyReport, isNull);
+
+        // Yeni takip (demo verisi üret / sıfırla): hepsi yeniden çıkar.
+        await fill(DateTime(2026, 9, 26), 14);
+        expect(state.measurementSummaryPending, isTrue);
+        await state.markMeasurementSummarySeen();
+        expect(state.pendingWeeklyReport, 2);
+      },
+    );
+  });
 }

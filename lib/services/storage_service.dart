@@ -41,6 +41,7 @@ class StorageService {
   static const _kPriceConfirmedAt = 'price_confirmed_at';
   static const _kMeasurementSummarySeen = 'measurement_summary_seen';
   static const _kMascotOutfit = 'mascot_outfit';
+  static const _kWeeklyReportSeen = 'weekly_report_seen';
 
   // ---------- Profil ----------
 
@@ -179,6 +180,14 @@ class StorageService {
 
   Future<void> setMeasurementSummarySeen(bool value) =>
       _prefs.setBool(_kMeasurementSummarySeen, value);
+
+  // ---------- Haftalık rapor ----------
+
+  /// En son görülen haftalık raporun hafta numarası (hiç görülmediyse 0).
+  int get weeklyReportSeen => _prefs.getInt(_kWeeklyReportSeen) ?? 0;
+
+  Future<void> setWeeklyReportSeen(int week) =>
+      _prefs.setInt(_kWeeklyReportSeen, week);
 
   // ---------- Nefes'in dolabı ----------
 

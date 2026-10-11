@@ -6,6 +6,7 @@ import 'logic/measurement.dart';
 import 'logic/quests.dart';
 import 'logic/rewards.dart';
 import 'logic/stats.dart';
+import 'logic/weekly_report.dart' as weekly;
 // Getter adlarıyla (sproutStage, unlockedAccessories) karışmasın diye önekli.
 import 'logic/wardrobe.dart' as wardrobe;
 import 'models/activity_log.dart';
@@ -47,6 +48,7 @@ class AppState extends ChangeNotifier {
   PriceHistory _prices = PriceHistory();
   DateTime? _priceConfirmedAt;
   bool _measurementSummarySeen = false;
+  int _weeklyReportSeen = 0;
   Set<Accessory> _outfit = {};
   StreamSubscription<SmokingEvent>? _subscription;
 
@@ -98,7 +100,7 @@ class AppState extends ChangeNotifier {
   int? get measurementDay => measurementDayNumber(now, _trackingStartedAt);
 
   /// Ölçüm haftasının özeti (takip başlamadıysa null).
-  MeasurementSummary? get measurementSummary {
+  PeriodSummary? get measurementSummary {
     final start = _trackingStartedAt;
     return start == null ? null : summarizeMeasurementWeek(_events, start);
   }
@@ -120,6 +122,50 @@ class AppState extends ChangeNotifier {
     now: now,
     prices: _prices,
   );
+
+  // ---------- Haftalık rapor (bkz. logic/weekly_report.dart) ----------
+
+  /// Takibin kaçıncı günü (1 = başladığı gün). Takip başlamadıysa null.
+  int? get trackingDay {
+    final start = _trackingStartedAt;
+    return start == null ? null : weekly.trackingDayNumber(now, start);
+  }
+
+  /// Bugüne kadar biten hafta sayısı (ölçüm haftası bitince 1).
+  int get completedWeeks => weekly.completedWeeks(now, _trackingStartedAt);
+
+  /// [week]. haftanın raporu (2. haftadan itibaren; hafta bitmediyse null).
+  weekly.WeeklyReport? weeklyReport(int week) => weekly.buildWeeklyReport(
+    week: week,
+    events: _events,
+    activity: _activity,
+    trackingStart: _trackingStartedAt,
+    now: now,
+    prices: _prices,
+  );
+
+  /// "Bugün"de duyurulacak yeni haftalık raporun hafta numarası (yoksa
+  /// null). Sadece EN SON biten hafta duyurulur: uygulama üç hafta
+  /// açılmadıysa üç rapor üst üste gelmez; eskiler İstatistik'te durur.
+  /// Ölçüm haftası özeti bekliyorsa önce o gösterilir. Haftada hiçbir şey
+  /// olmadıysa (ne kayıt ne görev) duyurulacak bir şey yok.
+  int? get pendingWeeklyReport {
+    if (!_onboardingDone || measurementSummaryPending) return null;
+    final week = completedWeeks;
+    if (week < weekly.firstWeeklyReport || week <= _weeklyReportSeen) {
+      return null;
+    }
+    final report = weeklyReport(week);
+    return report == null || report.isEmpty ? null : week;
+  }
+
+  /// Haftalık rapor görüldü: "Bugün"deki duyuru kalksın.
+  Future<void> markWeeklyReportSeen(int week) async {
+    if (week <= _weeklyReportSeen) return;
+    _weeklyReportSeen = week;
+    await storage.setWeeklyReportSeen(week);
+    notifyListeners();
+  }
 
   // ---------- Nefes'in dolabı (bkz. logic/wardrobe.dart) ----------
 
@@ -173,6 +219,7 @@ class AppState extends ChangeNotifier {
     _prices = storage.loadPrices();
     _priceConfirmedAt = storage.priceConfirmedAt;
     _measurementSummarySeen = storage.measurementSummarySeen;
+    _weeklyReportSeen = storage.weeklyReportSeen;
     _outfit = storage.loadOutfit();
     // 0.6.0 ve öncesinden gelen kullanıcı: puanı zaten varsa açılmış
     // eşyaları (yerleri boşsa) bir kez tak; yoksa dolaptan habersiz kalır.
@@ -435,21 +482,32 @@ class AppState extends ChangeNotifier {
 
   /// Tüm verileri verilenlerle değiştirir (demo verisi üretirken).
   /// [prices] verilirse fiyat geçmişi de değişir (verilmezse dokunulmaz).
+  ///
+  /// [newTracking]: takip baştan mı başlıyor? (Varsayılan evet: ölçüm
+  /// haftası özeti ve haftalık raporlar yeniden çıkar.) Demo'daki "bir gün
+  /// ilerlet" aynı takibi sürdürdüğü için false verir; görülen raporlar
+  /// görülmüş kalır.
   Future<void> replaceAll({
     required List<SmokingEvent> events,
     required ActivityLog activity,
     required DateTime trackingStartedAt,
     PriceHistory? prices,
+    bool newTracking = true,
   }) async {
     _events = [...events]..sort(_byTime);
     _activity = activity;
     _trackingStartedAt = trackingStartedAt;
-    // Takip yeniden başladı: yeni ölçüm haftasının özeti de yeniden çıksın.
-    _measurementSummarySeen = false;
     await storage.saveEvents(_events);
     await storage.saveActivity(_activity);
     await storage.setTrackingStartedAt(trackingStartedAt);
-    await storage.setMeasurementSummarySeen(false);
+    if (newTracking) {
+      // Takip yeniden başladı: yeni ölçüm haftasının özeti ve haftalık
+      // raporlar da yeniden çıksın.
+      _measurementSummarySeen = false;
+      _weeklyReportSeen = 0;
+      await storage.setMeasurementSummarySeen(false);
+      await storage.setWeeklyReportSeen(0);
+    }
     if (prices != null) {
       _prices = prices;
       await storage.savePrices(prices);
@@ -481,6 +539,7 @@ class AppState extends ChangeNotifier {
     _prices = PriceHistory();
     _priceConfirmedAt = null;
     _measurementSummarySeen = false;
+    _weeklyReportSeen = 0;
     _outfit = {};
     notifyListeners();
   }

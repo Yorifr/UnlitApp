@@ -2,10 +2,13 @@
 //
 // "Demo verisi üret" butonuna basınca sadece sigara kayıtları değil,
 // gerçek bir kullanıcının yapacağı olumlu şeyler de oluşur: ruh hali
-// check-in'leri, sigara nedenleri, nefes molaları, ertelemeler ve bunların
+// kayıtları, sigara nedenleri, nefes molaları, ertelemeler ve bunların
 // XP'leri. Böylece seri, XP ve görevler sunumda dolu görünür.
 //
 // Bugün bilerek boş bırakılır: bugünün görevlerini kullanıcı kendisi yapsın.
+//
+// "Bir günlük veri ekle" ([addDemoDay]) ise sanki bir gün geçmiş gibi
+// davranır; ölçüm haftasını ve haftalık raporları gün gün izlemek için.
 
 import 'dart:math';
 
@@ -62,8 +65,6 @@ PriceHistory demoPrices({required DateTime start, required DateTime now}) {
       XpEntry(time: trackingStart, amount: xpWelcome, reason: XpReason.welcome),
     ],
   );
-  DateTime at(DateTime day, int hour, int minute) =>
-      DateTime(day.year, day.month, day.day, hour, minute);
 
   final today = startOfDay(now);
   var dayIndex = 0;
@@ -74,64 +75,171 @@ PriceHistory demoPrices({required DateTime start, required DateTime now}) {
   ) {
     // 10. gün hiçbir şey yapılmamış olsun: "dinlenme günü" seriyi korur.
     if (dayIndex == 9) continue;
-
-    // 1) Ruh hali: demo kullanıcısı her gün check-in yapar. (Böylece her
-    //    gün en az bir görev tamamlanır ve seri tutarlı şekilde dolu olur.)
-    activity.moods.add(
-      MoodEntry(
-        time: at(day, 9 + random.nextInt(3), random.nextInt(60)),
-        mood: _randomMood(random),
-      ),
-    );
-
-    // 2) O günün 1–3 sigarasının nedenini işaretle
-    final indexes = [
-      for (var i = 0; i < tagged.length; i++)
-        if (startOfDay(tagged[i].time) == day) i,
-    ]..shuffle(random);
-    for (final i in indexes.take(1 + random.nextInt(3))) {
-      tagged[i] = tagged[i].withTrigger(_guessTrigger(tagged[i].time, random));
-    }
-
-    // 3) Nefes molası (bazı günler)
-    if (random.nextDouble() < 0.6) {
-      activity.breaths.add(at(day, 14 + random.nextInt(6), random.nextInt(60)));
-    }
-
-    // 4) Erteleme (ölçüm haftasından sonra, çoğu gün)
-    if (!isMeasurementDay(day, trackingStart) && random.nextDouble() < 0.8) {
-      final start = at(day, 11 + random.nextInt(8), random.nextInt(50));
-      final success = random.nextDouble() < 0.75;
-      final end = start.add(
-        Duration(minutes: success ? delayMinutes : 3 + random.nextInt(6)),
-      );
-      activity.delays.add(
-        DelayAttempt(
-          start: start,
-          end: end,
-          outcome: success ? DelayOutcome.success : DelayOutcome.gaveIn,
-        ),
-      );
-      activity.xp.add(
-        XpEntry(
-          time: end,
-          amount: success ? xpDelaySuccess : xpDelayTry,
-          reason: success ? XpReason.delaySuccess : XpReason.delayTry,
-        ),
-      );
-    }
-
-    // 5) O gün tamamlanan görevlerin XP'si (uygulamadaki kuralla aynı)
-    activity.xp.addAll(
-      pendingQuestRewards(
-        now: at(day, 22, 0),
-        trackingStart: trackingStart,
-        events: tagged,
-        activity: activity,
-      ),
+    addDemoDayActivity(
+      day: day,
+      trackingStart: trackingStart,
+      events: tagged,
+      activity: activity,
+      random: random,
     );
   }
   return (events: tagged, activity: activity);
+}
+
+/// Demo kullanıcısının [day] günü yaptıkları: ruh hali, 1–3 sigaranın
+/// nedeni, bazen nefes molası, ölçüm haftasından sonra erteleme ve bunların
+/// puanları. [events] (nedenler) ve [activity] YERİNDE değiştirilir.
+void addDemoDayActivity({
+  required DateTime day,
+  required DateTime trackingStart,
+  required List<SmokingEvent> events,
+  required ActivityLog activity,
+  required Random random,
+}) {
+  DateTime at(int hour, int minute) =>
+      DateTime(day.year, day.month, day.day, hour, minute);
+
+  // 1) Ruh hali: demo kullanıcısı her gün kendini dinler. (Böylece her gün
+  //    en az bir görev tamamlanır ve seri tutarlı şekilde dolu olur.)
+  activity.moods.add(
+    MoodEntry(
+      time: at(9 + random.nextInt(3), random.nextInt(60)),
+      mood: _randomMood(random),
+    ),
+  );
+
+  // 2) O günün 1–3 sigarasının nedenini işaretle
+  final indexes = [
+    for (var i = 0; i < events.length; i++)
+      if (startOfDay(events[i].time) == day) i,
+  ]..shuffle(random);
+  for (final i in indexes.take(1 + random.nextInt(3))) {
+    events[i] = events[i].withTrigger(_guessTrigger(events[i].time, random));
+  }
+
+  // 3) Nefes molası (bazı günler)
+  if (random.nextDouble() < 0.6) {
+    activity.breaths.add(at(14 + random.nextInt(6), random.nextInt(60)));
+  }
+
+  // 4) Erteleme (ölçüm haftasından sonra, çoğu gün)
+  if (!isMeasurementDay(day, trackingStart) && random.nextDouble() < 0.8) {
+    final start = at(11 + random.nextInt(8), random.nextInt(50));
+    final success = random.nextDouble() < 0.75;
+    final end = start.add(
+      Duration(minutes: success ? delayMinutes : 3 + random.nextInt(6)),
+    );
+    activity.delays.add(
+      DelayAttempt(
+        start: start,
+        end: end,
+        outcome: success ? DelayOutcome.success : DelayOutcome.gaveIn,
+      ),
+    );
+    activity.xp.add(
+      XpEntry(
+        time: end,
+        amount: success ? xpDelaySuccess : xpDelayTry,
+        reason: success ? XpReason.delaySuccess : XpReason.delayTry,
+      ),
+    );
+  }
+
+  // 5) O gün tamamlanan görevlerin XP'si (uygulamadaki kuralla aynı)
+  activity.xp.addAll(
+    pendingQuestRewards(
+      now: at(22, 0),
+      trackingStart: trackingStart,
+      events: events,
+      activity: activity,
+    ),
+  );
+}
+
+// ---------- "Bir günlük veri ekle" ----------
+
+/// "Bir günlük veri ekle": sanki bir gün geçmiş gibi.
+///
+/// Gerçek saati ileri alamayız. Onun yerine her kaydı (sigaralar, ruh hali,
+/// ertelemeler, puanlar, fiyatlar ve takibin başlangıcı) bir gün GERİYE
+/// kaydırırız: bugün boşalır, takip bir gün "eskir". Sonra:
+/// 1. Boşalan son 24 saate demo kılıfın yeni sigaraları eklenir.
+/// 2. Dün (kaymadan önceki bugün) hiç görev yapılmadıysa, demo kullanıcısı
+///    o günün görevlerini yapmış olur; seri ve haftalık rapor dolu görünür.
+///
+/// Geçmiş günler değişmez, sadece kayar. Böylece ölçüm haftası özeti ve
+/// haftalık raporlar gün gün izlenebilir; görülen raporlar görülmüş kalır.
+Future<void> addDemoDay(
+  AppState state,
+  DemoDeviceService demo, {
+  Random? random,
+}) async {
+  final now = state.now;
+  DateTime back(DateTime time) => addDays(time, -1);
+  final start = back(state.trackingStartedAt ?? now);
+
+  final events = [
+    for (final e in state.events)
+      SmokingEvent(time: back(e.time), source: e.source, trigger: e.trigger),
+    ...await demo.generateLastDay(trackingStart: start),
+  ]..sort((a, b) => a.time.compareTo(b.time));
+
+  final old = state.activity;
+  final activity = ActivityLog(
+    moods: [
+      for (final m in old.moods) MoodEntry(time: back(m.time), mood: m.mood),
+    ],
+    delays: [
+      for (final d in old.delays)
+        DelayAttempt(
+          start: back(d.start),
+          end: back(d.end),
+          outcome: d.outcome,
+        ),
+    ],
+    breaths: [for (final b in old.breaths) back(b)],
+    xp: [
+      for (final x in old.xp)
+        XpEntry(time: back(x.time), amount: x.amount, reason: x.reason),
+    ],
+    // Süren bir erteleme "şu an"a ait; kaydırılmaz.
+    activeDelayStart: old.activeDelayStart,
+  );
+
+  final yesterday = startOfDay(back(now));
+  final anyQuestDone = questStatuses(
+    day: yesterday,
+    trackingStart: start,
+    events: events,
+    activity: activity,
+  ).any((q) => q.done);
+  if (!anyQuestDone) {
+    addDemoDayActivity(
+      day: yesterday,
+      trackingStart: start,
+      events: events,
+      activity: activity,
+      random: random ?? Random(),
+    );
+  }
+
+  final prices = state.prices;
+  await state.replaceAll(
+    events: events,
+    activity: activity,
+    trackingStartedAt: start,
+    prices: prices.isEmpty
+        ? null
+        : PriceHistory([
+            for (final p in prices.entries)
+              PackPrice(
+                since: back(p.since),
+                price: p.price,
+                perPack: p.perPack,
+              ),
+          ]),
+    newTracking: false,
+  );
 }
 
 Mood _randomMood(Random random) {

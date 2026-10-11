@@ -19,7 +19,9 @@ import '../widgets/stat_tile.dart';
 /// ("doğru ya da yanlış yok, bu senin başlangıç noktan").
 ///
 /// Aynı zamanda "kademeli açılım" anı: ölçüm haftasından sonra açılan
-/// özellikleri (erteleme görevi, "Kazandıkların") burada haber veririz.
+/// özellikleri (erteleme görevi, "Kazandıkların", haftalık raporlar) burada
+/// haber veririz. Bu özet, aynı zamanda 1. haftanın raporudur (İstatistik →
+/// "Haftalık raporların" listesinde 1. hafta).
 /// Böylece ilk gün her şey birden ekrana dökülmez.
 class MeasurementSummaryScreen extends StatefulWidget {
   const MeasurementSummaryScreen({super.key, required this.state});
@@ -176,6 +178,14 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
                                 'İstatistik’te “Kazandıkların” açıldı: bu '
                                 'ortalamanın altında kaldıkça içmediğin '
                                 'sigaralar ve cebinde kalan para birikir.',
+                          ),
+                          const SizedBox(height: 12),
+                          const _Unlocked(
+                            icon: Icons.event_note_outlined,
+                            text:
+                                'Her hafta bitince kısa bir haftalık rapor '
+                                'gelecek: örüntün, kendine iyi baktığın '
+                                'anlar ve gelecek hafta için bir fikir.',
                           ),
                           const SizedBox(height: 12),
                           const _Unlocked(
