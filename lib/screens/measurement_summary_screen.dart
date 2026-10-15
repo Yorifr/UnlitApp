@@ -196,7 +196,9 @@ class _MeasurementSummaryScreenState extends State<MeasurementSummaryScreen> {
                             text:
                                 'Her hafta bitince kısa bir haftalık rapor '
                                 'gelecek: örüntün, kendine iyi baktığın '
-                                'anlar ve gelecek hafta için bir fikir.',
+                                'anlar ve gelecek hafta için bir fikir. Bir '
+                                'hafta sonra İstatistik’in en üstünde '
+                                '“Başladığından beri” kartı da açılacak.',
                           ),
                           const SizedBox(height: 12),
                           const _Unlocked(

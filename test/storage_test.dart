@@ -14,6 +14,7 @@ void main() {
     final profile = UserProfile(
       cigarettesPerDay: 18,
       firstCigarette: FirstCigaretteTime.within30Min,
+      smokesOutsideCase: true,
       triggers: {SmokingTrigger.coffee, SmokingTrigger.stress},
       reasonNote: 'Merdivenleri rahat çıkmak istiyorum.',
     );
@@ -36,9 +37,12 @@ void main() {
     expect(loaded.toJson().keys, {
       'cigarettesPerDay',
       'firstCigarette',
+      'smokesOutsideCase',
       'triggers',
       'reasonNote',
     });
+    // Yeni soru (0.11.0) eski kayıtta yok: cevaplanmamış sayılır.
+    expect(loaded.smokesOutsideCase, isNull);
     // Sadece boşluktan oluşan not, not sayılmaz.
     expect(loaded.reasonNote, isNull);
   });
@@ -82,8 +86,10 @@ void main() {
       'firstCigarette': 'boyle_bir_secenek_yok',
       'triggers': ['coffee', 'bilinmeyen'],
       'cigarettesPerDay': 'yanlış tip',
+      'smokesOutsideCase': 'evet',
     });
     expect(profile.firstCigarette, isNull);
+    expect(profile.smokesOutsideCase, isNull);
     expect(profile.triggers, {SmokingTrigger.coffee});
     expect(profile.cigarettesPerDay, isNull);
   });
@@ -93,11 +99,16 @@ void main() {
     final events = [
       SmokingEvent(time: DateTime(2026, 10, 10, 8), source: EventSource.demo),
       SmokingEvent(time: DateTime(2026, 10, 10, 9), source: EventSource.device),
+      SmokingEvent(
+        time: DateTime(2026, 10, 10, 10),
+        source: EventSource.manual,
+      ),
     ];
     await storage.saveEvents(events);
 
     final loaded = storage.loadEvents();
-    expect(loaded.length, 2);
+    expect(loaded.length, 3);
+    expect(loaded.last.source, EventSource.manual);
     expect(loaded[0].time, events[0].time);
     expect(loaded[1].source, EventSource.device);
   });

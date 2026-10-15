@@ -188,8 +188,42 @@ class SettingsScreen extends StatelessWidget {
                   '20 minutes of life?" Addiction, 2024 (University College '
                   'London). Bir sigara ortalama olarak erkeklerde ~17 dk, '
                   'kadınlarda ~22 dk (genel ortalama ~20 dk) yaşam süresine '
-                  'mal oluyor. Uygulama, içilmeyen her sigara için genel '
-                  'ortalamayı (20 dk) kullanır. Ortalama bir tahmindir.',
+                  'mal oluyor. Uygulama bu ortalamayı sadece sigarasız '
+                  'günlerin için kullanır. Neden: Hackshaw A ve ark., BMJ, '
+                  '2018 — sağlığa etkisi sigara sayısıyla orantılı değil, az '
+                  'sayıda sigara bile riskin önemli bir kısmını taşıyor. '
+                  'Ortalama bir tahmindir.',
+                ),
+              ),
+              const ListTile(
+                title: Text('İsteği 10 dakika ertelemek'),
+                subtitle: Text(
+                  'Mayo Clinic, "Quitting smoking: 10 ways to resist tobacco '
+                  'cravings" (Türkçesi Koç Üniversitesi Hastanesi ve Amerikan '
+                  'Hastanesi sitelerinde): isteği 10 dakika erteleyip dikkatini '
+                  'dağıtmayı önerir. Yürüme önerisi: Taylor AH, Katomeri M, '
+                  'Ussher M, Psychopharmacology, 2005. 10 dakika kesin bir '
+                  'bilimsel sınır değildir; uygulama her ertelemenin süresini '
+                  'kaydeder ve isteklerin sende genelde kaç dakikada '
+                  'geçtiğini söyler.',
+                ),
+              ),
+              const ListTile(
+                title: Text('Nefes molası'),
+                subtitle: Text(
+                  'Shahab L, Sarkar BK, West R, Psychopharmacology, 2013: '
+                  'nefes egzersizi sigara isteğini hemen azalttı (24 saat '
+                  'sonra etkisi görülmedi). 4 saniye al, 4 saniye ver ritmi '
+                  'ekibin seçimidir.',
+                ),
+              ),
+              const ListTile(
+                title: Text('Günde kaç sigara tahmini'),
+                subtitle: Text(
+                  'Shiffman S, Health Psychology, 2009: insanlar sigara '
+                  'sayısını çoğu zaman yuvarlak bir tahminle hatırlar; anlık '
+                  'kayıt bu yanılgıyı yapmaz. Bu yüzden tahminin ölçümle yan '
+                  'yana gösterilir.',
                 ),
               ),
               const ListTile(

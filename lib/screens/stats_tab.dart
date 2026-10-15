@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../logic/progress.dart';
 import '../logic/stats.dart';
 import '../logic/weekly_report.dart';
 import '../models/smoking_event.dart';
@@ -24,8 +25,8 @@ enum _Period {
   final String label;
 }
 
-/// "İstatistik" sekmesi: bugünkü sayı, geçen haftayla karşılaştırma,
-/// son 7 günün grafiği, haftalık raporlar, "Kazandıkların" ve harcanan
+/// "İstatistik" sekmesi: "Başladığından beri" (tek bakışta durum), bugünkü
+/// sayı, son 7 günün grafiği, haftalık raporlar, "Kazandıkların" ve harcanan
 /// para.
 ///
 /// Bilerek SADE: sayfada tek bir dönem seçici var (para için). "Kaybedilen
@@ -56,11 +57,10 @@ class _StatsTabState extends State<StatsTab> {
       builder: (context, _) {
         final now = state.now;
         final events = state.events;
-        // Haftalık karşılaştırma ancak 2 haftalık kayıt varsa anlamlı;
-        // yoksa kartı hiç göstermiyoruz (boş kart kalabalık yapar).
-        final canCompareWeeks =
-            hasDataSince(events, addDays(now, -13)) &&
-            compareWeeks(events, now).changePercent != null;
+        // Ölçüm haftasından 7 gün sonra açılır; öncesinde hiç görünmez
+        // (boş kart kalabalık yapar). 0.11.0'a kadar burada "geçen haftayla
+        // karşılaştırma" vardı; haftadan haftaya fark artık haftalık raporda.
+        final progress = state.progress;
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
@@ -69,11 +69,11 @@ class _StatsTabState extends State<StatsTab> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
-            _TodayCard(events: events, now: now),
-            if (canCompareWeeks) ...[
+            if (progress != null) ...[
+              _SinceStartCard(progress: progress),
               const SizedBox(height: 16),
-              _WeekCard(events: events, now: now),
             ],
+            _TodayCard(events: events, now: now),
             const SizedBox(height: 16),
             _ChartCard(events: events, now: now),
             // Ölçüm haftası bitince açılır (öncesinde hiç görünmez).
@@ -246,16 +246,31 @@ class _GainsSection extends StatelessWidget {
             onTap: money == null ? onAddPrice : null,
           ),
           const SizedBox(height: 12),
-          StatTile(
-            icon: Icons.favorite_outline,
-            color: c.purple,
-            title: 'Korunan yaşam süresi',
-            value: formatDuration(gains.lifeMinutes),
-            footnote:
-                'Ortalama tahmin: içilmeyen sigara başına '
-                '~$lifeMinutesPerCigarette dk (UCL, 2024)',
-            onInfo: () => _showLifeInfo(context),
-          ),
+          // Korunan yaşam süresi sadece SİGARASIZ günlerden hesaplanır
+          // (0.11.0; gerekçe logic/measurement.dart → Gains.lifeMinutes).
+          // Henüz sigarasız gün yoksa "0 dk" kartı yerine nasıl
+          // hesaplandığını anlatan küçük bir bağlantı.
+          if (gains.smokeFreeDays > 0)
+            StatTile(
+              icon: Icons.favorite_outline,
+              color: c.purple,
+              title: 'Korunan yaşam süresi',
+              value: formatDuration(gains.lifeMinutes),
+              footnote:
+                  'Sigarasız ${gains.smokeFreeDays} gününde · ortalama '
+                  'tahmin (UCL, 2024)',
+              onInfo: () => _showLifeInfo(context),
+            )
+          else
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => _showLifeInfo(context),
+                icon: const Icon(Icons.info_outline, size: 20),
+                label: const Text('Korunan yaşam süresi nasıl hesaplanır?'),
+                style: TextButton.styleFrom(foregroundColor: c.textMuted),
+              ),
+            ),
         ],
       ],
     );
@@ -266,15 +281,23 @@ class _GainsSection extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Bu sayı nasıl hesaplanıyor?'),
-        content: const Text(
-          'University College London (UCL) araştırmacılarının 2024’te '
-          'Addiction dergisinde yayımladığı çalışmaya göre bir sigara, '
-          'ortalama olarak yaklaşık 20 dakika yaşam süresine mal oluyor '
-          '(erkeklerde ~17, kadınlarda ~22 dk).\n\n'
-          'Burada bunu tersinden kullanıyoruz: ölçüm haftandaki ortalamaya '
-          'göre İÇMEDİĞİN her sigara için ~20 dk.\n\n'
-          'Bu bir ORTALAMA TAHMİNDİR; senin sağlığına dair kişisel bir '
-          'ölçüm değildir.',
+        content: const SingleChildScrollView(
+          child: Text(
+            'University College London (UCL) araştırmacılarının 2024’te '
+            'Addiction dergisinde yayımladığı çalışmaya göre bir sigara, '
+            'ortalama olarak yaklaşık $lifeMinutesPerCigarette dakika yaşam '
+            'süresine mal oluyor (erkeklerde ~17, kadınlarda ~22 dk).\n\n'
+            'Bu süreyi sadece hiç sigara içmediğin günler için hesaplıyoruz: '
+            'sigarasız her gün, başlangıç noktan kadar sigara × '
+            '~$lifeMinutesPerCigarette dk.\n\n'
+            'Neden azalttığın günler sayılmıyor? Sağlığa etkisi sigara '
+            'sayısıyla orantılı değil; az sayıda sigara bile riskin önemli '
+            'bir kısmını taşıyor (Hackshaw ve ark., BMJ, 2018). Azalttığın '
+            'günlerde içmediğin sigaralar ve cebinde kalan para yine burada '
+            'birikiyor.\n\n'
+            'Bu bir ORTALAMA TAHMİNDİR; senin sağlığına dair kişisel bir '
+            'ölçüm değildir.',
+          ),
         ),
         actions: [
           TextButton(
@@ -508,20 +531,27 @@ class _TodayCard extends StatelessWidget {
   }
 }
 
-/// Son 7 gün ile önceki 7 günün karşılaştırması. (Sadece 2 haftalık kayıt
-/// varken gösterilir; bkz. StatsTab.)
-class _WeekCard extends StatelessWidget {
-  const _WeekCard({required this.events, required this.now});
-  final List<SmokingEvent> events;
-  final DateTime now;
+/// "Başladığından beri": tek bakışta ne durumdayım? Başlangıç noktası
+/// (ölçüm haftası) ile şimdi (son 7 gün) ve hafta hafta günlük ortalama.
+/// Ölçüm haftasından 7 gün sonra görünür (bkz. logic/progress.dart).
+/// Azalma nane renkli; artış nötr (kırmızı ya da mesaj yok).
+class _SinceStartCard extends StatelessWidget {
+  const _SinceStartCard({required this.progress});
+  final StartProgress progress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final c = AppColors.of(context);
-    final comparison = compareWeeks(events, now);
-    final percent = comparison.changePercent ?? 0;
+    final percent = progress.changePercent;
     final less = percent.round() < 0;
+    final headline = percent.round() == 0
+        ? 'Başlangıç noktana yakın'
+        : '${formatPercent(percent)} ${less ? 'daha az' : 'daha fazla'}';
+    final weeks = progress.weeks;
+    final description =
+        'Hafta hafta günde ortalama: ${weeks.map((w) => '${w.week}. hafta '
+            '${formatDecimal(w.average)}').join(', ')}';
 
     return ChunkyCard(
       padding: const EdgeInsets.all(20),
@@ -531,38 +561,55 @@ class _WeekCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('Başladığından beri', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 4),
           Text(
-            'Geçen haftayla karşılaştırma',
-            style: theme.textTheme.titleMedium,
+            headline,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              color: less ? c.mintText : c.text,
+            ),
           ),
           const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: _NumberWithLabel(
-                  number: '${comparison.thisWeek}',
-                  label: 'Son 7 gün',
-                  emphasized: true,
+                  number: formatDecimal(progress.baseline),
+                  label: 'Başlangıçta günde',
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(Icons.arrow_forward, color: c.textMuted),
               ),
               Expanded(
                 child: _NumberWithLabel(
-                  number: '${comparison.lastWeek}',
-                  label: 'Önceki 7 gün',
+                  number: formatDecimal(progress.current),
+                  label: 'Şimdi günde',
+                  emphasized: true,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          ChangeChip(
-            // Yüzde %0'a yuvarlanıyorsa "aynı" ikonu gösterilsin.
-            difference: percent.round() == 0
-                ? 0
-                : comparison.thisWeek - comparison.lastWeek,
-            text: percent.round() == 0
-                ? 'Neredeyse aynı'
-                : '${formatPercent(percent)} '
-                      '${percent < 0 ? 'daha az. Harika!' : 'daha fazla'}',
+          const SizedBox(height: 18),
+          SimpleBarChart(
+            height: 130,
+            items: [
+              for (final w in weeks)
+                BarChartItem(
+                  label: '${w.week}.',
+                  value: w.average,
+                  valueLabel: formatDecimal(w.average),
+                  highlight: w == weeks.last,
+                ),
+            ],
+            semanticsLabel: description,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Hafta hafta, günde ortalama sigara. Başlangıç: ölçüm haftası '
+            '(1. hafta). Şimdi: son 7 gün.',
+            style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
           ),
         ],
       ),

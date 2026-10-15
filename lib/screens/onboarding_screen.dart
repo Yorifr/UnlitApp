@@ -14,14 +14,15 @@ import '../widgets/privacy_banner.dart';
 
 /// Onboarding'in adımları. Duolingo gibi: her ekranda TEK soru.
 ///
-/// Sadece 4 soru var ve HER BİRİNİN cevabı uygulamada bir şeyi değiştirir
-/// ("sorulan her soru bir söz"). Hedef, bırakma isteği gibi sorular
-/// gerçekten kullanılacakları anda (Aşama 3: ölçüm haftası bitip plan
-/// kurulurken) sorulacak. Ayrıntı: docs/SPEC.md → Özellik 1.
+/// Sadece 5 soru var ve HER BİRİNİN cevabı uygulamada bir şeyi değiştirir
+/// ("sorulan her soru bir söz"). Hedef gibi sorular gerçekten
+/// kullanılacakları anda (ölçüm haftası bitince) sorulur. Ayrıntı:
+/// docs/SPEC.md → Özellik 1.
 enum OnboardingStep {
   welcome,
   cigarettesPerDay,
   firstCigarette,
+  outsideCase,
   packPrice,
   triggers,
   done;
@@ -125,6 +126,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _answered(OnboardingStep step) => switch (step) {
     OnboardingStep.cigarettesPerDay => _draft.cigarettesPerDay != null,
     OnboardingStep.firstCigarette => _draft.firstCigarette != null,
+    OnboardingStep.outsideCase => _draft.smokesOutsideCase != null,
     OnboardingStep.packPrice => _price != null,
     OnboardingStep.triggers => _draft.triggers.isNotEmpty,
     OnboardingStep.welcome || OnboardingStep.done => true,
@@ -242,10 +244,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       OnboardingStep.cigarettesPerDay => _question(
         question: 'Günde ortalama kaç sigara içiyorsun?',
         note: 'Emin değilsen tahmini bir sayı yeterli.',
+        // Not: Demo modunda sahte veri de bu sayıya yakın üretilir; ama bu
+        // gerçek kullanıcı için bir gerekçe olmadığı için metinde yok.
         why:
             'Ölçüm haftasının sonunda bu tahminini, kılıfın gerçekten '
-            'saydığıyla yan yana göstereceğim. Kılıf yokken (demo modunda) '
-            'sahte veriyi de bu sayıya yakın üretirim.',
+            'saydığıyla yan yana göstereceğim. İnsanlar bu sayıyı genelde '
+            'yuvarlak bir tahminle hatırlar; ikisini karşılaştırmak, '
+            'alışkanlığını tanımanın ilk adımı. Bu yüzden ölçümden ÖNCE '
+            'soruyorum.',
         answer: NumberStepper(
           value: _draft.cigarettesPerDay,
           min: 1,
@@ -261,14 +267,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'Bu, nikotin bağımlılığını ölçmek için yaygın kullanılan '
             'Fagerström testinin sorularından biridir. Uyanınca sigaraya ne '
             'kadar çabuk ihtiyaç duyulduğu, bağımlılığın en güçlü '
-            'göstergelerinden biri kabul edilir. Ölçüm haftasının sonunda '
-            'cevabını, kılıfın gördüğü ilk sigara saatlerinle birlikte '
-            'göstereceğim.',
+            'göstergelerinden biri kabul edilir. Kılıf saati bilir ama ne '
+            'zaman uyandığını bilemez; bu yüzden sana soruyorum. Ölçüm '
+            'haftasının sonunda cevabını, kılıfın gördüğü ilk sigara '
+            'saatlerinle birlikte göstereceğim.',
         answer: OptionList<FirstCigaretteTime>(
           options: FirstCigaretteTime.values,
           selected: _draft.firstCigarette,
           labelOf: (o) => o.label,
           onChanged: (v) => setState(() => _draft.firstCigarette = v),
+        ),
+      ),
+      OnboardingStep.outsideCase => _question(
+        question: 'Kılıfın göremeyeceği sigaralar içtiğin olur mu?',
+        note:
+            'Örneğin bir arkadaşından aldığın, başka bir paketten ya da '
+            'sarma sigaralar.',
+        why:
+            'Kılıf sadece takılı olduğu paketten alınan sigaraları sayabilir. '
+            '“Evet” dersen Bugün sekmesine, kılıfın görmediği sigaraları '
+            'kendin ekleyebileceğin bir “Elle sigara ekle” butonu koyarım; '
+            'böylece sayıların gerçeğe yakın olur.',
+        answer: OptionList<bool>(
+          options: const [true, false],
+          selected: _draft.smokesOutsideCase,
+          labelOf: (o) =>
+              o ? 'Evet, bazen olur' : 'Hayır, hep kendi paketimden içerim',
+          onChanged: (v) => setState(() => _draft.smokesOutsideCase = v),
         ),
       ),
       OnboardingStep.packPrice => _pricePage(),

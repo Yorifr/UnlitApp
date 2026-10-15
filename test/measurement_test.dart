@@ -107,7 +107,27 @@ void main() {
       expect(gains.days, 2);
       expect(gains.notSmoked, 5);
       expect(gains.money, 25); // 5 × 5 ₺
-      expect(gains.lifeMinutes, 100); // 5 × 20 dk
+      // Azaltılan günler korunan süreye sayılmaz (sadece sigarasız günler).
+      expect(gains.smokeFreeDays, 0);
+      expect(gains.lifeMinutes, 0);
+    });
+
+    test('korunan yaşam süresi sadece sigarasız günlerden', () {
+      final events = [
+        ...week,
+        ...daysWith(DateTime(2026, 10, 8), [0, 7]), // sigarasız gün + azaltma
+      ];
+      final gains = computeGains(
+        events: events,
+        trackingStart: start,
+        now: DateTime(2026, 10, 10, 9),
+        prices: prices,
+      )!;
+      expect(gains.notSmoked, 13); // 10 + 3: azaltılan gün de burada
+      expect(gains.smokeFreeDays, 1);
+      // Sigarasız gün: başlangıç noktası (10) × 20 dk. Azaltılan gündeki
+      // 3 sigara korunan süreye eklenmez.
+      expect(gains.lifeMinutes, 200);
     });
 
     test('NET hesap: fazla içilen gün, az içilen günü dengeler', () {

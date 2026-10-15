@@ -30,9 +30,12 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
    paket ekleme. `google_fonts` gibi çalışırken internetten dosya indiren
    paketler de yasak.
 2. **Uydurma sayı yok:** Her sayı ya kullanıcının kendi verisi ya da
-   kaynaklı bilgi (SPEC.md Bölüm 7). Varsayımlar ekranda "varsayım",
+   kaynaklı bilgi (SPEC.md Bölüm 9). Varsayımlar ekranda "varsayım",
    ortalamalar "ortalama tahmin" diye yazılır. Yeni kaynaklı bilgi eklersen
-   SPEC.md'deki kaynak tablosuna da ekle.
+   SPEC.md'deki kaynak tablosuna da ekle. Yeni bir sayı (süre, eşik...)
+   eklerken SPEC.md → "Sayıların dayanağı" tablosuna türünü yaz (sağlık
+   iddiası → kaynak şart; müdahale ayarı → kaynak ya da gerekçe; oyun/
+   arayüz kararı → "ekip kararı"). Kaynak uydurma.
 3. **Suçlama ve korkutma yok:** Sigaradan hemen sonra suçluluk mesajı yok;
    artışlar kırmızıyla değil nötr renkle gösterilir. Sürekli büyüyen bir
    kayıp sayısı ("kaybedilen yaşam" gibi) gösterme; aynı kaynaklı bilgiyi
@@ -50,7 +53,9 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
    yok. Puan HARCANMAZ: "Nefes'in dolabı"ndaki eşyalar eşikle açılır ve
    kaybolmaz; başındaki filiz sadece toplam puanla büyür, asla küçülmez.
    Azaltma hedefinin günlük sınırını aşmak da ceza değildir (nötr gri,
-   mesaj yok; "hedefinde kaldığın gün" sadece artar).
+   mesaj yok; "hedefinde kaldığın gün" sadece artar). Elle sigara
+   ekleme / "Bu sigarayı ben içmedim" ile silme bir ölçüm düzeltmesidir:
+   puan, ses, kutlama yok; silinen kaydın puanı geri alınmaz.
    Yeni bir oyun mekaniği eklerken önce SPEC.md Bölüm 3'e bak.
 6. **Kılıf erişimi sadece `DeviceService` üzerinden.** Ekranlar Bluetooth'u
    ya da demo detaylarını bilmez (tek istisna: ayarlardaki ve "Bugün" sekmesindeki
@@ -81,7 +86,9 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
   `demo_day_planner.dart`, `demo_activity.dart`, `StorageService`,
   `effects.dart` (ses + titreşim) ve ses oynatıcılar (`sound_player*.dart`).
 - `lib/logic/`: **saf** hesap fonksiyonları (`stats.dart`,
-  `measurement.dart` (ölçüm haftası özeti + "Kazandıkların"),
+  `measurement.dart` (ölçüm haftası özeti + "Kazandıkların"; korunan
+  yaşam süresi sadece sigarasız günlerden), `progress.dart`
+  ("Başladığından beri": başlangıç, şimdi, hafta hafta),
   `weekly_report.dart` (haftalık rapor; haftalar takipten sayılır),
   `goal.dart` (azaltma hedefi: haftalık sınır, ilerleme, zorluk), `quests.dart`,
   `rewards.dart`, `wardrobe.dart` (dolap: eşya açılma, filiz aşaması),

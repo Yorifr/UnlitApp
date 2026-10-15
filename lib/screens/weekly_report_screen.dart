@@ -490,19 +490,26 @@ class _GainsCard extends StatelessWidget {
                 ? 'Paket fiyatını İstatistik’e eklersen hesaplanır.'
                 : null,
           ),
-          const SizedBox(height: 14),
-          _InfoRow(
-            icon: Icons.favorite_outline,
-            color: c.purple,
-            title: 'Korunan yaşam süresi',
-            value: formatDuration(gains.lifeMinutes),
-          ),
+          // Korunan yaşam süresi sadece sigarasız günlerden (0.11.0).
+          if (gains.smokeFreeDays > 0) ...[
+            const SizedBox(height: 14),
+            _InfoRow(
+              icon: Icons.favorite_outline,
+              color: c.purple,
+              title: 'Korunan yaşam süresi',
+              value: formatDuration(gains.lifeMinutes),
+            ),
+          ],
           const SizedBox(height: 12),
           Text(
-            'Başlangıç noktana (ölçüm haftasında günde '
-            '${formatDecimal(gains.baseline)}) göre. Yaşam süresi ortalama '
-            'tahmin: içilmeyen sigara başına ~$lifeMinutesPerCigarette dk '
-            '(UCL, 2024).',
+            gains.smokeFreeDays > 0
+                ? 'Başlangıç noktana (ölçüm haftasında günde '
+                      '${formatDecimal(gains.baseline)}) göre. Yaşam süresi '
+                      'ortalama tahmin: sigarasız ${gains.smokeFreeDays} '
+                      'gününde, her gün başlangıç noktan kadar sigara × '
+                      '~$lifeMinutesPerCigarette dk (UCL, 2024).'
+                : 'Başlangıç noktana (ölçüm haftasında günde '
+                      '${formatDecimal(gains.baseline)}) göre.',
             style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
           ),
         ],

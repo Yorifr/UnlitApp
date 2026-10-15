@@ -23,6 +23,12 @@ import '../models/smoking_event.dart';
 /// Not: Bu sayıyı sadece "KAZANILAN" tarafta (içilmeyen sigaralar) gösteriyoruz;
 /// "kaybedilen yaşam" diye sürekli büyüyen bir sayı göstermiyoruz (gerekçesi
 /// docs/SPEC.md → Bölüm 3 ve 11).
+///
+/// 0.11.0'dan beri sadece SİGARASIZ GÜNLER için kullanılır (bkz.
+/// measurement.dart → [Gains.lifeMinutes]). Neden? Sağlığa etkisi sigara
+/// sayısıyla orantılı değil: günde 1 sigara bile kalp hastalığı riskinin
+/// yaklaşık yarısını taşıyor (Hackshaw ve ark., BMJ 2018). "Azalttığın her
+/// sigara 20 dk" demek abartılı olurdu.
 const int lifeMinutesPerCigarette = 20;
 
 // ---------- Tarih yardımcıları ----------
@@ -191,3 +197,15 @@ bool priceChangedBetween(PriceHistory prices, DateTime from, DateTime to) {
 
 /// İçilmeyen [count] sigaranın korunan tahmini yaşam süresi (dakika).
 int lifeMinutesFor(int count) => count * lifeMinutesPerCigarette;
+
+// ---------- "Şimdi" ----------
+
+/// Son 7 TAMAMLANMIŞ günde (dün dahil, bugün hariç) günde ortalama sigara.
+///
+/// Uygulamadaki her "Şimdi" bu sayıdır (Hedefim, "Başladığından beri"); iki
+/// ekran farklı sayı göstermesin diye tek yerden hesaplanır. Bugün sayılmaz:
+/// sayı gün içinde, sigaradan hemen sonra değişmesin.
+double lastSevenDaysAverage(List<SmokingEvent> events, DateTime now) {
+  final today = startOfDay(now);
+  return countBetween(events, addDays(today, -7), today) / 7;
+}

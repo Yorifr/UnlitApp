@@ -10,7 +10,8 @@ teması ("Nane"), sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
 özeti, "Kazandıkların"), Nefes 2.0 + "Nefes'in dolabı" (0.7.0) ve haftalık
 rapor + "bir günlük veri ekle" demo seçeneği (0.8.0), erteleme
 ekranında kişisel cümle (0.8.1), azaltma hedefi + "Hedefim" sayfası
-(0.9.0) ve Bugün'de "Son sigarandan beri" sayacı (0.10.0) tamamlandı.
+(0.9.0), Bugün'de "Son sigarandan beri" sayacı (0.10.0) ve "Başladığından
+beri" kartı + elle düzeltme + kaynaklı sayılar (0.11.0) tamamlandı.
 
 ---
 
@@ -211,10 +212,15 @@ suçluluk duymasın**.
    Özellik 2f): yeni sigara gelince **sessizce** sıfırdan başlar: mesaj,
    ses, titreşim, renk değişimi yok. Puan vermez, rekor ("en uzun ara")
    tutmaz, kutlama tetiklemez; filiz ve dolap ona bağlı değildir.
+14. **Elle düzeltme bir ölçüm düzeltmesidir** (0.11.0; Özellik 2h): elle
+   sigara eklemek ya da "Bu sigarayı ben içmedim" ile silmek puan
+   götürmez/getirmez, ses, titreşim, kutlama tetiklemez (sadece kısa bir
+   "Kaydedildi" / "Kayıt silindi" yazısı). Silinen kaydın daha önce
+   kazandırdığı puan geri alınmaz (puan asla düşmez).
 
 ## 4. Özellikler (tam vizyon)
 
-### Özellik 1 — Onboarding ✅ (Aşama 1; Aşama 2'de yenilendi; 0.6.0'da 4 soruya indi)
+### Özellik 1 — Onboarding ✅ (Aşama 1; Aşama 2'de yenilendi; 0.6.0'da 4 soruya indi; 0.11.0'da 5)
 - En üstte: **"Bilgilerin sadece bu telefonda kalır, kimseyle paylaşılmaz."**
 - Her ekranda tek soru; maskot soruyu sorar; **"Neden soruyoruz?"**
   açıklaması; cevap yoksa buton "ŞİMDİLİK GEÇ", varsa "DEVAM".
@@ -222,14 +228,38 @@ suçluluk duymasın**.
   gerçekten bir şeyi değiştiriyorsa sorulur ve saklanır; "Neden
   soruyoruz?" metni tam olarak bunu söyler. Soru, cevabın kullanılacağı
   ana konur ("tam zamanında").
-- **Sorulan 4 soru ve nerede kullanıldıkları:**
+- **Sorulan 5 soru ve nerede kullanıldıkları:**
 
   | Soru | Nerede kullanılıyor |
   |---|---|
   | Günde kaç sigara (tahmin) | Ölçüm haftası özetinde kılıfın saydığıyla yan yana; demo verisi buna yakın |
   | Uyanınca ilk sigara (Fagerström 1. soru) | Ölçüm haftası özetinde, ölçülen ilk sigara saatinin yanında; demo verisi; Aşama 3'te sabah hedefi |
+  | Kılıfın göremeyeceği sigaralar olur mu? (0.11.0) | "Evet" ise Bugün'de **ELLE SİGARA EKLE** butonu (Özellik 2h) |
   | Paket fiyatı (+ paketteki adet) | Harcanan para, cebinde kalan para |
   | Tetikleyiciler | "Bu sigara neden?" penceresinde seçilenler en başta (tek dokunuş) |
+
+- **Kılıf zaten ölçüyorsa "günde kaç" neden soruluyor?** (0.11.0'da
+  tartışıldı, kaldı.) Bu soru ölçmek için değil: (1) **Tahmin ancak
+  ölçümden ÖNCE sorulabilir**; sonra sorulursa kullanıcı sayıyı görmüş
+  olur. (2) İnsanlar sigara sayısını yuvarlak sayılarla (10, 20)
+  hatırlar; anlık kayıt bu yanılgıyı yapmaz (Shiffman 2009). Tahmin ile
+  ölçülen arasındaki fark hem kullanıcı için bir farkındalık anı hem de
+  pilot için hazır bir araştırma sorusudur ("Katılımcıların tahmini,
+  kılıfın ölçümünden ne kadar farklı?"). (3) "Uyanınca ilk sigara" ile
+  birlikte **Sigara İçme Ağırlığı İndeksi'nin** (HSI, Heatherton 1989)
+  iki sorusudur; pilot raporunda katılımcıların bağımlılık düzeyi bu iki
+  cevaptan hesaplanabilir (uygulama içinde hesaplanıp gösterilmez).
+  "Neden soruyoruz?" metni artık demo verisinden bahsetmez (gerçek
+  kullanıcı için gerekçe değil).
+- **"Uyanınca ilk sigara" kılıfla ölçülemez:** kılıf saati bilir ama
+  kişinin ne zaman uyandığını bilemez. "Neden soruyoruz?" metni bunu
+  söyler.
+- **Kılıfın göremeyeceği sigaralar** (0.11.0): Kılıf sadece takılı olduğu
+  paketten alınan sigaraları sayar; başkasının paketinden, ikinci bir
+  paketten ya da sarma içilenler eksik kalır. Cevap "Evet" ise Bugün'de
+  elle ekleme butonu çıkar (cevap gerçekten bir şeyi değiştiriyor).
+  Nargile ve e-sigara bilerek kapsam dışı: bir nargile ya da e-sigara
+  oturumu "1 sigara" sayılamaz.
 
 - **Kaldırılan sorular ve ne zaman sorulacakları** (0.6.0'a kadar
   soruluyordu ama hiçbir yerde kullanılmıyordu; eski cevaplar açılışta
@@ -241,7 +271,9 @@ suçluluk duymasın**.
   | Bırakma isteği 1–10 | Sorulmuyor: cevabı uygulamada hiçbir şeyi değiştirmiyor |
   | Sevilen aktiviteler | Aşama 4'te, mesaj motoru ("Yarın koşacaksan…") gelince |
   | Motivasyon (çocuk, eş…) | Hazır seçenek yerine **kendine not** (aşağıda) |
-  | Kaç yıldır, yaş aralığı, cinsiyet | Uygulamada dürüst bir kullanımı yok; pilot için gerekirse bkz. Bölüm 11 |
+  | Kaç yıldır, yaş aralığı, cinsiyet | Uygulamada dürüst bir kullanımı yok (tek kullanımı "paket-yıl" gibi bir risk sayısı göstermek olurdu; korkutma kuralına aykırı). Pilot anketinde sorulur: bkz. Bölüm 11 → "Pilot anketi" |
+  | Daha önce bırakmayı denedin mi? | Pilot anketinde. Uygulamada belki Aşama 3'te (hedef/bırakma günü seçerken, olumlu dille: "Daha önce 3 ay bırakmıştın"); başarısızlık hatırlatmamalı |
+  | Uyku/uyanma saati | Aşama 4'te, bildirimlerin "rahatsız etme" saatleri için |
 
 - **Kendine not:** Kullanıcı isterse "Bunu neden yapıyorsun?" sorusuna kendi
   cümlesiyle kısa bir not yazar (en fazla 140 harf). Erteleme ekranında,
@@ -258,11 +290,11 @@ suçluluk duymasın**.
   süre 0.10.0'dan beri burada değil, Bugün sekmesindeki sayaçta (Özellik
   2f; aynı bilgi iki yerde olmasın).
 - Geçen haftayla karşılaştırma:
-  - Bugün ↔ geçen haftanın aynı günü, **aynı saate kadar**
-  - Son 7 gün ↔ önceki 7 gün (yüzde değişim; azalma varsa kart nane renkli)
+  - Bugün ↔ geçen haftanın aynı günü, **aynı saate kadar** (bugün kartında)
   - Yeterli kayıt yoksa karşılaştırma gösterilmez (yanıltmasın diye).
-  - Haftalık karşılaştırma kartı sadece 2 haftalık kayıt varken görünür
-    (öncesinde boş bir "henüz yok" kartı kalabalık yapıyordu).
+  - "Son 7 gün ↔ önceki 7 gün" kartı **0.11.0'da kaldırıldı**: yerine en
+    üstte "Başladığından beri" kartı var (Özellik 2g); haftadan haftaya
+    fark haftalık raporda.
 - Grafik: sadece son 7 gün (günlük). Saatlik görünüm ve ikinci seçici
   kaldırıldı (sayfada tek seçici kalsın; en yoğun saat ölçüm haftası
   özetinde).
@@ -274,9 +306,15 @@ suçluluk duymasın**.
     (bugün sayılmaz) Σ(ortalama − o günkü sayı), **net** ve en az 0.
   - **Cebinde kalan para** = her gün (ortalama − o günkü sayı) × **o günün**
     sigara fiyatı (`PriceHistory.at`), net ve en az 0.
-  - **Korunan yaşam süresi** = içilmeyen sigara × ~20 dk (UCL 2024, genel
-    ortalama). **"Ortalama tahmin"** olduğu ve kaynağı açıkça yazar; (i)
-    penceresi hesabı anlatır.
+  - **Korunan yaşam süresi** (0.11.0'da değişti) = **sadece sigarasız
+    günler** için: her sigarasız (tamamlanmış) gün × başlangıç noktası ×
+    ~20 dk (UCL 2024, genel ortalama). Azaltılan günler sayılmaz, çünkü
+    sağlığa etkisi sigara sayısıyla orantılı değil (Hackshaw 2018; gerekçe
+    Bölüm 11). Henüz sigarasız gün yoksa kart yerine "Korunan yaşam süresi
+    nasıl hesaplanır?" bağlantısı durur ("0 dk" kartı göstermeyiz).
+    **"Ortalama tahmin"** olduğu ve kaynağı açıkça yazar; (i) penceresi
+    hesabı ve nedenini anlatır. Haftalık rapordaki kazanç kartında da aynı
+    kural.
   - Neden net? Her günü ayrı "ortalamanın altındaysa ekle" diye toplamak,
     hiç azaltmayan birinin günlük dalgalanmasını bile kazanç gibi
     gösterirdi. Neden bugün yok? Gün bitmeden "bugün 15 sigara içmedin"
@@ -370,8 +408,9 @@ en uzun seri, toplam puan, ertelenen istekler).
 
   | Veri | Nerede kullanıcıya döner |
   |---|---|
-  | Sigara sayısı/saati | İstatistik (bugün, haftalık karşılaştırma, grafik), ölçüm özeti, haftalık rapor, Bugün'deki maskot cümlesi ve "Son sigarandan beri" sayacı (0.10.0) |
+  | Sigara sayısı/saati | İstatistik ("Başladığından beri", bugün, grafik), ölçüm özeti, haftalık rapor, Bugün'deki maskot cümlesi ve "Son sigarandan beri" sayacı (0.10.0) |
   | Onboarding tahminleri | Ölçüm özetinde ölçülenle yan yana |
+  | "Kılıfın göremeyeceği sigaralar" (0.11.0) | Bugün'de "ELLE SİGARA EKLE" butonu |
   | İşaretlenen nedenler | Ölçüm özeti (1. hafta), haftalık rapor (en sık neden + öneri) |
   | Ruh hali | O günün maskot cümlesi/kutlaması (zor gün → sakin), haftalık rapor (dağılım) |
   | Erteleme, nefes | Profil (toplam ertelenen istek), haftalık rapor, erteleme ekranında Nefes'in cümlesi (kaç isteği atlattın, genelde kaç dakikada geçti) |
@@ -456,6 +495,54 @@ en uzun seri, toplam puan, ertelenen istekler).
 - Kod: `lib/widgets/since_last_counter.dart` (sayaç), `sinceCounterParts`
   (`lib/utils/format.dart`, süreyi 3 kutuya böler; testli).
 - Açık soru: ölçüm haftasında da görünüyor (bkz. Bölüm 11).
+
+### Özellik 2g — "Başladığından beri" ✅ (0.11.0)
+- **Neden?** Kullanıcı tek bakışta "ne durumdayım?" sorusunun cevabını
+  göremiyordu: parçalar vardı ama dağınıktı (Hedefim sadece hedef
+  seçenlerde; haftalık kart başlangıca değil geçen haftaya göreydi).
+- **Nerede?** İstatistik sekmesinin **en üstünde** (tek giriş noktası).
+  Ölçüm haftasından sonra **7 gün tamamlanınca** açılır (takibin 15.
+  günü); öncesinde "şimdi" ölçüm haftasının kendisi olurdu. Ölçüm
+  haftası özetindeki "Neler açıldı?" listesinde haber verilir.
+- **İçerik:**
+  1. Büyük yazı: "%27 daha az" / "%8 daha fazla" / "Başlangıç noktana
+     yakın" (yüzde %0'a yuvarlanıyorsa).
+  2. "Başlangıçta günde 15 → Şimdi günde 11". Başlangıç = ölçüm
+     haftasında günde ortalama; Şimdi = son 7 tamamlanmış gün (Hedefim'deki
+     "Şimdi" ile aynı sayı, `lastSevenDaysAverage`).
+  3. Hafta hafta küçük grafik: takibin her biten haftasında günde
+     ortalama (1. hafta = ölçüm haftası). En fazla 8 çubuk: 1. hafta + en
+     yeni 7 hafta.
+- **Renk:** azalma varsa kart nane; artış nötr (kırmızı yok, mesaj yok).
+- **Araştırma için:** Bu yüzde, pilotun ana sonuç sayısıdır (başlangıca
+  göre günlük sigara sayısındaki değişim); kullanıcı ile araştırma aynı
+  sayıya bakar.
+- Kod: `lib/logic/progress.dart` (saf hesap, `test/progress_test.dart`),
+  `lib/screens/stats_tab.dart` → `_SinceStartCard`.
+
+### Özellik 2h — Elle düzeltme ✅ (0.11.0)
+- **Neden?** Kılıf her sigarayı göremez (başkasının paketi, ikinci paket,
+  sarma) ve bazen yanlış sayar (sigarayı bir arkadaşına vermek). Pilotta
+  ilk sorulacak şey "kılıf ne kadar doğru ölçüyor?" olacak.
+- **Elle ekleme:** Onboarding'de "Kılıfın göremeyeceği sigaralar içtiğin
+  olur mu?" sorusuna "Evet" diyenlerin Bugün sekmesinde, "Bugünkü
+  sigaraların" kartının altında **ELLE SİGARA EKLE** butonu var.
+  Dokununca saat sorulur (varsayılan şimdi; gelecek saat seçilemez).
+  Kayıt `source: manual` ile saklanır; listede "· elle" yazar. Cevabı
+  "Bilgilerimi düzenle"den değiştirilebilir.
+- **"Bu sigarayı ben içmedim":** Bugünkü bir sigaranın "Neden?"
+  penceresinin altında küçük, nötr (kırmızı değil) bir bağlantı. Onaydan
+  sonra kayıt silinir.
+- **Kurallar:** Bölüm 3, madde 14 (puan, ses, kutlama yok).
+- **Pilot için:** Elle eklenenler `manual` kaynağıyla ayrıldığı için
+  "sigaraların yüzde kaçını kılıf gördü?" raporlanabilir.
+- **Aşama 7 notu:** Silinen bir kılıf kaydı, kılıf onu tekrar gönderirse
+  yeniden eklenebilir. Taslak protokolde telefon her kaydı onaylar (ack)
+  ve kılıf onaylananları siler, bu yüzden normalde tekrar gelmez; gerçek
+  kılıfta denenmeli.
+- Kod: `AppState.addManualEvent` / `removeEvent`,
+  `lib/screens/today_tab.dart`, `lib/widgets/pickers.dart`
+  (`TriggerChoice.notMine`).
 
 ### Özellik 3 — Süreç aşamaları ⏳ Aşama 3
 Ölçüm → Farkındalık → Azaltma → Bırakma günü → Sürdürme
@@ -546,6 +633,7 @@ lib/
 ├── logic/                     Saf (test edilebilir) hesaplar
 │   ├── stats.dart             Sayılar, para, yaşam tahmini sabiti
 │   ├── measurement.dart       Ölçüm haftası özeti + "Kazandıkların"
+│   ├── progress.dart          "Başladığından beri" (başlangıç, şimdi, haftalar)
 │   ├── weekly_report.dart     Haftalık rapor (haftalar, rapor hesabı)
 │   ├── quests.dart            Günlük görevler, ölçüm haftası
 │   ├── rewards.dart           XP ödülleri, seri (dinlenme günü dahil)
@@ -557,7 +645,7 @@ lib/
 │   ├── onboarding_screen.dart Tek soru = tek ekran
 │   ├── main_screen.dart       Alt menü + 3 sekme
 │   ├── today_tab.dart         Bugün: maskot, sayaç, görevler, erteleme
-│   ├── stats_tab.dart         İstatistik: sayılar, grafik, maliyet
+│   ├── stats_tab.dart         İstatistik: "Başladığından beri", sayılar, grafik, maliyet
 │   ├── profile_tab.dart       Profil: seri, puan, dolap kartı, başarılar
 │   ├── delay_screen.dart      10 dk erteleme
 │   ├── breathing_screen.dart  1 dk nefes egzersizi
@@ -655,13 +743,44 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   olarak gönderilir; telefon bağlanınca kılıfın o anki sayacını okuyup
   gerçek saate çevirir.
 - Telefon aldığı son sıra numarasını onaylar (ack); kılıf onaylananları
-  hafızasından silebilir. Bu, çift sayımı ve kaybı önler.
+  hafızasından silebilir. Bu, çift sayımı ve kaybı önler. (Kullanıcının
+  "Bu sigarayı ben içmedim" ile sildiği kayıt da böylece tekrar gelmez.)
+- İsteğe bağlı olay türü (araştırma için): kapak açıldı ama IR sensörü
+  sigara alındığını görmedi. Direnilmiş bir istek mi, paket kontrolü mü
+  belirsiz; bu yüzden uygulamada puan/görev/mesaj OLMAZ, sadece pilot
+  verisi olarak saklanabilir.
+
+### Kılıfın OLED ekranı (ÖNERİ — donanım ekibi için, 0.11.0)
+Kapak açılma anı, sigara kararının verildiği an; doğru anda küçük bir
+bilgi vermek için en değerli yer ("tam zamanında müdahale", JITAI:
+Nahum-Shani ve ark. 2018). Ama kılıf masada durur ve başkaları da görür.
+- **Ne zaman yanar?** Normalde kapalı. Kapak açılınca ~5 saniye yanar,
+  sonra söner. (Pil: açıkken kılıfın en çok enerji harcayan parçası olur.
+  Gizlilik: sürekli açık bir ekran dikkat çeker.)
+- **Ne yazar? Tek bilgi:** `Son sigaradan beri` + `2 sa 14 dk` (24 saati
+  geçince `1 gun 4 sa` gibi). Uygulamadaki sayacın aynısı, nötr ve
+  kişinin kendi verisi. Kılıf bunu telefonsuz bilir: son olaydan beri
+  geçen süreyi kendi sayacıyla tutar, gerçek saate (RTC) gerek yok.
+  İlk kayıttan önce sadece logo.
+- **Köşede küçük teknik simgeler:** pil, Bluetooth bağlı mı, telefona
+  gönderilmeyi bekleyen kayıt sayısı. Pilotta sorun ararken çok işe yarar
+  (sağlık bilgisi değil, teknik bilgi).
+- **YAZMAYACAKLARI:** bugünkü sigara sayısı ya da hedef (yanındakiler
+  görür; tek renkli ekranda "11/10" nötr gösterilemez → suçlama kuralına
+  takılır), sağlık uyarıları, harcanan para, üzgün yüz.
+- **Sigara alındıktan sonra:** hiçbir şey (Bölüm 3: sigara içmek hiçbir
+  şey tetiklemez). Ekran söner.
+- **Türkçe harfler:** Hazır OLED fontlarının çoğunda ş, ğ, ı, İ yok.
+  Önerilen metinlerde bu harfler yok; "gün" yerine "gun" yazılabilir ya
+  da Türkçe harfli bir font eklenir. Kılıfta denenmeli.
 
 ## 6. Veri modeli
 
-- `SmokingEvent { time, source: demo | device, trigger? }`
+- `SmokingEvent { time, source: demo | device | manual, trigger? }`
+  (`manual` = elle eklenen, 0.11.0)
 - `UserProfile` (hepsi isteğe bağlı): `cigarettesPerDay`, `firstCigarette`
-  (4 seçenek), `triggers`, `reasonNote` (kendine not, ≤140 harf).
+  (4 seçenek), `smokesOutsideCase` (0.11.0; kılıfın göremeyeceği
+  sigaralar olur mu), `triggers`, `reasonNote` (kendine not, ≤140 harf).
 - `ActivityLog { moods[], delays[], breaths[], xp[], activeDelayStart? }`
   - `MoodEntry { time, mood }` (Çok zor / Zor / İdare eder / İyi / Harika;
     ekranda bu sırayla soldan sağa)
@@ -685,7 +804,7 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 
 ## 7. Ekranlar (Aşama 2 itibarıyla)
 
-- **Onboarding:** Karşılama ("Merhaba! Ben Nefes.") → 4 tek-soruluk ekran
+- **Onboarding:** Karşılama ("Merhaba! Ben Nefes.") → 5 tek-soruluk ekran
   → konfetili "Hazırsın!". Sağ üstte "ATLA" (o ana kadarki cevaplar
   kaydedilir). Profil/Ayarlar'dan düzenleme modunda tekrar açılır;
   düzenleme modunda paket fiyatı sorusu YOKTUR (fiyatın kendi yeri var).
@@ -694,10 +813,12 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   GÖR"); "Son sigarandan beri" sayacı (ilk kayıttan sonra; 0.10.0);
   "CANIM SİGARA İSTİYOR"; "Hedefim" kartı (ölçüm özeti görülünce;
   hedef yoksa "Bir hedef seç");
-  günlük görevler; bugünkü sigaralar ve "Neden?" etiketleri.
+  günlük görevler; bugünkü sigaralar ve "Neden?" etiketleri ("Neden?"
+  penceresinde "Bu sigarayı ben içmedim"; "Evet" diyenlerde altta
+  "ELLE SİGARA EKLE", 0.11.0).
 - **Hedef seçme / Hedefim** (0.9.0): bkz. Özellik 2e.
-- **İstatistik:** bugün kartı, haftalık karşılaştırma (2 haftalık kayıt
-  varsa), son 7 gün grafiği, "Haftalık raporların" (ölçüm haftasından
+- **İstatistik:** "Başladığından beri" (takibin 15. gününden itibaren, en
+  üstte; 0.11.0), bugün kartı, son 7 gün grafiği, "Haftalık raporların" (ölçüm haftasından
   sonra), "Kazandıkların" (ölçüm haftasından sonra),
   "Para": paket fiyatı kartı (DEĞİŞTİR → fiyat penceresi, fiyat geçmişi),
   dönem seçici, harcanan para.
@@ -751,8 +872,21 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 
 | Bilgi | Kaynak | Kullanıldığı yer |
 |---|---|---|
-| Sigara başına yaşam süresi: erkek ~17 dk, kadın ~22 dk, ort. ~20 dk | Jackson SE, Jarvis MJ, West R. "The price of a cigarette: 20 minutes of life?" *Addiction*, 2024 (UCL). doi:10.1111/add.16757 | İstatistik → "Kazandıkların": içilmeyen sigara × 20 dk (genel ortalama; cinsiyet sorulmuyor) |
+| Sigara başına yaşam süresi: erkek ~17 dk, kadın ~22 dk, ort. ~20 dk | Jackson SE, Jarvis MJ, West R. "The price of a cigarette: 20 minutes of life?" *Addiction*, 2024 (UCL). doi:10.1111/add.16757 | İstatistik → "Kazandıkların": sadece sigarasız günler × başlangıç noktası × 20 dk (genel ortalama; cinsiyet sorulmuyor) |
+| Az sayıda sigara bile riskin önemli kısmını taşır: günde ~1 sigara, koroner kalp hastalığı ve inme riskinin günde 20 içenlerdekinin yaklaşık yarısı kadar | Hackshaw A ve ark. "Low cigarette consumption and risk of coronary heart disease and stroke: meta-analysis of 141 cohort studies in 55 study reports." *BMJ*, 2018;360:j5855 | Tasarım kararı: korunan yaşam süresi azaltılan günlere değil sadece sigarasız günlere (ekranda (i) penceresinde, sayı yok) |
+| Azaltmanın sağlık kazancı sınırlı/belirsiz | Pisinger C, Godtfredsen NS. "Is there a health benefit of reduced tobacco consumption? A systematic review." *Nicotine Tob Res*, 2007;9(6):631–646 | Aynı tasarım kararı (ekranda sayı yok) |
 | Uyanınca ilk sigara süresi (bağımlılık göstergesi) | Heatherton TF ve ark. "The Fagerström Test for Nicotine Dependence", *Br J Addict*, 1991 | Onboarding, demo |
+| Günde kaç sigara + uyanınca ilk sigara = Sigara İçme Ağırlığı İndeksi (HSI) | Heatherton TF, Kozlowski LT, Frecker RC, Rickert W, Robinson J. "Measuring the heaviness of smoking..." *Br J Addict*, 1989;84(7):791–800 | Pilot raporu (bağımlılık düzeyi); uygulamada hesaplanmaz |
+| Fagerström testinin Türkçe güvenilirliği | Uysal MA ve ark. "Fagerström test for nicotine dependence: reliability in a Turkish sample and factor analysis." *Tüberküloz ve Toraks*, 2004;52(2):115–121 (ayrıca 2015;63(4):250–256) | Pilot anketi |
+| İnsanlar sigara sayısını yuvarlak sayılarla hatırlar; anlık kayıt (EMA) bu yanılgıyı yapmaz | Shiffman S. "How many cigarettes did you smoke? Assessing cigarette consumption by global report, Time-Line Follow-Back, and ecological momentary assessment." *Health Psychology*, 2009 | Onboarding "günde kaç" sorusunun gerekçesi; ölçüm özetinde tahmin ↔ ölçüm |
+| İsteği ~10 dk erteleyip dikkat dağıtmak; istek dakikalar içinde geçer | Mayo Clinic, "Quitting smoking: 10 ways to resist tobacco cravings" (Türkçesi: Koç Üniversitesi Hastanesi ve Amerikan Hastanesi Mayo Clinic sağlık kütüphanesi) | Erteleme süresi (10 dk) |
+| Kısa yürüyüş sigara isteğini azaltır | Taylor AH, Katomeri M, Ussher M. "Acute effects of self-paced walking on urges to smoke during temporary smoking abstinence." *Psychopharmacology*, 2005;181(1):1–7. Ayrıca Taylor AH, Katomeri M, *Nicotine Tob Res*, 2007 (15 dk yürüyüş sonraki sigarayı ~57 dk geciktirdi) | Erteleme ekranındaki "yürü" önerisi |
+| Nefes egzersizi isteği hemen azaltır (24 saat sonra etkisi görülmedi) | Shahab L, Sarkar BK, West R. "The acute effects of yogic breathing exercises on craving and withdrawal symptoms in abstaining smokers." *Psychopharmacology*, 2013;225:875–882 | Nefes molası (ritim 4 sn al / 4 sn ver ekip seçimi) |
+| "İstek dalga gibi gelir, geçer": isteği azaltmadı ama 7 günde daha az sigara içildi | Bowen S, Marlatt GA. "Surfing the urge: brief mindfulness-based intervention for college student smokers." *Psychol Addict Behav*, 2009;23(4):666–671 | Erteleme ekranındaki "Bu istek geçici" dili |
+| Azaltarak bırakma ↔ birden bırakma | Lindson-Hawley N ve ark. "Gradual versus abrupt smoking cessation: a randomized, controlled noninferiority trial." *Ann Intern Med*, 2016;164(9):585–592. Lindson N ve ark. "Smoking reduction interventions for smoking cessation." *Cochrane Database Syst Rev*, 2019 (CD013183) | Tasarım kararı (Bölüm 11); bırakma seçeneği eşit görünür |
+| Kendini izlemek tek başına davranışı değiştirebilir (reaktivite) | McFall RM. "Effects of self-monitoring on normal smoking behavior." *J Consult Clin Psychol*, 1970;35(2):135–142 | Pilot raporunda sınırlılık (ölçüm haftası "saf" değil) |
+| Doğru anda müdahale (JITAI) | Nahum-Shani I ve ark. "Just-in-Time Adaptive Interventions (JITAIs) in mobile health." *Ann Behav Med*, 2018;52(6):446–462 | OLED ekran önerisi (Bölüm 5) |
+| Kullanılabilirlik ölçeği (SUS) | Brooke J. "SUS: a 'quick and dirty' usability scale." 1996 | Pilot anketi (sonda) |
 | Perhiz ihlali etkisi (seri tasarımının gerekçesi) | Marlatt GA, Gordon JR. *Relapse Prevention*, Guilford Press, 1985 | Tasarım kararı (ekranda sayı yok) |
 | Korku/tehdit mesajları ancak kişi "değiştirebilirim" diye hissederse işe yarar; yoksa kaçınma/savunma | Witte K. "Putting the fear back into fear appeals: The extended parallel process model." *Communication Monographs*, 1992; Peters GJY, Ruiter RAC, Kok G. "Threatening communication: a critical re-analysis and a revised meta-analytic test of fear appeal theory." *Health Psychology Review*, 2013 | Tasarım kararı: "kaybedilen yaşam" kartı kaldırıldı (ekranda sayı yok) |
 | İnsanlar kötü hissettiren ilerleme bilgisine bakmaktan kaçınabilir ("devekuşu sorunu") | Webb TL, Chang BPI, Benn Y. "'The Ostrich Problem': Motivated avoidance or rejection of information about goal progress." *Social and Personality Psychology Compass*, 2013 | Tasarım kararı: kayıp yerine kazanım çerçevesi (ekranda sayı yok) |
@@ -761,6 +895,28 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
 | Sigara bırakma poliklinikleri (MHRS randevu) | T.C. Sağlık Bakanlığı | Hedefim sayfası, bırakma hedefinde (0.9.0); Aşama 3 (Bırakma günü) |
 | Nunito yazı tipi | The Nunito Project Authors, SIL Open Font License 1.1 (`assets/fonts/OFL.txt`) | Tüm arayüz |
 | Ses efektleri | Ekip tarafından sentezlendi (`tool/make_sounds.py`), telif yok | Kutlamalar, nefes, erteleme |
+
+> Not: Kaynaklar arama sonuçları ve özetlerden doğrulandı; tam metinlere
+> erişilemedi. Pilot raporunda kesin rakam kullanmadan önce özetleri
+> (özellikle Cochrane 2019 ve Pisinger 2007) bir kez okuyun.
+
+### Sayıların dayanağı (0.11.0)
+TÜBİTAK için her sayıya makale aramıyoruz; önce TÜRÜNE bakıyoruz. Üçüncü
+türe zorla kaynak bulmak, kaynaksız bırakmaktan daha kötü görünür.
+
+| Sayı | Tür | Dayanak |
+|---|---|---|
+| ~20 dk / sigara (sadece sigarasız günler) | Sağlık iddiası → kaynak şart | UCL 2024; neden sadece sigarasız gün: Hackshaw 2018 |
+| WHO iyileşme takvimi (Aşama 3) | Sağlık iddiası → kaynak şart | WHO |
+| 10 dk erteleme | Müdahale ayarı → kaynak varsa kaynak | Mayo Clinic; yürüyüş Taylor 2005; "istek geçici" Bowen & Marlatt 2009. Kesin bilimsel sınır değil; pilotta kendi verimizle test edilir (her ertelemenin süresi kaydediliyor; Nefes "istekler genelde X dakikada geçti" diyor) |
+| Nefes molası: 6 tur × (4 sn al + 4 sn ver) ≈ 48 sn | Müdahale ayarı | Kısa nefes egzersizinin anlık etkisi: Shahab 2013. Ritim ekibin seçimi |
+| 7 günlük ölçüm haftası | Müdahale ayarı → gerekçe | Bir tam hafta içi + hafta sonu döngüsü (hafta sonu farkı büyük). Kaynak değil, ekip kararı |
+| Fagerström seçenekleri (5 / 6–30 / 31–60 / 60+ dk) | Kaynaklı ölçek | Heatherton 1991 |
+| Gün 04:00'te başlar (ilk sigara için) | Ekip kararı | Gece yarısından sonra yatmadan önce içilen sigara "günün ilk sigarası" sayılmasın |
+| Zorluk eşikleri (%10 / %20 / %35), önerilen süreler | Ekip kararı (varsayım) | Ekranda sayı olarak gösterilmez, sadece etiket |
+| "Başladığından beri" için 7 gün bekleme | Arayüz kararı | "Şimdi" ölçüm haftasının kendisi olmasın |
+| Puanlar, dolap eşikleri, dinlenme günü, erteleme puanı günde ≤5 | Oyun kararı | Kaynak gerekmez |
+| Fiyat 90 günde bir "hâlâ aynı mı?" | Arayüz kararı | Kaynak gerekmez |
 
 **WHO iyileşme takvimi** (Aşama 3'te eklemeden önce metni WHO sayfasından
 birebir doğrulayın):
@@ -786,6 +942,7 @@ birebir doğrulayın):
 | 2++ | Nefes 2.0 (yeni maskot, büyüyen filiz) + Nefes'in dolabı (Özellik 6'nın bir kısmı) | ✅ Tamamlandı (11.10.2026, 0.7.0) |
 | 2+++ | Haftalık rapor + "bir günlük veri ekle" demo seçeneği (Özellik 2d) | ✅ Tamamlandı (11.10.2026, 0.8.0) |
 | 2+++++ | Azaltma hedefi + "Hedefim" sayfası (Özellik 2e; Aşama 3'ün bir kısmı) | ✅ Tamamlandı (11.10.2026, 0.9.0) |
+| 2+6 | "Başladığından beri" kartı, elle düzeltme, kaynaklı sayılar, korunan sürenin sadece sigarasız günlere bağlanması (Özellik 2g, 2h) | ✅ Tamamlandı (15.10.2026, 0.11.0) |
 | 3 | Süreç aşamaları (Özellik 3) | ⏳ Sıradaki |
 | 4 | Mesaj motoru + bildirimler (Özellik 4) | ⏳ Planlandı |
 | 5 | Para kumbarası (Özellik 5) | ⏳ Planlandı |
@@ -909,7 +1066,10 @@ birebir doğrulayın):
 - [ ] `BleDeviceService` (flutter_blue_plus), izinler (Android/iOS),
       eşleştirme ekranı; demo/gerçek seçimi ayarlardan
 - [ ] Gerçek kılıfa geçerken demo kayıtlarını silme seçeneği
-- [ ] CSV dışa aktarma (paylaş menüsü), anonim katılımcı kodu
+- [ ] CSV dışa aktarma (paylaş menüsü), anonim katılımcı kodu; olay
+      kaynağı (`device` / `manual`) da dışa aktarılsın
+- [ ] Pilot anketi (Bölüm 11 → "Pilot anketi"): başta ve sonda
+- [ ] OLED ekranı (Bölüm 5 → "Kılıfın OLED ekranı") donanım ekibiyle
 - [ ] Not: Web'de Bluetooth sınırlı (iOS Safari'de yok); pilot mobil
       uygulamayla yapılmalı
 
@@ -931,7 +1091,7 @@ birebir doğrulayın):
   hissettiren bilgiye bakmayı bırakabilir (Webb ve ark. 2013). Stres de
   uygulamanın kendi tetikleyici listesinde. Aynı kaynak (UCL 2024) artık
   "içmediğin sigaralarla korunan süre" olarak, ölçüm haftasından sonra
-  gösteriliyor. Kaynaksız "sigaraya giden süre (~6 dk)" varsayımı da
+  gösteriliyor (0.11.0'dan beri sadece sigarasız günler için; aşağıda). Kaynaksız "sigaraya giden süre (~6 dk)" varsayımı da
   kaldırıldı (önceki açık soru böylece kapandı).
 - **Karar — kazanç NET hesaplanır:** Gün gün "ortalamanın altındaysa ekle"
   toplamı, hiç azaltmayan birinin dalgalanmasını bile kazanç gösterirdi.
@@ -1008,12 +1168,72 @@ birebir doğrulayın):
   düşük çıkar ve 2. hafta raporu "biraz yoğun" diyebilir. Seçenekler:
   ölçümü ertesi gün 00:00'dan başlatmak ya da ilk günü ortalamaya katmamak.
   Ekip karar vermeli (`summarizeMeasurementWeek` tek yerden değişir).
+  **0.11.0'dan beri daha önemli:** başlangıç noktası artık "Başladığından
+  beri" kartının (ve pilotun ana sonuç sayısının) temeli; yarım ilk gün
+  azalmayı olduğundan küçük gösterir.
 - **Karar — kullanılmayan sorular kaldırıldı (0.6.0):** Bkz. Özellik 1.
   **Pilot için demografi** (yaş aralığı, cinsiyet, kaç yıldır içtiği)
   gerekiyorsa uygulamada "kişiselleştirme" gibi sorulmamalı: ya pilot onam
   formunda ya da Aşama 7'de CSV ile birlikte, açıkça "araştırma için,
   uygulamayı değiştirmez" diye etiketlenmiş ayrı bir bölümde sorulmalı.
-  Ekip ve danışman öğretmen karar vermeli.
+  Ekip ve danışman öğretmen karar vermeli. Önerilen içerik: aşağıda
+  "Pilot anketi".
+- **Öneri — Pilot anketi (0.11.0):** Uygulamanın "kişiselleştirme"
+  soruları değil; araştırma için. Kâğıt/onam formunda ya da Aşama 7'de
+  uygulamada ayrı, "araştırma için, uygulamayı değiştirmez" diye
+  etiketlenmiş bir bölümde (cevaplar sadece cihazda, CSV ile kullanıcının
+  kendi isteğiyle paylaşılır).
+  - **Başta:** yaş (18+ kontrolü), cinsiyet, kaç yıldır içtiği, daha önce
+    bırakma denemesi (kaç kez, en uzun ne kadar), Fagerström testinin
+    tamamı (6 soru; Türkçe güvenilirlik: Uysal ve ark. 2004). HSI,
+    uygulamadaki iki sorudan zaten hesaplanabilir (Heatherton 1989).
+  - **Sonda:** Fagerström testi tekrar (önce/sonra farkı somut bir sonuç
+    verir), SUS kullanılabilirlik ölçeği (Brooke 1996), açık uçlu
+    sorular ("Sayaç sıfırlanınca nasıl hissettin?", "Kılıf hiç yanlış
+    saydı mı?").
+  - **Ana sonuç sayısı:** başlangıca göre günlük sigara sayısındaki
+    değişim (%) — uygulamadaki "Başladığından beri" ile aynı hesap.
+  - **Raporda yazılacak sınırlılıklar:** kendini izlemek tek başına
+    davranışı değiştirebilir (McFall 1970), bu yüzden ölçüm haftası "saf"
+    bir başlangıç değildir; erteleme butonu ölçüm haftasında da açık;
+    kılıfın göremediği sigaralar (elle eklenenler `manual` kaynağıyla
+    ayrı sayılabilir); ilk gün yarım ölçülebilir.
+- **Karar — korunan yaşam süresi sadece sigarasız günlerde (0.11.0):**
+  UCL'nin "sigara başına ~20 dk" tahmini, hayat boyu içilen sigaralara
+  bölünmüş bir ortalama ve kendi çerçevesi BIRAKMAK. Bunu "azalttığın her
+  sigara 20 dk" diye kullanmak sigara ile kayıp arasında doğrusal bir
+  ilişki varsayar; oysa günde ~1 sigara bile koroner kalp hastalığı ve
+  inme riskinin, günde 20 içenlerdekinin yaklaşık yarısını taşır
+  (Hackshaw 2018) ve azaltmanın sağlık kazancı belirsizdir (Pisinger ve
+  Godtfredsen 2007). Tıp bilgisi olan bir değerlendirici bunu sorardı.
+  Artık sadece sigarasız günler sayılır (her gün × başlangıç noktası ×
+  20 dk); azaltılan günlerde içilmeyen sigara ve para yine birikir. (i)
+  penceresi nedenini korkutmadan anlatır. Demo kullanıcısının hiç
+  sigarasız günü olmadığı için demoda bu kart görünmez (bağlantı
+  görünür).
+- **Tartışma — azaltarak mı, birden mi bırakmak? (0.11.0):** Projenin
+  temel fikri ("azaltmadan bırakmaya") bu tartışmanın ortasında; raporda
+  bilerek ele alınmalı.
+  - İngiltere'de 697 kişilik deneyde 6. ayda birden bırakanların %22'si,
+    2 haftada %75 azaltıp bırakanların %15,5'i sigarasızdı
+    (Lindson-Hawley 2016). Farkın çoğu, azaltma grubunun bırakma gününde
+    bırakmayı daha az denemesinden geliyordu.
+  - Cochrane derlemesi (Lindson ve ark. 2019) ise ikisi arasında belirgin
+    bir üstünlük bulmadı (orta düzey kanıt); kişiye seçenek sunulmasını
+    destekliyor.
+  - **Uygulama için çıkarım:** "Bırakmak" hedef ekranında azaltmayla eşit
+    görünür (öyle). Azaltma son durak değil, bir bırakma tarihine giden
+    yol olarak sunulmalı → Aşama 3'teki "Bırakma günü" öncelikli.
+  - **Açık soru:** Azaltma hedefi bitince Nefes nazikçe "Bir bırakma günü
+    seçmek ister misin?" diye önersin mi? (Baskı değil, öneri.) Ekip karar
+    vermeli.
+- **Karar — "günde kaç" sorusu kalır (0.11.0):** Kılıf ölçüyor diye
+  kaldırılması tartışıldı; kaldı. Gerekçe Özellik 1'de (tahmin ölçümden
+  önce sorulabilir; tahmin ↔ ölçüm farkı bir bulgu; HSI).
+- **Karar — "Son 7 gün ↔ önceki 7 gün" kartı yerine "Başladığından beri"
+  (0.11.0):** Haftadan haftaya fark haftalık raporda zaten var; İstatistik'in
+  en üstü "başladığımdan beri ne durumdayım?" sorusuna ayrıldı (tek giriş
+  noktası).
 - **Açık soru — cinsiyete göre yaşam süresi:** Cinsiyet artık sorulmadığı
   için herkese genel ortalama (20 dk) kullanılıyor (UCL: erkek ~17, kadın
   ~22). Bu bir ortalama tahmin olduğu için yeterli görüldü.
@@ -1067,3 +1287,4 @@ birebir doğrulayın):
 | 0.8.1 | Kendi başarın | Erteleme ekranında Nefes, daha önce atlattığın istekleri senin verinle hatırlatır ("Daha önce 6 isteği atlattın; istekler genelde 7 dakika içinde geçti."); sadece başarılı ertelemeler sayılır, yeni kart eklenmedi; demo ertelemeleri artık 4–10 dakikada geçebiliyor |
 | 0.9.0 | Hedefim | Ölçüm haftası özetinin sonunda Duolingo tarzı hedef seçimi: ne kadar (%25 / %50 / %75 / bırakmak, yanında günlük karşılığı), ne kadar sürede (sayı + hafta/ay) ve hemen görünen zorluk (Rahat / Dengeli / İddialı / Çok iddialı + "her hafta günde yaklaşık 2 sigara"); isteğe bağlı kendine not (erteleme ekranındakiyle aynı not); ilk hedefe +10 puan. Hafta hafta inen günlük sınırlar. Tek bakışta "Hedefim" sayfası: Nefes'in cümlesi, başlangıç / şimdi / hedef ve ilerleme çubuğu, bu haftanın sınırı ve 7 günlük şerit (nane = hedefinde, gri = nötr), hedefinde kaldığın gün sayısı, bırakma hedefinde ALO 171 bilgisi. Bugün'de "Hedefim" kartı. Sınırın üstü asla ceza değil. Kutlamada uzun seri yazısı artık taşmıyor |
 | 0.10.0 | Son sigarandan beri | Bugün sekmesinde, erteleme butonunun üstünde canlı sayaç: 24 saatten az ise saat / dakika / saniye (her saniye ilerler), sonra gün / saat / dakika. İlk kayıttan sonra görünür; yeni sigarada sessizce sıfırlanır (mesaj, ses, renk değişimi, puan yok; seri değil). Ekran okuyucu tek cümle okur. İstatistik'teki "Son: … önce" yazısı kaldırıldı (aynı bilgi iki yerde olmasın) |
+| 0.11.0 | Başladığından beri | İstatistik'in en üstünde tek bakışta durum: başlangıca göre "%27 daha az", "Başlangıçta günde 15 → Şimdi günde 11" ve hafta hafta küçük grafik (takibin 15. gününden itibaren; artış nötr). Kılıf yanılırsa düzelt: onboarding'e "Kılıfın göremeyeceği sigaralar içtiğin olur mu?" sorusu, "Evet" diyenlere Bugün'de "ELLE SİGARA EKLE"; "Neden?" penceresinde "Bu sigarayı ben içmedim" (puan/ses/kutlama yok). Korunan yaşam süresi artık sadece sigarasız günlerden (Hackshaw 2018). "Neden soruyoruz?" metinleri gerçek gerekçeyi söylüyor. Ayarlar → Kaynaklar'a 10 dk erteleme, nefes molası ve tahmin sorusunun kaynakları; SPEC'e sayıların dayanağı tablosu, OLED ekran önerisi, pilot anketi ve "azaltarak mı birden mi" tartışması. "Son 7 gün ↔ önceki 7 gün" kartı kaldırıldı |

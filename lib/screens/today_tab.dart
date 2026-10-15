@@ -90,6 +90,10 @@ class TodayTab extends StatelessWidget {
       preferred: state.profile.triggers,
     );
     if (choice == null || !context.mounted) return;
+    if (choice.notMine) {
+      await _removeEvent(context, event);
+      return;
+    }
     final reward = await state.tagEvent(event, choice.trigger);
     if (!context.mounted) return;
     if (reward.isEmpty) {
@@ -100,6 +104,62 @@ class TodayTab extends StatelessWidget {
     } else {
       await CelebrationScreen.show(context, reward);
     }
+  }
+
+  /// "Bu sigarayı ben içmedim": onay alıp kaydı sil. Sadece bir düzeltme;
+  /// puan, ses ya da kutlama yok.
+  Future<void> _removeEvent(BuildContext context, SmokingEvent event) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bu kaydı silelim mi?'),
+        content: Text(
+          'Saat ${formatClock(event.time)} kaydı silinir. Kılıf bazen yanlış '
+          'sayabilir; örneğin sigarayı bir arkadaşına verdiysen.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('VAZGEÇ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('SİL'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    await state.removeEvent(event);
+    if (context.mounted) _snack(context, 'Kayıt silindi.');
+  }
+
+  /// Kılıfın görmediği bir sigarayı elle ekle: saati sor (varsayılan şimdi).
+  /// Gelecek bir saat seçilemez. Sigara içmek gibi bu da hiçbir ses, puan ya
+  /// da kutlama tetiklemez; sadece kısa bir "kaydedildi" yazısı çıkar.
+  Future<void> _addManual(BuildContext context) async {
+    final now = state.now;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(now),
+      helpText: 'Bu sigarayı ne zaman içtin?',
+    );
+    if (picked == null || !context.mounted) return;
+    final time = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      picked.hour,
+      picked.minute,
+    );
+    if (time.isAfter(now)) {
+      _snack(context, 'Henüz gelmemiş bir saat seçilemez.');
+      return;
+    }
+    // Şu anki dakika seçildiyse saniyeyi de koru (sayaç 0'dan başlasın).
+    final sameMinute = time.hour == now.hour && time.minute == now.minute;
+    await state.addManualEvent(sameMinute ? now : time);
+    if (context.mounted) _snack(context, 'Kaydedildi: ${formatClock(time)}');
   }
 
   /// Göreve dokununca o görevi yapmaya götür.
@@ -218,6 +278,11 @@ class TodayTab extends StatelessWidget {
               events: todayEvents,
               now: now,
               onTag: (e) => _tag(context, e),
+              // Sadece "kılıfın göremeyeceği sigaralar olur" diyene görünür
+              // (onboarding sorusu; Bilgilerimi düzenle'den değişir).
+              onAdd: state.profile.smokesOutsideCase == true
+                  ? () => _addManual(context)
+                  : null,
               onGenerateDemo: state.events.isEmpty && _demo != null
                   ? () => loadDemoHistory(state, _demo!)
                   : null,
@@ -575,6 +640,7 @@ class _TodayCigarettes extends StatefulWidget {
     required this.events,
     required this.now,
     required this.onTag,
+    required this.onAdd,
     required this.onGenerateDemo,
   });
 
@@ -582,6 +648,9 @@ class _TodayCigarettes extends StatefulWidget {
   final List<SmokingEvent> events;
   final DateTime now;
   final ValueChanged<SmokingEvent> onTag;
+
+  /// "Elle sigara ekle" (null ise buton yok).
+  final VoidCallback? onAdd;
   final VoidCallback? onGenerateDemo;
 
   @override
@@ -673,6 +742,16 @@ class _TodayCigarettesState extends State<_TodayCigarettes> {
                   ],
                 ),
         ),
+        if (widget.onAdd != null) ...[
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton.icon(
+              onPressed: widget.onAdd,
+              icon: const Icon(Icons.add),
+              label: const Text('ELLE SİGARA EKLE'),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -705,7 +784,10 @@ class _CigaretteRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              formatTimeAgo(event.time, now),
+              // Elle eklenen sigara ayırt edilsin (kılıf görmedi).
+              event.source == EventSource.manual
+                  ? '${formatTimeAgo(event.time, now)} · elle'
+                  : formatTimeAgo(event.time, now),
               style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
             ),
           ),

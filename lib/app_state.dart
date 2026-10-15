@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import 'logic/goal.dart' as goals;
 import 'logic/measurement.dart';
+import 'logic/progress.dart';
 import 'logic/quests.dart';
 import 'logic/rewards.dart';
 import 'logic/stats.dart';
@@ -126,6 +127,14 @@ class AppState extends ChangeNotifier {
     prices: _prices,
   );
 
+  /// "Başladığından beri": başlangıç noktası, şimdi ve hafta hafta ortalama.
+  /// Ölçüm haftasından sonra 7 gün bitmediyse null (bkz. logic/progress.dart).
+  StartProgress? get progress => progressSinceStart(
+    events: _events,
+    trackingStart: _trackingStartedAt,
+    now: now,
+  );
+
   // ---------- Haftalık rapor (bkz. logic/weekly_report.dart) ----------
 
   /// Takibin kaçıncı günü (1 = başladığı gün). Takip başlamadıysa null.
@@ -190,10 +199,7 @@ class AppState extends ChangeNotifier {
 
   /// Şu anki seviye: son 7 tamamlanmış günde günde ortalama sigara.
   /// Yeni bir hedefin haftalık sınırları buradan başlar.
-  double get recentLevel {
-    final today = startOfDay(now);
-    return countBetween(_events, addDays(today, -7), today) / 7;
-  }
+  double get recentLevel => lastSevenDaysAverage(_events, now);
 
   /// Hedef seçilebilir mi? (Ölçüm haftası bitti ve özeti görüldü.)
   bool get canSetGoal =>
@@ -342,6 +348,36 @@ class AppState extends ChangeNotifier {
     _events.add(event);
     _events.sort(_byTime);
     unawaited(storage.saveEvents(_events)); // Kaydı arka planda yap.
+    notifyListeners();
+  }
+
+  // ---------- Elle düzeltme (kılıfın göremedikleri / yanlış saydıkları) ----------
+
+  /// Kılıfın göremediği bir sigarayı elle ekle (başkasının paketinden,
+  /// ikinci bir paketten...). [time] gelecekte olamaz; olursa şimdi sayılır.
+  ///
+  /// Kılıftan gelen sigara gibi: puan götürmez, ses/titreşim/kutlama yok.
+  Future<void> addManualEvent(DateTime time) async {
+    var at = time.isAfter(now) ? now : time;
+    // Aynı anda başka bir kayıt varsa bir saniye kaydır: kayıtlar zamanla
+    // ayırt ediliyor (aynı zamanlı iki olay tek sayılırdı).
+    while (_events.any((e) => e.time == at)) {
+      at = at.add(const Duration(seconds: 1));
+    }
+    _events.add(SmokingEvent(time: at, source: EventSource.manual));
+    _events.sort(_byTime);
+    await storage.saveEvents(_events);
+    notifyListeners();
+  }
+
+  /// "Bu sigarayı ben içmedim": kılıfın yanlış saydığı bir kaydı sil (ör.
+  /// sigarayı bir arkadaşına verdiysen). Kazanılmış puanlar silinmez
+  /// (puan asla düşmez).
+  Future<void> removeEvent(SmokingEvent event) async {
+    final before = _events.length;
+    _events.removeWhere((e) => e.time == event.time);
+    if (_events.length == before) return;
+    await storage.saveEvents(_events);
     notifyListeners();
   }
 
