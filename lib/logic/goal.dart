@@ -16,6 +16,13 @@
 // - "Hedefinde kaldığın gün" sayısı sadece artar.
 // - Zorluk etiketleri bilimsel bir ölçüm değil, ekibin kaba bir tahminidir
 //   (haftada ne kadar azaltılacağına bakar; bkz. SPEC.md Bölüm 11).
+//
+// Bırakma hedefi (0.12.0): süre yerine bir BIRAKMA GÜNÜ seçilir.
+// - "O güne kadar azaltarak": günlük sınır her hafta biraz iner, bırakma
+//   gününde 0 olur.
+// - "O gün birden": bırakma gününe kadar sınır yok; o gün 0.
+// - Bırakma gününden sonra hedef "bitmez": sigarasız günler sayılır (sadece
+//   artar). Sigara içilen gün nötr gri; suçlama yok.
 
 import '../models/goal.dart';
 import '../models/smoking_event.dart';
@@ -40,8 +47,30 @@ DateTime goalEndFrom(DateTime start, int amount, GoalUnit unit) {
   };
 }
 
-/// Bir hedefin bitiş günü.
-DateTime goalEnd(Goal goal) => goalEndFrom(goal.start, goal.amount, goal.unit);
+/// Bir hedefin bitiş günü. Bırakma hedefinde bu, bırakma günüdür.
+DateTime goalEnd(Goal goal) => goal.isQuit
+    ? quitDayOf(goal)
+    : goalEndFrom(goal.start, goal.amount, goal.unit);
+
+// ---------- Bırakma günü ----------
+
+/// Önerilen bırakma günü: kaç gün sonra? Rehberler bırakma gününü yakın
+/// seçmeyi öneriyor: "en fazla bir iki hafta sonra" (NCI Smokefree), "önümüzdeki
+/// iki hafta içinde" (Avustralya Quit, quit.org.au). Uzak bir tarih motivasyonu
+/// azaltabilir. (Kaynaklar: SPEC.md Bölüm 9.)
+const int suggestedQuitDays = 14;
+
+/// Bırakma günü bundan uzaksa nazik bir not gösterilir (aynı kaynaklar).
+const int quitDayNoteAfterDays = 14;
+
+/// Bir bırakma hedefinin bırakma günü (00:00). 0.12.0'dan önceki bırakma
+/// hedeflerinde bırakma günü yoktu; onlarda süre bitişi bırakma günü sayılır.
+DateTime quitDayOf(Goal goal) =>
+    startOfDay(goal.quitDay ?? goalEndFrom(goal.start, goal.amount, goal.unit));
+
+/// Bırakma yolu. Eski bırakma hedeflerinde boştur: onlar azaltarak
+/// ilerliyordu.
+QuitMethod quitMethodOf(Goal goal) => goal.quitMethod ?? QuitMethod.gradual;
 
 /// Hedef kaç haftalık adıma bölünür? Süre tam hafta değilse (ör. "1 ay" =
 /// 30 gün) artan birkaç gün son haftaya eklenir: 30 gün → 4 adım.
@@ -62,18 +91,32 @@ int goalWeekOf(Goal goal, DateTime day) {
 /// Sınır, hedef konduğundaki seviyeden ([Goal.from]) hedefe doğru eşit
 /// adımlarla iner; son hafta hedefe eşittir. Yukarı yuvarlanır ("en fazla"
 /// sınırı küçük adımlarla, rahat başlasın).
+///
+/// Bırakma hedefinde ("azaltarak") hedefe (0) bırakma GÜNÜNDE ulaşılır;
+/// ondan önceki haftalar eşit adımlarla iner. Örn. günde 15, 2 hafta:
+/// 1. hafta 10, 2. hafta 5, bırakma günü 0.
 int weeklyLimit(Goal goal, int week) {
   final target = targetOf(goal);
   final steps = goalStepCount(goal.start, goalEnd(goal));
   if (goal.from <= target) return target;
-  final value = target + (goal.from - target) * (steps - week) / steps;
+  final value = goal.isQuit
+      ? goal.from * (steps - week + 1) / (steps + 1)
+      : target + (goal.from - target) * (steps - week) / steps;
   // Küçük bir pay: 10.0000001 gibi bir küsurat 11'e yuvarlanmasın.
   return (value - 1e-9).ceil();
 }
 
 /// [day] günü için günlük sınır. Süre bittiyse hedefin kendisi.
-int limitOn(Goal goal, DateTime day) =>
-    weeklyLimit(goal, goalWeekOf(goal, day));
+///
+/// Bırakma hedefinde: bırakma gününden itibaren 0. "O gün birden" yolunda
+/// bırakma gününden önce sınır YOK (null).
+int? limitOn(Goal goal, DateTime day) {
+  if (goal.isQuit) {
+    if (!startOfDay(day).isBefore(quitDayOf(goal))) return 0;
+    if (quitMethodOf(goal) == QuitMethod.abrupt) return null;
+  }
+  return weeklyLimit(goal, goalWeekOf(goal, day));
+}
 
 // ---------- Zorluk ----------
 
@@ -132,6 +175,10 @@ enum GoalDayState {
 
   /// Henüz gelmedi.
   future,
+
+  /// Gün bitti ama o gün sınır yoktu ("o gün birden" yolunda bırakma
+  /// gününden önceki hazırlık günleri). Nötr; yorum yapılmaz.
+  noLimit,
 }
 
 class GoalDay {
@@ -144,7 +191,9 @@ class GoalDay {
 
   final DateTime day;
   final int count;
-  final int limit;
+
+  /// O günün sınırı (sınır yoksa null).
+  final int? limit;
   final GoalDayState state;
 }
 
@@ -163,6 +212,8 @@ class GoalStatus {
     required this.progress,
     required this.daysOnTarget,
     required this.days,
+    this.daysToQuit,
+    this.smokeFreeDays = 0,
   });
 
   final Goal goal;
@@ -179,10 +230,12 @@ class GoalStatus {
   /// Şu an kaçıncı hafta (1..steps).
   final int week;
 
-  /// Bugünün (bu haftanın) günlük sınırı.
-  final int limit;
+  /// Bugünün (bu haftanın) günlük sınırı. "O gün birden" yolunda bırakma
+  /// gününden önce sınır yok: null.
+  final int? limit;
 
-  /// Hedef süresi doldu mu?
+  /// Hedef süresi doldu mu? (Bırakma hedefi hiç "dolmaz": bırakma gününden
+  /// sonra sigarasız günler sayılır.)
   final bool ended;
 
   /// Hedef konalı kaç gün oldu? (Bugün konduysa 0.)
@@ -201,8 +254,19 @@ class GoalStatus {
   /// Bu 7 günlük dilimin günleri (şerit için).
   final List<GoalDay> days;
 
+  /// Bırakma gününe kaç gün var? (Bugünse 0, geçtiyse eksi. Bırakma hedefi
+  /// değilse null.)
+  final int? daysToQuit;
+
+  /// Bırakma gününden sonraki BİTEN günlerden kaçında hiç sigara yok.
+  /// Sadece artar (sigara içilen bir gün sayıyı düşürmez, sadece eklenmez).
+  final int smokeFreeDays;
+
   /// Hedefe ulaşıldı mı? (Son 7 günün ortalaması hedefte ya da altında.)
   bool get reached => currentLevel <= target;
+
+  /// Bırakma günü geldi mi (bugün ya da geçti)?
+  bool get quitStarted => daysToQuit != null && daysToQuit! <= 0;
 }
 
 /// Hedefin [now] anındaki durumu. [events] eskiden yeniye sıralı olmalı.
@@ -235,10 +299,24 @@ GoalStatus goalStatus({
       : ((goal.baseline - current) / span).clamp(0.0, 1.0);
 
   // Hedefinde kaldığın günler: hedef konduktan sonra BİTEN günler.
+  // (Sınırın olmadığı günler sayılmaz.)
   var onTarget = 0;
   for (var i = 0; i < sinceStart; i++) {
     final day = addDays(start, i);
-    if ((perDay[day] ?? 0) <= limitOn(goal, day)) onTarget++;
+    final limit = limitOn(goal, day);
+    if (limit != null && (perDay[day] ?? 0) <= limit) onTarget++;
+  }
+
+  // Bırakma hedefi: bırakma gününe kaç gün var, o günden beri kaç biten
+  // gün sigarasız geçti?
+  int? daysToQuit;
+  var smokeFree = 0;
+  if (goal.isQuit) {
+    final quitDay = quitDayOf(goal);
+    daysToQuit = daysBetween(today, quitDay);
+    for (var day = quitDay; day.isBefore(today); day = addDays(day, 1)) {
+      if ((perDay[day] ?? 0) == 0) smokeFree++;
+    }
   }
 
   // Şerit: hedefin başından itibaren 7'şer günlük dilimlerden bugününki.
@@ -255,12 +333,14 @@ GoalStatus goalStatus({
     steps: goalStepCount(start, end),
     week: goalWeekOf(goal, today),
     limit: limitOn(goal, today),
-    ended: !today.isBefore(end),
+    ended: !goal.isQuit && !today.isBefore(end),
     daysSinceStart: sinceStart,
     currentLevel: current,
     progress: progress,
     daysOnTarget: onTarget,
     days: days,
+    daysToQuit: daysToQuit,
+    smokeFreeDays: smokeFree,
   );
 }
 
@@ -277,6 +357,8 @@ GoalDay _goalDay(
     state = GoalDayState.future;
   } else if (day == today) {
     state = GoalDayState.today;
+  } else if (limit == null) {
+    state = GoalDayState.noLimit;
   } else if (count <= limit) {
     state = GoalDayState.onTarget;
   } else {

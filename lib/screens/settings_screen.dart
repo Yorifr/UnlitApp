@@ -273,6 +273,7 @@ class SettingsScreen extends StatelessWidget {
   String _dayLabel() {
     final day = state.trackingDay;
     if (day == null) return '';
+    if (day < 1) return ' Bugün hazırlık günü; ölçüm haftası yarın başlıyor.';
     return ' Şu an takibin $day. günü (${(day - 1) ~/ daysPerWeek + 1}. '
         'hafta).';
   }

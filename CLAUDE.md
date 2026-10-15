@@ -53,7 +53,9 @@ Bu dosya, bu repoda çalışan Claude oturumları (ve ekip üyeleri) için kısa
    yok. Puan HARCANMAZ: "Nefes'in dolabı"ndaki eşyalar eşikle açılır ve
    kaybolmaz; başındaki filiz sadece toplam puanla büyür, asla küçülmez.
    Azaltma hedefinin günlük sınırını aşmak da ceza değildir (nötr gri,
-   mesaj yok; "hedefinde kaldığın gün" sadece artar). Elle sigara
+   mesaj yok; "hedefinde kaldığın gün" sadece artar). Bırakma gününden
+   sonra sigara içmek de öyle: "sigarasız gün" sadece artar, Nefes
+   "kaldığın yerden devam" der. Elle sigara
    ekleme / "Bu sigarayı ben içmedim" ile silme bir ölçüm düzeltmesidir:
    puan, ses, kutlama yok; silinen kaydın puanı geri alınmaz.
    Yeni bir oyun mekaniği eklerken önce SPEC.md Bölüm 3'e bak.
@@ -90,7 +92,8 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
   yaşam süresi sadece sigarasız günlerden), `progress.dart`
   ("Başladığından beri": başlangıç, şimdi, hafta hafta),
   `weekly_report.dart` (haftalık rapor; haftalar takipten sayılır),
-  `goal.dart` (azaltma hedefi: haftalık sınır, ilerleme, zorluk), `quests.dart`,
+  `goal.dart` (azaltma/bırakma hedefi: haftalık sınır, ilerleme, zorluk,
+  bırakma günü, sigarasız günler), `quests.dart`,
   `rewards.dart`, `wardrobe.dart` (dolap: eşya açılma, filiz aşaması),
   `mascot_messages.dart`); `now`'ı parametre olarak alır →
   kolay test. Yeni hesapları buraya koy ve test yaz. XP miktarları
@@ -172,6 +175,11 @@ paketsiz yazıldı.
   sorunsuz. Yeni karakter eklersen web'de dış istek olmadığını kontrol et.
 - **Tarih aritmetiği:** Gün eklerken `Duration(days: n)` yerine
   `stats.dart`'taki `addDays` kullan (takvim günüyle hesaplar).
+- **Hazırlık günü:** Ölçüm haftası 7 tam gün; onboarding gün ortasında
+  biterse `trackingStartedAt` YARININ 00:00'ıdır (`trackingStartFor`) ve
+  bugün `measurementDay == 0`. Gerçek saatle çalışan arayüz testlerinde
+  bu saate bağlıdır (04:00'ten önce 1); beklentiyi `dayStartsAtHour` ile
+  yaz (bkz. `test/app_flow_test.dart`).
 - **Testlerde zamanlayıcı:** Demo kılıf `Timer.periodic` kullanır; widget
   testlerinde test bitmeden `disconnect()` çağır (bkz.
   `test/app_flow_test.dart` → `testApp`). Erteleme ekranında saniyelik

@@ -32,9 +32,13 @@ suçlamaz:
   uygulamada bir şeyi değiştirir.
 - **Günlük 3 görev** (kendini dinle, sigaranın nedenini işaretleme, nefes
   molası, bir isteği 10 dakika erteleme…) → **puan** ve **seri**.
-- **Ölçüm haftası:** ilk 7 gün sadece ölçülür; bitince "Ölçüm haftan
+- **Ölçüm haftası:** 7 tam gün sadece ölçülür (gün ortasında başlandıysa
+  o gün hazırlık günü, ölçüm ertesi gün başlar); bitince "Ölçüm haftan
   bitti!" özeti (günde ortalama, ilk sigara saati, en yoğun saat, en sık
   neden) ve yeni özellikler açılır.
+- **Hedef:** azaltmak (%25 / %50 / %75, süre seçerek) ya da **bırakma
+  günü** seçmek (o güne kadar azaltarak ya da o gün birden); bıraktıktan
+  sonra sigarasız günler sayılır.
 - **"CANIM SİGARA İSTİYOR"** butonu: 10 dakikalık erteleme, öneriler,
   nefes egzersizi ve kullanıcının **kendine yazdığı not**.
 - Her başarıda **konfetili kutlama ekranı**.

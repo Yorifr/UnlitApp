@@ -1,8 +1,10 @@
-// Kullanıcının ölçüm haftasından sonra seçtiği azaltma hedefi.
+// Kullanıcının ölçüm haftasından sonra seçtiği hedef: azaltmak ya da
+// bırakmak.
 //
-// Örnek: "Günde 15 sigarayı 8 haftada %50 azalt." Hedef bir söz değil, bir
-// yol haritası: istenildiği zaman değiştirilebilir ve hedefin dışına çıkmak
-// hiçbir ceza getirmez (puan düşmez, seri bozulmaz).
+// Örnek: "Günde 15 sigarayı 8 haftada %50 azalt." ya da "29 Ekim'de
+// bırak, o güne kadar azaltarak." Hedef bir söz değil, bir yol haritası:
+// istenildiği zaman değiştirilebilir ve hedefin dışına çıkmak hiçbir ceza
+// getirmez (puan düşmez, seri bozulmaz).
 //
 // Hesaplar (haftalık sınır, ilerleme...) burada değil,
 // lib/logic/goal.dart'ta.
@@ -25,6 +27,23 @@ enum GoalUnit {
 /// Seçilebilen azaltma oranları (yüzde). 100 = bırakmak.
 const goalPercents = [25, 50, 75, 100];
 
+/// Bırakma gününe nasıl gidilecek? (Sadece bırakma hedefinde.)
+///
+/// İkisi de geçerli bir yol: Cochrane derlemesi (Lindson ve ark. 2019)
+/// aralarında belirgin bir üstünlük bulmadı; bir deneyde birden bırakanlar
+/// biraz daha başarılıydı (Lindson-Hawley ve ark. 2016). Bu yüzden seçimi
+/// kullanıcıya bırakıyoruz ve hiçbirini önceden seçili getirmiyoruz.
+enum QuitMethod {
+  /// O güne kadar her hafta günlük sınır biraz iner; bırakma gününde 0.
+  gradual('O güne kadar azaltarak'),
+
+  /// O güne kadar sınır yok; bırakma gününde birden bırakılır.
+  abrupt('O gün birden');
+
+  const QuitMethod(this.label);
+  final String label;
+}
+
 class Goal {
   const Goal({
     required this.start,
@@ -33,6 +52,8 @@ class Goal {
     required this.percent,
     required this.amount,
     required this.unit,
+    this.quitDay,
+    this.quitMethod,
   });
 
   /// Hedefin başladığı gün (00:00). Haftalar bu günden sayılır.
@@ -50,22 +71,34 @@ class Goal {
   /// Ne kadar azaltılacak (25, 50, 75 ya da 100 = bırakmak).
   final int percent;
 
-  /// Süre: [amount] [unit] ("8 hafta", "2 ay").
+  /// Süre: [amount] [unit] ("8 hafta", "2 ay"). Sadece azaltma hedefinde;
+  /// bırakma hedefinde bunun yerine [quitDay] var.
   final int amount;
   final GoalUnit unit;
+
+  /// Bırakma günü (00:00). Sadece bırakma hedefinde. (0.12.0'dan önceki
+  /// bırakma hedeflerinde boştur; o zaman süre bitişi bırakma günü sayılır,
+  /// bkz. logic/goal.dart → quitDayOf.)
+  final DateTime? quitDay;
+
+  /// Bırakma gününe nasıl gidilecek (sadece bırakma hedefinde; boşsa
+  /// "azaltarak" sayılır: eski bırakma hedefleri böyle çalışıyordu).
+  final QuitMethod? quitMethod;
 
   /// Bırakma hedefi mi?
   bool get isQuit => percent == 100;
 
-  /// Aynı hedef, başlangıç günü değişmiş hâli (demo'daki "bir gün ekle"
-  /// her kaydı bir gün geriye kaydırırken kullanılır).
-  Goal copyWith({DateTime? start}) => Goal(
+  /// Aynı hedef, günleri kaydırılmış hâli (demo'daki "bir gün ekle" her
+  /// kaydı bir gün geriye kaydırırken kullanılır).
+  Goal copyWith({DateTime? start, DateTime? quitDay}) => Goal(
     start: start ?? this.start,
     baseline: baseline,
     from: from,
     percent: percent,
     amount: amount,
     unit: unit,
+    quitDay: quitDay ?? this.quitDay,
+    quitMethod: quitMethod,
   );
 
   Map<String, dynamic> toJson() => {
@@ -75,6 +108,8 @@ class Goal {
     'percent': percent,
     'amount': amount,
     'unit': unit.name,
+    if (quitDay != null) 'quitDay': quitDay!.millisecondsSinceEpoch,
+    if (quitMethod != null) 'quitMethod': quitMethod!.name,
   };
 
   /// JSON'dan okur; kayıt bozuksa null (uygulama çökmez, hedef yok sayılır).
@@ -85,6 +120,7 @@ class Goal {
     final percent = json['percent'];
     final amount = json['amount'];
     final unit = GoalUnit.values.asNameMap()[json['unit']];
+    final quitDay = json['quitDay'];
     if (start is! int ||
         baseline is! num ||
         from is! num ||
@@ -100,6 +136,10 @@ class Goal {
       percent: percent,
       amount: amount,
       unit: unit,
+      quitDay: quitDay is int
+          ? DateTime.fromMillisecondsSinceEpoch(quitDay)
+          : null,
+      quitMethod: QuitMethod.values.asNameMap()[json['quitMethod']],
     );
   }
 }

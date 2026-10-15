@@ -10,8 +10,9 @@ teması ("Nane"), sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
 özeti, "Kazandıkların"), Nefes 2.0 + "Nefes'in dolabı" (0.7.0) ve haftalık
 rapor + "bir günlük veri ekle" demo seçeneği (0.8.0), erteleme
 ekranında kişisel cümle (0.8.1), azaltma hedefi + "Hedefim" sayfası
-(0.9.0), Bugün'de "Son sigarandan beri" sayacı (0.10.0) ve "Başladığından
-beri" kartı + elle düzeltme + kaynaklı sayılar (0.11.0) tamamlandı.
+(0.9.0), Bugün'de "Son sigarandan beri" sayacı (0.10.0), "Başladığından
+beri" kartı + elle düzeltme + kaynaklı sayılar (0.11.0) ve bırakma günü +
+7 tam günlük ölçüm haftası (hazırlık günü) (0.12.0) tamamlandı.
 
 ---
 
@@ -208,6 +209,11 @@ suçluluk duymasın**.
    gri). "Hedefinde kaldığın gün" sayısı sadece artar. Nefes sınırı aşılan
    günlerden hiç bahsetmez; süre dolduysa suçlamadan yeni bir süre önerir.
    Hedef her an değiştirilebilir.
+   **Bırakma günü de ceza vermez** (0.12.0; Özellik 2i): bırakma gününden
+   sonra sigara içilen gün şeritte nötr gri; "sigarasız gün" sayısı sadece
+   artar (sigara içilen gün sayıyı düşürmez, sadece eklenmez). Sigarasız
+   güne puan/rozet yok (aynı gerekçe: perhiz ihlali etkisi). Kayma olursa
+   Nefes "Kaldığın yerden devam" der; asla "baştan başla" demez.
 13. **"Son sigarandan beri" sayacı bir seri değildir** (0.10.0; ayrıntı
    Özellik 2f): yeni sigara gelince **sessizce** sıfırdan başlar: mesaj,
    ses, titreşim, renk değişimi yok. Puan vermez, rekor ("en uzun ara")
@@ -347,6 +353,18 @@ erteleme ekranı, nefes egzersizi, kutlama ekranı, "Profil" sekmesi (seri,
 en uzun seri, toplam puan, ertelenen istekler).
 
 ### Özellik 2c — Ölçüm haftası özeti ✅ (0.6.0)
+- **Ölçüm haftası 7 TAM gündür** (0.12.0, `trackingStartFor`): onboarding
+  gün ortasında biterse o gün **hazırlık günü** olur, ölçüm ertesi gün
+  00:00'da başlar. Gece 04:00'ten önce bittiyse (gün henüz başlamadı;
+  `dayStartsAtHour`) ölçüm aynı gün başlar. Neden? Yarım ilk gün başlangıç
+  noktasını olduğundan düşük, günün ilk sigarasını da olduğundan geç
+  gösterirdi (öğleden sonra başlayan birinin "ilk sigarası" 15:00
+  görünürdü). Hazırlık gününde: rozet "Ölçüm yarın başlıyor", Nefes
+  "Bugün kılıfını tanı", görevler ölçüm haftasınınki gibi (azaltma görevi
+  yok), sigaralar kaydedilir ve Bugün/İstatistik'te görünür ama başlangıç
+  noktasına, haftalık raporlara ve "Başladığından beri"ye girmez. Takip
+  sıfırlanınca da aynı kural. Demo verisi gece yarısından başladığı için
+  hazırlık günü yoktur.
 - Ölçüm haftası (ilk 7 gün) bitince "Bugün" sekmesinde maskot "Ölçüm haftan
   bitti!" der ve **SONUÇLARIMI GÖR** butonu çıkar (açılır pencere değil).
 - Özet ekranı (konfeti + fanfar): günde ortalama (kullanıcının onboarding
@@ -416,6 +434,7 @@ en uzun seri, toplam puan, ertelenen istekler).
   | Erteleme, nefes | Profil (toplam ertelenen istek), haftalık rapor, erteleme ekranında Nefes'in cümlesi (kaç isteği atlattın, genelde kaç dakikada geçti) |
   | Kendine not | Erteleme ekranı (hedef seçerken de yazılabilir; aynı not) |
   | Azaltma hedefi (0.9.0) | Bugün'deki "Hedefim" kartı, Hedefim sayfası (haftalık sınır, ilerleme, hedefinde kaldığın günler) |
+  | Bırakma günü ve yolu (0.12.0) | Hedefim kartı ve sayfası (geri sayım, sınırlar, sigarasız gün), Bugün'de Nefes'in bir gün önceki ve bırakma günündeki cümlesi |
 
 ### Özellik 2e — Azaltma hedefi ve "Hedefim" sayfası ✅ (0.9.0)
 - **Ne zaman sorulur?** Ölçüm haftası özetinin sonunda (ilk seferde):
@@ -436,6 +455,8 @@ en uzun seri, toplam puan, ertelenen istekler).
      Hedef koyarken "neden?" diye düşünmek için en doğal an olduğu için
      burada da soruluyor.
   Sonunda "Hedefin hazır!" kutlaması (ilk hedefte bir kez +10 puan).
+  **Bırakmak** seçilirse 2. adım süre değil **bırakma günü** ve **yol**
+  (0.12.0; bkz. Özellik 2i).
 - **Hesap** (`lib/logic/goal.dart`, saf ve testli):
   - Hedef = başlangıç noktası (ölçüm haftasında günde ortalama) × kalan
     yüzde, yuvarlanır. Yüzde hep başlangıç noktasına göredir.
@@ -465,10 +486,70 @@ en uzun seri, toplam puan, ertelenen istekler).
   4. Bırakma hedefinde: ALO 171 ve MHRS'den sigara bırakma polikliniği
      bilgisi (T.C. Sağlık Bakanlığı).
   5. HEDEFİ DEĞİŞTİR (süre dolduysa YENİ HEDEF SEÇ).
+  6. Azaltma hedefi **tamamlanınca ya da süresi dolunca** (0.12.0): "Bir
+     sonraki adım: bırakma günü" kartı ve **BIRAKMA GÜNÜ SEÇ** (akış
+     "Bırakmak" seçili açılır). Açılır pencere ya da bildirim değil; seçmek
+     isteğe bağlı. Gerekçe: azaltma son durak olmasın (Bölüm 11 →
+     "azaltarak mı, birden mi").
 - Takip baştan başlarsa (demo verisi üret, kayıtları sıfırla) hedef silinir
   (başlangıç noktası değişti). Demo'daki "bir gün ekle" hedefi de bir gün
   geriye kaydırır.
 - Kod: `lib/models/goal.dart`, `lib/logic/goal.dart`,
+  `lib/screens/goal_setup_screen.dart`, `lib/screens/goal_screen.dart`.
+
+### Özellik 2i — Bırakma günü ✅ (0.12.0)
+- **Nerede?** Hedef seçme akışında "Bırakmak" seçilince (ölçüm özetinden,
+  Bugün'deki "Bir hedef seç" kartından, HEDEFİ DEĞİŞTİR'den ya da azaltma
+  hedefi bitince Hedefim'deki BIRAKMA GÜNÜ SEÇ'ten). Ayrı bir ekran ya da
+  ikinci bir hedef türü değil: bırakma, hedefin bir türü (tek giriş
+  noktası).
+- **Akış:**
+  1. *Bırakma günün ne zaman olsun?* Hızlı seçenekler: Bugün / 1 hafta
+     sonra / 2 hafta sonra / 1 ay sonra + **BAŞKA BİR GÜN SEÇ** (takvim,
+     bugünden en fazla 6 ay sonrası). **Varsayılan 2 hafta sonra:**
+     rehberler bırakma gününü yakın seçmeyi öneriyor (NCI Smokefree: "en
+     fazla bir iki hafta sonra"; Quit (quit.org.au): "önümüzdeki iki hafta
+     içinde"). 14 günden uzak bir tarihte nötr bir not: "Uzak bir tarih
+     kararlılığını azaltabilir… Yine de karar senin."
+  2. *Bırakma gününe nasıl gitmek istersin?* **O güne kadar azaltarak**
+     (her hafta günlük sınır iner, bırakma gününde 0; seçeneğin altında bu
+     haftanın sınırı yazar) ya da **O gün birden** (o güne kadar sınır
+     yok). **Hiçbiri önceden seçili değil**, seçmeden ilerlenmez: iki yol
+     da geçerli (Cochrane 2019); bir deneyde birden bırakanlar biraz daha
+     başarılıydı (Lindson-Hawley 2016). "Neden soruyoruz?" bunu dürüstçe
+     söyler. Bırakma günü bugünse bu soru sorulmaz.
+  3. Kendine not (daha önce yazılmadıysa).
+- **Hesap** (`lib/logic/goal.dart`):
+  - Bırakma hedefinde hedef = 0. "Azaltarak": hedef konduğundaki
+    seviyeden (son 7 gün) bırakma gününe kadar haftalık eşit adımlarla
+    iner; 0'a bırakma GÜNÜNDE ulaşılır (örn. günde 15, 2 hafta: 10 → 5 →
+    bırakma günü 0). "Birden": bırakma gününe kadar sınır yok (`null`).
+  - Bırakma hedefi "dolmaz": bırakma gününden sonra sınır 0 ve
+    **sigarasız gün** sayılır (bırakma gününden sonraki BİTEN günlerden
+    hiç sigara olmayanlar; sadece artar).
+  - 0.12.0'dan önceki bırakma hedeflerinde bırakma günü yoktu: onlarda
+    süre bitişi bırakma günü, yol "azaltarak" sayılır.
+- **Gösterim:**
+  - Bugün'deki "Hedefim" kartı: "Bırakma gününe 9 gün (· bu hafta günde
+    en fazla 10)" → "Yarın bırakma günün" → "Bugün bırakma günün" →
+    "Sigarasız gün: 5".
+  - Hedefim: yol kartında "O gün birden · Bırakma günü: 29 Ekim Perşembe";
+    "birden" yolunda bırakma gününe kadar şerit yerine geri sayım ("9 gün
+    kaldı"); bırakma gününden sonra "Sigarasız gün: N" + şerit (sigarasız
+    gün nane + onay, diğerleri nötr gri). ALO 171 / MHRS kartı.
+  - Nefes (`goalLine`, `mascotGreeting`): geri sayım; bir gün önce "Yarın
+    bırakma günün! İstersen bugün evdeki sigaraları, çakmakları ve
+    küllükleri kaldır" (NCI Smokefree "Prepare to quit" önerisi); bırakma
+    günü "Bugün bırakma günün! … ALO 171 hep burada"; sonra önce olumlu
+    olan (son 7 gün sigarasız → "N gün sigarasız geçti") yoksa "Bırakma
+    yolu herkes için düz değil. Kaldığın yerden devam".
+- **Yok (bilerek):** sigarasız güne puan/rozet, bırakma gününde
+  geri sayım bildirimi (Aşama 4), WHO iyileşme takvimi (metin önce
+  doğrulanmalı; Aşama 3 Sürdürme).
+- Demo'daki "Bir günlük veri ekle" bırakma gününü de bir gün geriye
+  kaydırır (yarın bırakacaksan ertesi "gün" bırakma günü olur).
+- Kod: `lib/models/goal.dart` (`quitDay`, `QuitMethod`), `lib/logic/goal.dart`
+  (`quitDayOf`, `limitOn`, `GoalStatus.daysToQuit` / `smokeFreeDays`),
   `lib/screens/goal_setup_screen.dart`, `lib/screens/goal_screen.dart`.
 
 ### Özellik 2f — "Son sigarandan beri" sayacı ✅ (0.10.0)
@@ -554,7 +635,7 @@ en uzun seri, toplam puan, ertelenen istekler).
   ✅ 0.9.0'da geldi (Özellik 2e).
 - **Bırakma günü:** kullanıcı tarih seçer; **ALO 171** (Sigara Bırakma
   Danışma Hattı) ve **sigara bırakma polikliniği** (MHRS üzerinden randevu)
-  yönlendirmesi.
+  yönlendirmesi. ✅ 0.12.0'da geldi (Özellik 2i).
 - **Sürdürme:** sigarasız gün sayacı (son sigaradan beri geçen süre
   0.10.0'da Bugün'de; bkz. Özellik 2f), **WHO iyileşme takvimi** (bkz.
   Bölüm 9). Perhiz ihlali etkisine karşı: sayaç **toplam sigarasız günü**
@@ -789,10 +870,14 @@ Nahum-Shani ve ark. 2018). Ama kılıf masada durur ve başkaları da görür.
     buradan hesaplanır.
 - `PriceHistory { entries: PackPrice { since, price, perPack (vars. 20) } }`
   — `at(zaman)` o andaki geçerli fiyatı verir.
-- `tracking_started_at`: ölçüm haftasının başlangıcı (onboarding bitince).
+- `tracking_started_at`: ölçüm haftasının ilk günü. 0.12.0'dan beri
+  onboarding gün ortasında biterse ERTESİ günün 00:00'ı (bugün hazırlık
+  günü; `trackingStartFor`). Eski kullanıcılarda onboarding anı (onların
+  1. günü yarımdı; değiştirilmedi).
 - `measurement_summary_seen`: "Ölçüm haftan bitti!" özeti görüldü mü.
 - `goal` (0.9.0): `Goal { start, baseline, from, percent, amount, unit:
-  week | month }`. Haftalık sınırlar ve ilerleme saklanmaz, her seferinde
+  week | month, quitDay?, quitMethod?: gradual | abrupt }` (`quitDay` ve
+  `quitMethod` 0.12.0'dan beri, sadece bırakma hedefinde). Haftalık sınırlar ve ilerleme saklanmaz, her seferinde
   kayıtlardan hesaplanır. Takip baştan başlarsa silinir.
 - `weekly_report_seen`: en son görülen haftalık raporun hafta numarası
   (0 = hiç). Raporların kendisi saklanmaz, her seferinde kayıtlardan
@@ -816,7 +901,8 @@ Nahum-Shani ve ark. 2018). Ama kılıf masada durur ve başkaları da görür.
   günlük görevler; bugünkü sigaralar ve "Neden?" etiketleri ("Neden?"
   penceresinde "Bu sigarayı ben içmedim"; "Evet" diyenlerde altta
   "ELLE SİGARA EKLE", 0.11.0).
-- **Hedef seçme / Hedefim** (0.9.0): bkz. Özellik 2e.
+- **Hedef seçme / Hedefim** (0.9.0): bkz. Özellik 2e; bırakma günü
+  (0.12.0): Özellik 2i.
 - **İstatistik:** "Başladığından beri" (takibin 15. gününden itibaren, en
   üstte; 0.11.0), bugün kartı, son 7 gün grafiği, "Haftalık raporların" (ölçüm haftasından
   sonra), "Kazandıkların" (ölçüm haftasından sonra),
@@ -883,7 +969,8 @@ Nahum-Shani ve ark. 2018). Ama kılıf masada durur ve başkaları da görür.
 | Kısa yürüyüş sigara isteğini azaltır | Taylor AH, Katomeri M, Ussher M. "Acute effects of self-paced walking on urges to smoke during temporary smoking abstinence." *Psychopharmacology*, 2005;181(1):1–7. Ayrıca Taylor AH, Katomeri M, *Nicotine Tob Res*, 2007 (15 dk yürüyüş sonraki sigarayı ~57 dk geciktirdi) | Erteleme ekranındaki "yürü" önerisi |
 | Nefes egzersizi isteği hemen azaltır (24 saat sonra etkisi görülmedi) | Shahab L, Sarkar BK, West R. "The acute effects of yogic breathing exercises on craving and withdrawal symptoms in abstaining smokers." *Psychopharmacology*, 2013;225:875–882 | Nefes molası (ritim 4 sn al / 4 sn ver ekip seçimi) |
 | "İstek dalga gibi gelir, geçer": isteği azaltmadı ama 7 günde daha az sigara içildi | Bowen S, Marlatt GA. "Surfing the urge: brief mindfulness-based intervention for college student smokers." *Psychol Addict Behav*, 2009;23(4):666–671 | Erteleme ekranındaki "Bu istek geçici" dili |
-| Azaltarak bırakma ↔ birden bırakma | Lindson-Hawley N ve ark. "Gradual versus abrupt smoking cessation: a randomized, controlled noninferiority trial." *Ann Intern Med*, 2016;164(9):585–592. Lindson N ve ark. "Smoking reduction interventions for smoking cessation." *Cochrane Database Syst Rev*, 2019 (CD013183) | Tasarım kararı (Bölüm 11); bırakma seçeneği eşit görünür |
+| Azaltarak bırakma ↔ birden bırakma | Lindson-Hawley N ve ark. "Gradual versus abrupt smoking cessation: a randomized, controlled noninferiority trial." *Ann Intern Med*, 2016;164(9):585–592. Lindson N ve ark. "Smoking reduction interventions for smoking cessation." *Cochrane Database Syst Rev*, 2019 (CD013183) | Bırakma günü: "O güne kadar azaltarak" / "O gün birden" eşit sunulur, hiçbiri önceden seçili değil; "Neden soruyoruz?" metni (0.12.0) |
+| Bırakma gününü yakın seç ("en fazla bir iki hafta sonra"); bırakmadan önce sigaraları, çakmakları, küllükleri kaldır | National Cancer Institute, Smokefree.gov — "Prepare to quit" (smokefree.nci.nih.gov). Quit (quit.org.au, Cancer Council Victoria) — "Setting a quit date and preparing to quit" (quit.org.au): "önümüzdeki iki hafta içinde". (Daha geniş: American Cancer Society "bir ay içinde".) | Bırakma günü varsayılanı 14 gün; 14 günden uzak tarihte nötr not; bırakma gününden bir gün önce Nefes'in hazırlık cümlesi (0.12.0) |
 | Kendini izlemek tek başına davranışı değiştirebilir (reaktivite) | McFall RM. "Effects of self-monitoring on normal smoking behavior." *J Consult Clin Psychol*, 1970;35(2):135–142 | Pilot raporunda sınırlılık (ölçüm haftası "saf" değil) |
 | Doğru anda müdahale (JITAI) | Nahum-Shani I ve ark. "Just-in-Time Adaptive Interventions (JITAIs) in mobile health." *Ann Behav Med*, 2018;52(6):446–462 | OLED ekran önerisi (Bölüm 5) |
 | Kullanılabilirlik ölçeği (SUS) | Brooke J. "SUS: a 'quick and dirty' usability scale." 1996 | Pilot anketi (sonda) |
@@ -912,7 +999,10 @@ türe zorla kaynak bulmak, kaynaksız bırakmaktan daha kötü görünür.
 | Nefes molası: 6 tur × (4 sn al + 4 sn ver) ≈ 48 sn | Müdahale ayarı | Kısa nefes egzersizinin anlık etkisi: Shahab 2013. Ritim ekibin seçimi |
 | 7 günlük ölçüm haftası | Müdahale ayarı → gerekçe | Bir tam hafta içi + hafta sonu döngüsü (hafta sonu farkı büyük). Kaynak değil, ekip kararı |
 | Fagerström seçenekleri (5 / 6–30 / 31–60 / 60+ dk) | Kaynaklı ölçek | Heatherton 1991 |
-| Gün 04:00'te başlar (ilk sigara için) | Ekip kararı | Gece yarısından sonra yatmadan önce içilen sigara "günün ilk sigarası" sayılmasın |
+| Gün 04:00'te başlar (ilk sigara için; ölçümün aynı gün başlaması için) | Ekip kararı | Gece yarısından sonra yatmadan önce içilen sigara "günün ilk sigarası" sayılmasın; 04:00'ten önce bitirilen onboarding'de gün henüz başlamamış sayılır |
+| Hazırlık günü (ölçüm ertesi gün başlar) | Müdahale ayarı → gerekçe | Başlangıç noktası 7 tam günden ve bir hafta içi + hafta sonu döngüsünden oluşsun (Bölüm 11) |
+| Bırakma günü varsayılanı 14 gün; 14 günden uzaksa not | Müdahale ayarı → kaynak | NCI Smokefree, Quit (quit.org.au) (Bölüm 9) |
+| Bırakma günü takvimi en fazla 6 ay sonrası | Arayüz kararı | Azaltma hedefinin en uzun süresiyle (6 ay) aynı |
 | Zorluk eşikleri (%10 / %20 / %35), önerilen süreler | Ekip kararı (varsayım) | Ekranda sayı olarak gösterilmez, sadece etiket |
 | "Başladığından beri" için 7 gün bekleme | Arayüz kararı | "Şimdi" ölçüm haftasının kendisi olmasın |
 | Puanlar, dolap eşikleri, dinlenme günü, erteleme puanı günde ≤5 | Oyun kararı | Kaynak gerekmez |
@@ -943,6 +1033,7 @@ birebir doğrulayın):
 | 2+++ | Haftalık rapor + "bir günlük veri ekle" demo seçeneği (Özellik 2d) | ✅ Tamamlandı (11.10.2026, 0.8.0) |
 | 2+++++ | Azaltma hedefi + "Hedefim" sayfası (Özellik 2e; Aşama 3'ün bir kısmı) | ✅ Tamamlandı (11.10.2026, 0.9.0) |
 | 2+6 | "Başladığından beri" kartı, elle düzeltme, kaynaklı sayılar, korunan sürenin sadece sigarasız günlere bağlanması (Özellik 2g, 2h) | ✅ Tamamlandı (15.10.2026, 0.11.0) |
+| 3 (kısmi) | Bırakma günü (azaltarak / birden, geri sayım, sigarasız gün), azaltma hedefi bitince öneri, ölçüm haftası 7 tam gün (hazırlık günü) (Özellik 2c, 2i) | ✅ Tamamlandı (15.10.2026, 0.12.0) |
 | 3 | Süreç aşamaları (Özellik 3) | ⏳ Sıradaki |
 | 4 | Mesaj motoru + bildirimler (Özellik 4) | ⏳ Planlandı |
 | 5 | Para kumbarası (Özellik 5) | ⏳ Planlandı |
@@ -1027,7 +1118,11 @@ birebir doğrulayın):
 - [x] Azaltma: haftalık kademeli hedef (ölçüm ortalamasından), hedef kartı,
       Hedefim sayfası (0.9.0)
 - [ ] Hedefin altında kalınan gün için görev/rozet (açık soru, Bölüm 11)
-- [ ] Bırakma günü: tarih seçimi, ALO 171 ve poliklinik (MHRS) bilgisi
+- [x] Bırakma günü: tarih seçimi, azaltarak / birden, geri sayım,
+      bırakma gününden sonra sigarasız gün sayısı, ALO 171 ve poliklinik
+      (MHRS) bilgisi; azaltma hedefi bitince öneri (0.12.0)
+- [x] Ölçüm haftası 7 tam gün: gün ortasında başlandıysa hazırlık günü
+      (0.12.0)
 - [ ] Sürdürme: sigarasız süre sayacı + toplam sigarasız gün (sıfırlanmaz),
       WHO takvimi (metin doğrulanmalı). Son sigaradan beri geçen süre
       sayacı 0.10.0'da Bugün'e geldi (Özellik 2f); toplam sigarasız gün ve
@@ -1163,14 +1258,20 @@ birebir doğrulayın):
     haftalık rapor bunu zaten kapsıyor. Pilot uzarsa (≥ 4–5 haftalık rapor)
     ayrı bir rapor yerine haftalık raporlara "son 4 hafta" eğilim grafiği
     eklenmesi önerilir (aynı veri, tek giriş noktası).
-- **Açık soru — ölçüm haftasının ilk günü yarım:** Onboarding gün ortasında
-  biterse 1. gün eksik ölçülür; başlangıç noktası (günde ortalama) biraz
-  düşük çıkar ve 2. hafta raporu "biraz yoğun" diyebilir. Seçenekler:
-  ölçümü ertesi gün 00:00'dan başlatmak ya da ilk günü ortalamaya katmamak.
-  Ekip karar vermeli (`summarizeMeasurementWeek` tek yerden değişir).
-  **0.11.0'dan beri daha önemli:** başlangıç noktası artık "Başladığından
-  beri" kartının (ve pilotun ana sonuç sayısının) temeli; yarım ilk gün
-  azalmayı olduğundan küçük gösterir.
+- **Karar — ölçüm haftası 7 tam gün, ilk gün hazırlık günü (0.12.0):**
+  Onboarding gün ortasında biterse 1. gün eksik ölçülüyordu; başlangıç
+  noktası (günde ortalama) düşük, günün ilk sigarası geç çıkıyordu ve bu
+  sayı artık "Başladığından beri" kartının ve pilotun ana sonuç sayısının
+  temeli. İki seçenek vardı:
+  - *İlk günü ortalamaya katmamak:* bekleme yok ama başlangıç 6 günden
+    hesaplanır ve haftanın bir günü eksik kalır (ör. cumartesi öğleden
+    sonra başlayan birinde cumartesi hiç ölçülmez; hafta sonu farkı büyük).
+  - *Ölçümü ertesi gün 00:00'da başlatmak* ✅ **seçildi:** her başlangıç
+    noktası 7 tam günden ve bir tam hafta içi + hafta sonu döngüsünden
+    oluşur; haftalık raporların haftaları da tam 7 gün. Bedeli: özet bir
+    gün geç gelir (hazırlık günü). Gece 04:00'ten önce başlayan için aynı
+    gün başlar (gün henüz başlamadı; "günün ilk sigarası" kuralıyla aynı
+    sınır). Hazırlık günü kılıfı tanımak için de doğal bir gün.
 - **Karar — kullanılmayan sorular kaldırıldı (0.6.0):** Bkz. Özellik 1.
   **Pilot için demografi** (yaş aralığı, cinsiyet, kaç yıldır içtiği)
   gerekiyorsa uygulamada "kişiselleştirme" gibi sorulmamalı: ya pilot onam
@@ -1224,9 +1325,11 @@ birebir doğrulayın):
   - **Uygulama için çıkarım:** "Bırakmak" hedef ekranında azaltmayla eşit
     görünür (öyle). Azaltma son durak değil, bir bırakma tarihine giden
     yol olarak sunulmalı → Aşama 3'teki "Bırakma günü" öncelikli.
-  - **Açık soru:** Azaltma hedefi bitince Nefes nazikçe "Bir bırakma günü
-    seçmek ister misin?" diye önersin mi? (Baskı değil, öneri.) Ekip karar
-    vermeli.
+  - **Karar (0.12.0):** Azaltma hedefi tamamlanınca ya da süresi dolunca
+    Hedefim'de nazik bir "Bir sonraki adım: bırakma günü" kartı çıkar
+    (açılır pencere/bildirim değil; Özellik 2e madde 6). Bırakma günü
+    seçerken iki yol eşit sunulur, hiçbiri önceden seçili değil
+    (Özellik 2i).
 - **Karar — "günde kaç" sorusu kalır (0.11.0):** Kılıf ölçüyor diye
   kaldırılması tartışıldı; kaldı. Gerekçe Özellik 1'de (tahmin ölçümden
   önce sorulabilir; tahmin ↔ ölçüm farkı bir bulgu; HSI).
@@ -1288,3 +1391,4 @@ birebir doğrulayın):
 | 0.9.0 | Hedefim | Ölçüm haftası özetinin sonunda Duolingo tarzı hedef seçimi: ne kadar (%25 / %50 / %75 / bırakmak, yanında günlük karşılığı), ne kadar sürede (sayı + hafta/ay) ve hemen görünen zorluk (Rahat / Dengeli / İddialı / Çok iddialı + "her hafta günde yaklaşık 2 sigara"); isteğe bağlı kendine not (erteleme ekranındakiyle aynı not); ilk hedefe +10 puan. Hafta hafta inen günlük sınırlar. Tek bakışta "Hedefim" sayfası: Nefes'in cümlesi, başlangıç / şimdi / hedef ve ilerleme çubuğu, bu haftanın sınırı ve 7 günlük şerit (nane = hedefinde, gri = nötr), hedefinde kaldığın gün sayısı, bırakma hedefinde ALO 171 bilgisi. Bugün'de "Hedefim" kartı. Sınırın üstü asla ceza değil. Kutlamada uzun seri yazısı artık taşmıyor |
 | 0.10.0 | Son sigarandan beri | Bugün sekmesinde, erteleme butonunun üstünde canlı sayaç: 24 saatten az ise saat / dakika / saniye (her saniye ilerler), sonra gün / saat / dakika. İlk kayıttan sonra görünür; yeni sigarada sessizce sıfırlanır (mesaj, ses, renk değişimi, puan yok; seri değil). Ekran okuyucu tek cümle okur. İstatistik'teki "Son: … önce" yazısı kaldırıldı (aynı bilgi iki yerde olmasın) |
 | 0.11.0 | Başladığından beri | İstatistik'in en üstünde tek bakışta durum: başlangıca göre "%27 daha az", "Başlangıçta günde 15 → Şimdi günde 11" ve hafta hafta küçük grafik (takibin 15. gününden itibaren; artış nötr). Kılıf yanılırsa düzelt: onboarding'e "Kılıfın göremeyeceği sigaralar içtiğin olur mu?" sorusu, "Evet" diyenlere Bugün'de "ELLE SİGARA EKLE"; "Neden?" penceresinde "Bu sigarayı ben içmedim" (puan/ses/kutlama yok). Korunan yaşam süresi artık sadece sigarasız günlerden (Hackshaw 2018). "Neden soruyoruz?" metinleri gerçek gerekçeyi söylüyor. Ayarlar → Kaynaklar'a 10 dk erteleme, nefes molası ve tahmin sorusunun kaynakları; SPEC'e sayıların dayanağı tablosu, OLED ekran önerisi, pilot anketi ve "azaltarak mı birden mi" tartışması. "Son 7 gün ↔ önceki 7 gün" kartı kaldırıldı |
+| 0.12.0 | Bırakma günü | Hedef seçerken "Bırakmak" seçilince süre yerine bırakma günü: Bugün / 1 hafta / 2 hafta / 1 ay sonra ya da takvimden (varsayılan 2 hafta; rehberler 1–2 hafta öneriyor) ve yol: "O güne kadar azaltarak" ya da "O gün birden" (ikisi de geçerli, hiçbiri önceden seçili değil; kaynaklar "Neden soruyoruz?"da). Hedefim'de geri sayım, bırakma gününden sonra "Sigarasız gün" sayısı (sadece artar; kayma olursa "Kaldığın yerden devam"). Nefes bir gün önce hazırlık önerir, bırakma günü yanında olur. Azaltma hedefi bitince Hedefim'de "Bir sonraki adım: bırakma günü" önerisi. Ölçüm haftası artık 7 tam gün: gün ortasında başlandıysa bugün hazırlık günü, ölçüm yarın başlar ("Ölçüm yarın başlıyor"). Hedef akışında not yazınca oluşan çökme düzeltildi |

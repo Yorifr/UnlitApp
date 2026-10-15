@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/app.dart';
 import 'package:unlit/app_state.dart';
+import 'package:unlit/logic/measurement.dart';
 import 'package:unlit/logic/rewards.dart';
+import 'package:unlit/logic/stats.dart';
 import 'package:unlit/models/activity_log.dart';
 import 'package:unlit/models/goal.dart';
 import 'package:unlit/models/mascot_look.dart';
@@ -383,13 +385,34 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
+    // Süre yerine bırakma günü: önerilen 2 hafta sonra (rehberler 1–2 hafta).
+    expect(find.text('Bırakma günün ne zaman olsun?'), findsOneWidget);
+    expect(find.text('14 gün sonra'), findsOneWidget);
+    await tester.tap(find.text('1 hafta sonra'));
+    await tester.pumpAndSettle();
+    expect(find.text('7 gün sonra'), findsOneWidget);
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    // Yol önceden seçili değil: seçmeden ilerlenmez.
+    expect(find.text('Bırakma gününe nasıl gitmek istersin?'), findsOneWidget);
+    await tester.tap(find.text('HEDEFİMİ KAYDET'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bırakma gününe nasıl gitmek istersin?'), findsOneWidget);
+    await tester.tap(find.text('O gün birden'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('HEDEFİMİ KAYDET'));
     await tester.pumpAndSettle();
     expect(find.text('Hedefin güncellendi'), findsOneWidget);
+    expect(find.textContaining('Bırakma günün:'), findsOneWidget);
     await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
     expect(state.totalXp, xp);
     expect(state.goal!.isQuit, isTrue);
+    expect(state.goal!.quitMethod, QuitMethod.abrupt);
+    expect(state.goalStatus!.daysToQuit, 7);
+    // "O gün birden": bırakma gününe kadar sınır yok, geri sayım var.
+    expect(find.text('7 gün kaldı'), findsOneWidget);
+    expect(find.textContaining('Günde en fazla'), findsNothing);
     // Bırakma hedefinde destek bilgisi.
     await tester.scrollUntilVisible(
       find.text('Bırakırken yalnız değilsin'),
@@ -397,6 +420,92 @@ void main() {
       scrollable: find.byType(Scrollable).hitTestable().first,
     );
     expect(find.textContaining('ALO 171'), findsOneWidget);
+  });
+
+  testApp('azaltma hedefi tamamlanınca bırakma günü önerilir (büyük yazı)', (
+    tester,
+    state,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    tester.view.physicalSize = const Size(1080, 2340); // 360 px genişlik
+    await skipOnboarding(tester);
+
+    // Ölçüm haftası günde 10; son iki hafta günde 2 → %25 hedefi tamam.
+    final today = startOfDay(state.now);
+    List<SmokingEvent> day(int daysAgo, int count) => [
+      for (var h = 0; h < count; h++)
+        SmokingEvent(
+          time: addDays(today, -daysAgo).add(Duration(hours: 8 + h)),
+          source: EventSource.demo,
+        ),
+    ];
+    await state.replaceAll(
+      events: [
+        for (var d = 21; d > 14; d--) ...day(d, 10),
+        for (var d = 14; d > 0; d--) ...day(d, 2),
+      ],
+      activity: state.activity,
+      trackingStartedAt: addDays(today, -21),
+    );
+    await state.markMeasurementSummarySeen();
+    await state.setGoal(percent: 25, amount: 2, unit: GoalUnit.week);
+    await tester.pumpAndSettle();
+    expect(state.goalStatus!.reached, isTrue);
+
+    await scrollAndTap(tester, find.text('Hedefim'));
+    await tester.pumpAndSettle();
+    // Öneri bir kart; açılır pencere değil.
+    await tester.scrollUntilVisible(
+      find.text('Bir sonraki adım: bırakma günü'),
+      250,
+      scrollable: find.byType(Scrollable).hitTestable().first,
+    );
+    expect(find.text('Bir sonraki adım: bırakma günü'), findsOneWidget);
+    await scrollAndTap(tester, find.text('BIRAKMA GÜNÜ SEÇ'));
+    await tester.pumpAndSettle();
+
+    // "Bırakmak" seçili gelir.
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bırakma günün ne zaman olsun?'), findsOneWidget);
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, -400),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('O güne kadar azaltarak'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Bu hafta günde en fazla'), findsOneWidget);
+    await tester.drag(
+      find.byType(Scrollable).hitTestable().first,
+      const Offset(0, -400),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    // Not henüz yoktu: son adım not (boş geçilebilir).
+    await tester.tap(find.text('HEDEFİMİ KAYDET'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
+    expect(state.goal!.isQuit, isTrue);
+    expect(state.goal!.quitMethod, QuitMethod.gradual);
+    expect(state.goalStatus!.daysToQuit, 14); // önerilen: 2 hafta sonra
+    expect(find.textContaining('Bırakma gününe 14 gün'), findsWidgets);
+    for (var i = 0; i < 4; i++) {
+      await tester.drag(
+        find.byType(Scrollable).hitTestable().first,
+        const Offset(0, -400),
+      );
+      await tester.pumpAndSettle();
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testApp('haftalık rapor: Bugün\'de bir kez duyurulur, İstatistik\'te kalır', (
@@ -459,23 +568,33 @@ void main() {
     state,
   ) async {
     await skipOnboarding(tester);
-    expect(state.trackingDay, 1);
+    // Testler gerçek saatle çalışır: gün ortasında başlandıysa bugün
+    // hazırlık günü (0), gece 04:00'ten önceyse ölçüm bugün başlar (1).
+    final first = state.trackingDay!;
+    expect(first, state.now.hour < dayStartsAtHour ? 1 : 0);
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Ayarlar'));
     await tester.pumpAndSettle();
     expect(
-      find.textContaining('Şu an takibin 1. günü (1. hafta).'),
+      find.textContaining(
+        first == 0
+            ? 'Bugün hazırlık günü; ölçüm haftası yarın başlıyor.'
+            : 'Şu an takibin 1. günü (1. hafta).',
+      ),
       findsOneWidget,
     );
 
     await scrollAndTap(tester, find.text('Bir günlük veri ekle'));
     await tester.pumpAndSettle();
-    expect(state.trackingDay, 2);
+    expect(state.trackingDay, first + 1);
     expect(state.events, isNotEmpty);
-    expect(find.text('Bir gün geçti: takibin 2. günü.'), findsOneWidget);
     expect(
-      find.textContaining('Şu an takibin 2. günü (1. hafta).'),
+      find.text('Bir gün geçti: takibin ${first + 1}. günü.'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Şu an takibin ${first + 1}. günü (1. hafta).'),
       findsOneWidget,
     );
   });
@@ -485,7 +604,16 @@ void main() {
     state,
   ) async {
     await skipOnboarding(tester);
-    expect(state.measurementDay, 1);
+    // Hazırlık günü (0) ya da ölçümün 1. günü (gece 04:00'ten önce).
+    expect(state.measurementDay, state.now.hour < dayStartsAtHour ? 1 : 0);
+    expect(
+      find.text(
+        state.measurementDay == 0
+            ? 'Ölçüm yarın başlıyor'
+            : 'Ölçüm: 1. gün / 7',
+      ),
+      findsOneWidget,
+    );
     // Puan üst çubukta yok (sadece seri); Profil'de ve kutlamalarda var.
     expect(find.byTooltip('Toplam XP'), findsNothing);
     await tester.tap(find.text('İstatistik'));

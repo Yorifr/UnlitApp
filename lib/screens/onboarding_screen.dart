@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../logic/measurement.dart';
 import '../logic/rewards.dart';
+import '../logic/stats.dart';
 import '../models/user_profile.dart';
 import '../services/effects.dart';
 import '../theme.dart';
@@ -429,6 +431,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _donePage() {
     final theme = Theme.of(context);
     final c = AppColors.of(context);
+    // Gün ortasında başlandıysa ölçüm yarın başlar: ölçüm haftası 7 TAM gün
+    // olsun (bkz. logic/measurement.dart → trackingStartFor).
+    final now = widget.state.now;
+    final startText = trackingStartFor(now) == startOfDay(now)
+        ? 'Ölçüm haftan bugün başlıyor'
+        : 'Ölçüm haftan yarın başlıyor; bugün kılıfını tanı';
     return Stack(
       children: [
         SingleChildScrollView(
@@ -471,7 +479,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'İlk hafta ölçüm haftası: hiçbir şeyi değiştirmeye çalışma, '
+                '$startText. 7 tam gün boyunca hiçbir şeyi değiştirmeye çalışma, '
                 'kılıfını yanında taşı; ben de alışkanlıklarını tanıyayım. '
                 'Hafta bitince sonuçlarını birlikte göreceğiz.\n\n'
                 'Her gün 3 küçük görevin olacak. Yaptıkça puan kazanır, '

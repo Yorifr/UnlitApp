@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../logic/goal.dart';
 import '../logic/mascot_messages.dart';
 import '../logic/quests.dart';
 import '../logic/rewards.dart';
@@ -220,6 +221,7 @@ class TodayTab extends StatelessWidget {
           delayActive: state.activeDelayStart != null,
           measurementSummaryPending: state.measurementSummaryPending,
           weeklyReportWeek: reportWeek,
+          daysToQuit: state.goalStatus?.daysToQuit,
         );
         final todayEvents = _todayEvents();
         final events = state.events;
@@ -325,7 +327,9 @@ class _TopBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'Ölçüm: $day. gün / $measurementDays',
+                      day == 0
+                          ? 'Ölçüm yarın başlıyor'
+                          : 'Ölçüm: $day. gün / $measurementDays',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelMedium
@@ -507,18 +511,35 @@ class _GoalEntry extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            status.ended
-                ? 'Hedef süren doldu; yeni bir süre seçebilirsin.'
-                : 'Bu hafta günde en fazla ${status.limit} sigara',
-            style: theme.textTheme.titleMedium,
-          ),
+          Text(_goalText(status), style: theme.textTheme.titleMedium),
           const SizedBox(height: 10),
           ChunkyProgressBar(value: status.progress),
         ],
       ),
     );
   }
+}
+
+/// "Hedefim" kartındaki tek cümle.
+String _goalText(GoalStatus status) {
+  if (status.goal.isQuit) {
+    final days = status.daysToQuit ?? 0;
+    if (days == 0) return 'Bugün bırakma günün';
+    if (days == 1) return 'Yarın bırakma günün';
+    if (days > 1) {
+      final limit = status.limit;
+      return limit == null
+          ? 'Bırakma gününe $days gün'
+          : 'Bırakma gününe $days gün · bu hafta günde en fazla $limit';
+    }
+    // Bırakma gününden sonra: sigarasız günler (sadece artar).
+    return status.smokeFreeDays > 0
+        ? 'Sigarasız gün: ${status.smokeFreeDays}'
+        : 'Her sigarasız gün burada sayılır';
+  }
+  return status.ended
+      ? 'Hedef süren doldu; yeni bir süre seçebilirsin.'
+      : 'Bu hafta günde en fazla ${status.limit} sigara';
 }
 
 /// Günlük görevler kartı.
