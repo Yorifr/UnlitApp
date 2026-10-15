@@ -84,6 +84,52 @@ String formatTimeAgo(DateTime time, DateTime now) {
   return '${minutes ~/ (24 * 60)} gün önce';
 }
 
+// ---------- "Son sigarandan beri" sayacı ----------
+
+/// Sayacın bir kutusu: sayı + birimi (ör. 5 ve "saniye" → kutuda "05").
+class CounterPart {
+  const CounterPart(this.value, this.unit, {this.twoDigits = true});
+
+  final int value;
+
+  /// "gün", "saat", "dakika" ya da "saniye"
+  final String unit;
+
+  /// Saat, dakika ve saniye iki basamakla yazılır ("05"), gün yazılmaz ("3").
+  final bool twoDigits;
+
+  /// Kutuda görünen yazı.
+  String get text => twoDigits ? _twoDigits(value) : '$value';
+}
+
+/// Sayaç için süreyi 3 kutuya böler:
+/// - 24 saatten azsa saat / dakika / saniye: 2 sa 14 dk 5 sn → 02 · 14 · 05
+/// - 24 saat ve fazlasıysa gün / saat / dakika: → 3 · 04 · 12 (saniye artık
+///   gösterilmez, ekran sakin kalsın)
+///
+/// Eksi süre (ör. telefonun saati geri alınırsa) 0 sayılır.
+List<CounterPart> sinceCounterParts(Duration elapsed) {
+  final totalSeconds = elapsed.isNegative ? 0 : elapsed.inSeconds;
+  const secondsPerDay = 24 * 60 * 60;
+  final days = totalSeconds ~/ secondsPerDay;
+  final hours = (totalSeconds % secondsPerDay) ~/ 3600;
+  final minutes = (totalSeconds % 3600) ~/ 60;
+  final seconds = totalSeconds % 60;
+
+  if (days == 0) {
+    return [
+      CounterPart(hours, 'saat'),
+      CounterPart(minutes, 'dakika'),
+      CounterPart(seconds, 'saniye'),
+    ];
+  }
+  return [
+    CounterPart(days, 'gün', twoDigits: false),
+    CounterPart(hours, 'saat'),
+    CounterPart(minutes, 'dakika'),
+  ];
+}
+
 /// Ondalık sayı, virgülle ve tek basamakla: 17.33 → "17,3", 15.0 → "15"
 String formatDecimal(double value) {
   final rounded = (value * 10).round() / 10;

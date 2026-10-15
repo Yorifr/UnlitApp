@@ -4,13 +4,13 @@
 > bağlam vermek için buradan başlayın. **Her aşama bitince "Aşama planı ve
 > durum" ile "Sürüm geçmişi" bölümlerini güncelleyin.**
 
-Son güncelleme: 11 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
+Son güncelleme: 15 Ekim 2026 — Aşama 2 (Duolingo tarzı tasarım ve
 oyunlaştırma), ses/titreşim efektleri, tarihli paket fiyatı, kendi renk
 teması ("Nane"), sadeleştirme (0.6.0: 4 soruluk onboarding, ölçüm haftası
 özeti, "Kazandıkların"), Nefes 2.0 + "Nefes'in dolabı" (0.7.0) ve haftalık
 rapor + "bir günlük veri ekle" demo seçeneği (0.8.0), erteleme
-ekranında kişisel cümle (0.8.1) ve azaltma hedefi + "Hedefim" sayfası
-(0.9.0) tamamlandı.
+ekranında kişisel cümle (0.8.1), azaltma hedefi + "Hedefim" sayfası
+(0.9.0) ve Bugün'de "Son sigarandan beri" sayacı (0.10.0) tamamlandı.
 
 ---
 
@@ -207,6 +207,10 @@ suçluluk duymasın**.
    gri). "Hedefinde kaldığın gün" sayısı sadece artar. Nefes sınırı aşılan
    günlerden hiç bahsetmez; süre dolduysa suçlamadan yeni bir süre önerir.
    Hedef her an değiştirilebilir.
+13. **"Son sigarandan beri" sayacı bir seri değildir** (0.10.0; ayrıntı
+   Özellik 2f): yeni sigara gelince **sessizce** sıfırdan başlar: mesaj,
+   ses, titreşim, renk değişimi yok. Puan vermez, rekor ("en uzun ara")
+   tutmaz, kutlama tetiklemez; filiz ve dolap ona bağlı değildir.
 
 ## 4. Özellikler (tam vizyon)
 
@@ -250,7 +254,9 @@ suçluluk duymasın**.
 - Sonunda konfetili "Hazırsın!" ekranı ve +10 puan.
 
 ### Özellik 2 — Ana ekran ✅ (Aşama 1; Aşama 2'de "İstatistik" sekmesine taşındı)
-- Bugünkü sigara sayısı (+ bugünkü ilk sigara saati, son sigaradan geçen süre)
+- Bugünkü sigara sayısı (+ bugünkü ilk sigara saati). Son sigaradan geçen
+  süre 0.10.0'dan beri burada değil, Bugün sekmesindeki sayaçta (Özellik
+  2f; aynı bilgi iki yerde olmasın).
 - Geçen haftayla karşılaştırma:
   - Bugün ↔ geçen haftanın aynı günü, **aynı saate kadar**
   - Son 7 gün ↔ önceki 7 gün (yüzde değişim; azalma varsa kart nane renkli)
@@ -364,7 +370,7 @@ en uzun seri, toplam puan, ertelenen istekler).
 
   | Veri | Nerede kullanıcıya döner |
   |---|---|
-  | Sigara sayısı/saati | İstatistik (bugün, haftalık karşılaştırma, grafik), ölçüm özeti, haftalık rapor, Bugün'deki maskot cümlesi |
+  | Sigara sayısı/saati | İstatistik (bugün, haftalık karşılaştırma, grafik), ölçüm özeti, haftalık rapor, Bugün'deki maskot cümlesi ve "Son sigarandan beri" sayacı (0.10.0) |
   | Onboarding tahminleri | Ölçüm özetinde ölçülenle yan yana |
   | İşaretlenen nedenler | Ölçüm özeti (1. hafta), haftalık rapor (en sık neden + öneri) |
   | Ruh hali | O günün maskot cümlesi/kutlaması (zor gün → sakin), haftalık rapor (dağılım) |
@@ -426,6 +432,31 @@ en uzun seri, toplam puan, ertelenen istekler).
 - Kod: `lib/models/goal.dart`, `lib/logic/goal.dart`,
   `lib/screens/goal_setup_screen.dart`, `lib/screens/goal_screen.dart`.
 
+### Özellik 2f — "Son sigarandan beri" sayacı ✅ (0.10.0)
+- **Nerede?** Bugün sekmesinde, maskotun cümlesinin altında ve **CANIM
+  SİGARA İSTİYOR** butonunun hemen üstünde: istek geldiğinde ne kadar
+  zamandır içmediğini görürsün. İlk sigara kaydından sonra görünür
+  (öncesinde sayacak bir şey yok).
+- **Biçim:** 3 kutu (büyük sayı + altında birim):
+  - 24 saatten az: **saat / dakika / saniye** (her saniye ilerler):
+    `02 saat · 14 dakika · 05 saniye`
+  - 24 saat ve fazlası: **gün / saat / dakika** (saniye gösterilmez, ekran
+    sakin kalsın): `3 gün · 04 saat · 12 dakika`
+- Süre sayılarak değil, her saniye "şimdi − son sigaranın zamanı" diye
+  yeniden hesaplanır: uygulama arka planda kalsa ya da telefon kilitlense
+  bile doğru. Eksi süre (saat geri alınırsa) 0 gösterilir.
+- **Kurallar** (Bölüm 3, madde 13): Yeni sigara gelince sessizce sıfırlanır;
+  mesaj, ses, titreşim, renk değişimi yok. Puan, rekor, kutlama yok. Renk
+  nane (nötr, olumlu); kırmızı ya da yaprak (seri) rengi değil.
+- Uyku da süreye dahildir (sabahları sayaç birkaç saatten başlar); bu
+  doğru bir bilgidir, ayrıca bir şey yapılmadı.
+- Ekran okuyucu kutuları tek tek değil, tek cümle okur: "Son sigarandan
+  beri 2 saat 14 dakika 5 saniye".
+- İstatistik'teki "Son: 3 sa önce" yazısı kaldırıldı (tek giriş noktası).
+- Kod: `lib/widgets/since_last_counter.dart` (sayaç), `sinceCounterParts`
+  (`lib/utils/format.dart`, süreyi 3 kutuya böler; testli).
+- Açık soru: ölçüm haftasında da görünüyor (bkz. Bölüm 11).
+
 ### Özellik 3 — Süreç aşamaları ⏳ Aşama 3
 Ölçüm → Farkındalık → Azaltma → Bırakma günü → Sürdürme
 - **Ölçüm (1 hafta):** sadece veri toplanır, **hiç mesaj yok**. (Aşama 2'de
@@ -437,7 +468,8 @@ en uzun seri, toplam puan, ertelenen istekler).
 - **Bırakma günü:** kullanıcı tarih seçer; **ALO 171** (Sigara Bırakma
   Danışma Hattı) ve **sigara bırakma polikliniği** (MHRS üzerinden randevu)
   yönlendirmesi.
-- **Sürdürme:** sigarasız gün sayacı, **WHO iyileşme takvimi** (bkz.
+- **Sürdürme:** sigarasız gün sayacı (son sigaradan beri geçen süre
+  0.10.0'da Bugün'de; bkz. Özellik 2f), **WHO iyileşme takvimi** (bkz.
   Bölüm 9). Perhiz ihlali etkisine karşı: sayaç **toplam sigarasız günü**
   de gösterir (asla sıfırlanmaz); kayma olursa suçlamadan, "kaldığın yerden
   devam" diliyle ele alınır.
@@ -524,7 +556,7 @@ lib/
 ├── screens/
 │   ├── onboarding_screen.dart Tek soru = tek ekran
 │   ├── main_screen.dart       Alt menü + 3 sekme
-│   ├── today_tab.dart         Bugün: maskot, görevler, erteleme
+│   ├── today_tab.dart         Bugün: maskot, sayaç, görevler, erteleme
 │   ├── stats_tab.dart         İstatistik: sayılar, grafik, maliyet
 │   ├── profile_tab.dart       Profil: seri, puan, dolap kartı, başarılar
 │   ├── delay_screen.dart      10 dk erteleme
@@ -547,6 +579,7 @@ lib/
     ├── reason_note.dart       "Kendine bir not" penceresi + kartı
     ├── onboarding_inputs.dart Seçenek kutuları, sayı seçici, ölçek
     ├── change_chip.dart       Fark rozeti ("2 az" nane / "3 fazla" nötr)
+    ├── since_last_counter.dart "Son sigarandan beri" sayacı (her saniye)
     ├── bar_chart.dart, stat_tile.dart, privacy_banner.dart
 assets/fonts/                  Nunito (SIL OFL), uygulamaya gömülü
 assets/sounds/                 Ses efektleri (sentez, telif yok)
@@ -658,7 +691,8 @@ tool/make_sounds.py            Ses efektlerini üreten betik (Python + numpy)
   düzenleme modunda paket fiyatı sorusu YOKTUR (fiyatın kendi yeri var).
 - **Bugün:** ölçüm rozeti + seri; demo uyarısı (+1 sigara); maskot
   cümlesi (+ hafta bitince "SONUÇLARIMI GÖR", sonraki haftalarda "RAPORUMU
-  GÖR"); "CANIM SİGARA İSTİYOR"; "Hedefim" kartı (ölçüm özeti görülünce;
+  GÖR"); "Son sigarandan beri" sayacı (ilk kayıttan sonra; 0.10.0);
+  "CANIM SİGARA İSTİYOR"; "Hedefim" kartı (ölçüm özeti görülünce;
   hedef yoksa "Bir hedef seç");
   günlük görevler; bugünkü sigaralar ve "Neden?" etiketleri.
 - **Hedef seçme / Hedefim** (0.9.0): bkz. Özellik 2e.
@@ -838,7 +872,9 @@ birebir doğrulayın):
 - [ ] Hedefin altında kalınan gün için görev/rozet (açık soru, Bölüm 11)
 - [ ] Bırakma günü: tarih seçimi, ALO 171 ve poliklinik (MHRS) bilgisi
 - [ ] Sürdürme: sigarasız süre sayacı + toplam sigarasız gün (sıfırlanmaz),
-      WHO takvimi (metin doğrulanmalı)
+      WHO takvimi (metin doğrulanmalı). Son sigaradan beri geçen süre
+      sayacı 0.10.0'da Bugün'e geldi (Özellik 2f); toplam sigarasız gün ve
+      WHO takvimi kaldı.
 - [ ] Kayma için suçlamasız akış
 - [ ] Aşamalar arası geçiş: otomatik öneri + kullanıcı onayı
 - [ ] Testler
@@ -943,6 +979,20 @@ birebir doğrulayın):
     hemen sonra kutlama/mesaj yok kuralı).
   - *Riskli saat kartı* ("genelde 15:00'te zorlanıyorsun"): Aşama 4 ile;
     sigarayı hatırlatıp isteği tetikleyebileceği için önce denenmeli.
+- **Karar — "Son sigarandan beri" sayacı (0.10.0):** Bölüm 3'te
+  "sigarasız gün serisi" bilerek yok (perhiz ihlali etkisi, Marlatt &
+  Gordon 1985). Bu sayaç da her sigarada sıfırlanır, yani aynı risk biraz
+  var. Riski küçültmek için seri gibi davranmaz: puan, rekor, kutlama,
+  "serin bozuldu" yok; sıfırlanırken mesaj/ses/renk değişimi yok; filiz ve
+  dolap ona bağlı değil. Sayaç sadece bilgi verir. Pilotta kullanıcılara
+  "sayaç sıfırlanınca nasıl hissettin?" diye sorulması önerilir.
+  - **Açık soru — ölçüm haftasında gösterilsin mi?** Şu an ilk kayıttan
+    itibaren görünüyor. Ölçüm haftasında Nefes "hiçbir şeyi değiştirmeye
+    çalışma" diyor; göz önünde ilerleyen bir sayaç bazı kullanıcıları
+    beklemeye itip başlangıç noktasını biraz düşürebilir (erteleme butonu
+    gibi; bkz. "Oyunlaştırma ve ölçüm"). Seçenek: sayacı ölçüm haftası
+    bitince açmak (kademeli açılım, `today_tab.dart`'ta tek koşul). Ekip
+    karar vermeli.
 - **Karar — haftalık rapor var; günlük ve aylık rapor yok (0.8.0):**
   - *Günlük rapor:* Bugün sekmesi ve İstatistik'teki "bugün" kartı zaten
     günün sayılarını gösteriyor; her akşam gelen bir "gün karnesi", ağır bir
@@ -1016,3 +1066,4 @@ birebir doğrulayın):
 | 0.8.0 | Haftalık rapor | Her hafta bitince kısa bir rapor: Nefes'in kişisel cümlesi (önce olumlu olan), bu hafta ve önceki hafta + 7 günün grafiği, örüntün (en yoğun saat, ilk sigara, en sık neden), kendine iyi baktığın anlar (görev günleri, ertelemeler, nefes, puan, ruh hali dağılımı), varsa haftanın kazancı ve en sık nedene göre "gelecek hafta için bir fikir"; Bugün'de bir kez "RAPORUMU GÖR", İstatistik'te "Haftalık raporların" listesi (1. hafta = ölçüm özeti); demo'ya "Bir günlük veri ekle" (sanki bir gün geçmiş gibi, ölçüm haftasını ve raporları gün gün izlemek için); onboarding'de yazı tipinde olmayan "→" karakteri kaldırıldı |
 | 0.8.1 | Kendi başarın | Erteleme ekranında Nefes, daha önce atlattığın istekleri senin verinle hatırlatır ("Daha önce 6 isteği atlattın; istekler genelde 7 dakika içinde geçti."); sadece başarılı ertelemeler sayılır, yeni kart eklenmedi; demo ertelemeleri artık 4–10 dakikada geçebiliyor |
 | 0.9.0 | Hedefim | Ölçüm haftası özetinin sonunda Duolingo tarzı hedef seçimi: ne kadar (%25 / %50 / %75 / bırakmak, yanında günlük karşılığı), ne kadar sürede (sayı + hafta/ay) ve hemen görünen zorluk (Rahat / Dengeli / İddialı / Çok iddialı + "her hafta günde yaklaşık 2 sigara"); isteğe bağlı kendine not (erteleme ekranındakiyle aynı not); ilk hedefe +10 puan. Hafta hafta inen günlük sınırlar. Tek bakışta "Hedefim" sayfası: Nefes'in cümlesi, başlangıç / şimdi / hedef ve ilerleme çubuğu, bu haftanın sınırı ve 7 günlük şerit (nane = hedefinde, gri = nötr), hedefinde kaldığın gün sayısı, bırakma hedefinde ALO 171 bilgisi. Bugün'de "Hedefim" kartı. Sınırın üstü asla ceza değil. Kutlamada uzun seri yazısı artık taşmıyor |
+| 0.10.0 | Son sigarandan beri | Bugün sekmesinde, erteleme butonunun üstünde canlı sayaç: 24 saatten az ise saat / dakika / saniye (her saniye ilerler), sonra gün / saat / dakika. İlk kayıttan sonra görünür; yeni sigarada sessizce sıfırlanır (mesaj, ses, renk değişimi, puan yok; seri değil). Ekran okuyucu tek cümle okur. İstatistik'teki "Son: … önce" yazısı kaldırıldı (aynı bilgi iki yerde olmasın) |

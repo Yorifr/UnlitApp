@@ -44,6 +44,30 @@ void main() {
     );
   });
 
+  test('sayaç: 24 saatten az saat/dakika/saniye, sonra gün/saat/dakika', () {
+    String show(Duration d) =>
+        sinceCounterParts(d).map((p) => '${p.text} ${p.unit}').join(' ');
+
+    expect(show(Duration.zero), '00 saat 00 dakika 00 saniye');
+    expect(
+      show(const Duration(hours: 2, minutes: 14, seconds: 5)),
+      '02 saat 14 dakika 05 saniye',
+    );
+    expect(
+      show(const Duration(hours: 23, minutes: 59, seconds: 59)),
+      '23 saat 59 dakika 59 saniye',
+    );
+    // Tam 24 saat → gün başlar, saniye artık gösterilmez.
+    expect(show(const Duration(hours: 24)), '1 gün 00 saat 00 dakika');
+    expect(
+      show(const Duration(days: 3, hours: 4, minutes: 12, seconds: 59)),
+      '3 gün 04 saat 12 dakika',
+    );
+    expect(show(const Duration(days: 120)), '120 gün 00 saat 00 dakika');
+    // Telefonun saati geri alınırsa eksi süre 0 sayılır.
+    expect(show(const Duration(minutes: -5)), '00 saat 00 dakika 00 saniye');
+  });
+
   test('fiyat yazımı ve okunması', () {
     expect(parsePrice('95,50'), 95.5);
     expect(parsePrice(' 110 '), 110);

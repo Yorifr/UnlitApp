@@ -14,6 +14,7 @@ import '../utils/format.dart';
 import '../widgets/chunky.dart';
 import '../widgets/mascot.dart';
 import '../widgets/pickers.dart';
+import '../widgets/since_last_counter.dart';
 import 'breathing_screen.dart';
 import 'celebration_screen.dart';
 import 'delay_screen.dart';
@@ -22,8 +23,8 @@ import 'goal_setup_screen.dart';
 import 'measurement_summary_screen.dart';
 import 'weekly_report_screen.dart';
 
-/// "Bugün" sekmesi: maskot, erteleme butonu, günlük görevler ve bugünkü
-/// sigaralar. Uygulamanın kalbi burası.
+/// "Bugün" sekmesi: maskot, "son sigarandan beri" sayacı, erteleme butonu,
+/// günlük görevler ve bugünkü sigaralar. Uygulamanın kalbi burası.
 ///
 /// Sade tutuyoruz: her iş için TEK bir giriş noktası var (ör. ruh hali sadece
 /// "Kendini dinle" görevinden seçilir). Üst çubukta sadece seri var; puan
@@ -161,6 +162,8 @@ class TodayTab extends StatelessWidget {
           weeklyReportWeek: reportWeek,
         );
         final todayEvents = _todayEvents();
+        final events = state.events;
+        final lastTime = events.isEmpty ? null : events.last.time;
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -189,6 +192,13 @@ class TodayTab extends StatelessWidget {
                 icon: Icons.event_note_outlined,
                 onPressed: () => _openWeeklyReport(context, reportWeek),
               ),
+            ],
+            // "Son sigarandan beri" sayacı: ilk kayıttan sonra görünür (öncesinde
+            // sayacak bir şey yok). Erteleme butonunun hemen üstünde: istek
+            // geldiğinde ne kadar zamandır içmediğini görürsün.
+            if (lastTime != null) ...[
+              const SizedBox(height: 20),
+              SinceLastCounter(last: lastTime, clock: () => state.now),
             ],
             const SizedBox(height: 20),
             _DelayEntry(state: state, onOpen: () => _openDelay(context)),
