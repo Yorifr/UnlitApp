@@ -107,8 +107,14 @@ Future<Mood?> showMoodSheet(BuildContext context) {
 
 /// Neden penceresinin sonucu. ([trigger] null ise neden kaldırıldı.)
 class TriggerChoice {
-  const TriggerChoice(this.trigger);
+  const TriggerChoice(this.trigger) : notMine = false;
+
+  /// "Bu sigarayı ben içmedim": kayıt silinmek isteniyor (kılıf yanlış
+  /// saydı, ör. sigarayı bir arkadaşına verdin).
+  const TriggerChoice.notMine() : trigger = null, notMine = true;
+
   final SmokingTrigger? trigger;
+  final bool notMine;
 }
 
 /// "Bu sigara neden?" penceresi. Vazgeçilirse null döner.
@@ -176,6 +182,18 @@ Future<TriggerChoice?> showTriggerSheet(
                       Navigator.of(context).pop(const TriggerChoice(null)),
                 ),
               ],
+              // Kılıf bazen yanlış sayabilir: kaydı düzeltmenin tek yeri
+              // burası. Bilerek küçük ve nötr (kırmızı değil).
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pop(const TriggerChoice.notMine()),
+                  icon: const Icon(Icons.remove_circle_outline, size: 20),
+                  label: const Text('BU SİGARAYI BEN İÇMEDİM'),
+                  style: TextButton.styleFrom(foregroundColor: c.textMuted),
+                ),
+              ),
             ],
           ),
         ),

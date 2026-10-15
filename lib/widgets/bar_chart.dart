@@ -9,14 +9,20 @@ class BarChartItem {
   const BarChartItem({
     required this.label,
     required this.value,
+    this.valueLabel,
     this.highlight = false,
   });
 
   /// Çubuğun altındaki yazı ("Pzt", "09" gibi). Boş bırakılabilir.
   final String label;
 
-  /// Çubuğun değeri (sigara sayısı).
-  final int value;
+  /// Çubuğun değeri (sigara sayısı ya da günlük ortalama gibi kesirli bir
+  /// sayı).
+  final num value;
+
+  /// Çubuğun üstünde yazacak metin (boşsa [value] yazılır). Kesirli
+  /// sayılarda Türkçe virgül için: "14,6".
+  final String? valueLabel;
 
   /// Vurgulu çubuk (ör. bugün) koyu renkte çizilir.
   final bool highlight;
@@ -53,7 +59,7 @@ class SimpleBarChart extends StatelessWidget {
     final textStyle = Theme.of(context).textTheme.labelSmall
         ?.copyWith(color: c.textMuted);
     // En büyük değer, çubukların ölçeğini belirler (en az 1, sıfıra bölme olmasın).
-    final maxValue = max(1, items.fold<int>(0, (m, i) => max(m, i.value)));
+    final maxValue = max(1, items.fold<num>(0, (m, i) => max(m, i.value)));
     final gap = items.length > 12 ? 1.5 : 5.0;
 
     return Semantics(
@@ -78,7 +84,10 @@ class SimpleBarChart extends StatelessWidget {
                             SizedBox(
                               height: _labelHeight,
                               child: showValues && item.value > 0
-                                  ? _CenteredLabel('${item.value}', textStyle)
+                                  ? _CenteredLabel(
+                                      item.valueLabel ?? '${item.value}',
+                                      textStyle,
+                                    )
                                   : null,
                             ),
                             const SizedBox(height: 4),

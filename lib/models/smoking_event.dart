@@ -11,8 +11,9 @@ class SmokingEvent {
   /// Sigaranın alındığı an (telefonun yerel saatiyle).
   final DateTime time;
 
-  /// Olayın nereden geldiği: demo verisi mi, gerçek kılıf mı?
-  /// Gerçek kılıfa geçince demo kayıtlarını ayırt edip silebilmek için tutuyoruz.
+  /// Olayın nereden geldiği: demo verisi mi, gerçek kılıf mı, elle mi?
+  /// Gerçek kılıfa geçince demo kayıtlarını ayırt edip silebilmek için
+  /// tutuyoruz. (Pilotta "kılıf ne kadarını gördü?" sorusu için de işe yarar.)
   final EventSource source;
 
   /// Kullanıcının işaretlediği neden (kahve, stres...). İsteğe bağlı.
@@ -50,4 +51,8 @@ enum EventSource {
 
   /// Gerçek akıllı kılıftan gelen olay.
   device,
+
+  /// Kullanıcının elle eklediği sigara: kılıfın göremediği (ör. arkadaşından
+  /// aldığı ya da başka bir paketten) bir sigara. (0.11.0)
+  manual,
 }

@@ -226,7 +226,7 @@ GoalStatus goalStatus({
   }
 
   // "Şimdi": son 7 tamamlanmış gün (dün dahil, bugün hariç).
-  final current = countBetween(events, addDays(today, -7), today) / 7;
+  final current = lastSevenDaysAverage(events, now);
 
   // İlerleme: başlangıçtan hedefe yolun ne kadarı yüründü.
   final span = goal.baseline - target;

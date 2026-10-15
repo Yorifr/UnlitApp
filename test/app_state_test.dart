@@ -87,6 +87,49 @@ void main() {
     expect(state.streak.current, 1);
   });
 
+  group('elle düzeltme', () {
+    test('kılıfın görmediği sigara elle eklenir; puan götürmez', () async {
+      await state.completeOnboarding(UserProfile(smokesOutsideCase: true));
+      final xpBefore = state.totalXp;
+      await state.addManualEvent(DateTime(2026, 10, 10, 9, 30));
+      expect(state.events.single.source, EventSource.manual);
+      expect(state.events.single.time, DateTime(2026, 10, 10, 9, 30));
+      expect(state.totalXp, xpBefore);
+      expect(state.streak.current, 1);
+      // Kalıcı olarak saklanır.
+      expect(state.storage.loadEvents().single.source, EventSource.manual);
+    });
+
+    test('gelecekteki saat "şimdi" sayılır', () async {
+      await state.completeOnboarding(UserProfile());
+      await state.addManualEvent(now.add(const Duration(hours: 2)));
+      expect(state.events.single.time, now);
+    });
+
+    test('aynı anda bir kayıt varsa bir saniye kaydırılır', () async {
+      await state.completeOnboarding(UserProfile());
+      device.emit(now);
+      await Future<void>.delayed(Duration.zero);
+      await state.addManualEvent(now);
+      expect(state.events.length, 2);
+      expect(state.events.last.time, now.add(const Duration(seconds: 1)));
+    });
+
+    test('"bu sigarayı ben içmedim": kayıt silinir, puan kalır', () async {
+      await state.completeOnboarding(UserProfile());
+      device.emit(now);
+      await Future<void>.delayed(Duration.zero);
+      await state.tagEvent(state.events.first, SmokingTrigger.coffee);
+      final xpBefore = state.totalXp;
+
+      await state.removeEvent(state.events.first);
+      expect(state.events, isEmpty);
+      expect(state.storage.loadEvents(), isEmpty);
+      // Puan asla düşmez: görevin puanı kalır.
+      expect(state.totalXp, xpBefore);
+    });
+  });
+
   test('neden işaretlemek görevi tamamlar ve kaydedilir', () async {
     await state.completeOnboarding(UserProfile());
     device.emit(now);

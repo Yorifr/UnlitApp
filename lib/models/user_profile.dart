@@ -20,18 +20,27 @@ class UserProfile {
   UserProfile({
     this.cigarettesPerDay,
     this.firstCigarette,
+    this.smokesOutsideCase,
     Set<SmokingTrigger>? triggers,
     this.reasonNote,
   }) : triggers = triggers ?? {};
 
   /// Günde ortalama kaç sigara içtiği (kullanıcının kendi tahmini).
-  /// Ölçüm haftası özetinde kılıfın saydığıyla yan yana gösterilir; demo
-  /// kılıf da sahte veriyi buna yakın üretir.
+  /// Ölçüm haftası özetinde kılıfın saydığıyla yan yana gösterilir. Bu
+  /// yüzden ölçümden ÖNCE sorulur: sonra sorsak kullanıcı sayıyı görmüş
+  /// olurdu. (Demo kılıf da sahte veriyi buna yakın üretir.)
   int? cigarettesPerDay;
 
   /// Uyandıktan sonra ilk sigarayı ne zaman içtiği (Fagerström testi 1. soru).
-  /// Ölçüm haftası özetinde gösterilir; demo kılıf da buna göre davranır.
+  /// Kılıf saati bilir ama kişinin ne zaman uyandığını bilemez; bu yüzden
+  /// sorulur. Ölçüm haftası özetinde gösterilir; demo kılıf da buna göre
+  /// davranır.
   FirstCigaretteTime? firstCigarette;
+
+  /// Kılıfın göremediği sigaralar olur mu? (Başkasının paketinden, ikinci
+  /// bir paketten, sarma...) true ise "Bugün" sekmesinde "ELLE SİGARA EKLE"
+  /// butonu görünür; böylece sayılar gerçeğe yakın kalır. (0.11.0)
+  bool? smokesOutsideCase;
 
   /// Sigara isteğini tetikleyen durumlar (kahve, stres, ...).
   /// "Bu sigara neden?" penceresinde bunlar en başta çıkar.
@@ -51,6 +60,7 @@ class UserProfile {
   Map<String, dynamic> toJson() => {
     'cigarettesPerDay': cigarettesPerDay,
     'firstCigarette': firstCigarette?.name,
+    'smokesOutsideCase': smokesOutsideCase,
     'triggers': triggers.map((t) => t.name).toList(),
     'reasonNote': reasonNote,
   };
@@ -67,6 +77,9 @@ class UserProfile {
         FirstCigaretteTime.values,
         json['firstCigarette'],
       ),
+      smokesOutsideCase: json['smokesOutsideCase'] is bool
+          ? json['smokesOutsideCase'] as bool
+          : null,
       triggers: _enumSet(SmokingTrigger.values, json['triggers']),
       reasonNote: note is String && note.trim().isNotEmpty ? note : null,
     );

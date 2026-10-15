@@ -7,6 +7,7 @@ import 'package:unlit/logic/rewards.dart';
 import 'package:unlit/models/activity_log.dart';
 import 'package:unlit/models/goal.dart';
 import 'package:unlit/models/mascot_look.dart';
+import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
 import 'package:unlit/services/demo_device_service.dart';
 import 'package:unlit/services/effects.dart';
@@ -137,12 +138,22 @@ void main() {
     await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
 
+    // Kılıfın göremeyeceği sigaralar (0.11.0).
+    expect(
+      find.text('Kılıfın göremeyeceği sigaralar içtiğin olur mu?'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Evet, bazen olur'));
+    await tester.pump();
+    await tester.tap(find.text('DEVAM'));
+    await tester.pumpAndSettle();
+
     await tester.enterText(find.byType(TextField), '95,50');
     await tester.pump();
     await tester.tap(find.text('DEVAM'));
     await tester.pumpAndSettle();
 
-    // Son soru: tetikleyiciler. Sadece 4 soru var, sonra "Hazırsın!".
+    // Son soru: tetikleyiciler. Sadece 5 soru var, sonra "Hazırsın!".
     await tester.tap(find.text('Çay'));
     await tester.pump();
     await tester.tap(find.text('DEVAM'));
@@ -154,6 +165,7 @@ void main() {
 
     expect(state.profile.cigarettesPerDay, 16);
     expect(state.profile.firstCigarette, FirstCigaretteTime.within5Min);
+    expect(state.profile.smokesOutsideCase, isTrue);
     expect(state.profile.triggers, {SmokingTrigger.tea});
     // Fiyat profilde değil, tarihli fiyat geçmişinde; paket varsayılan 20'li.
     expect(state.prices.current!.price, 95.5);
@@ -280,14 +292,24 @@ void main() {
     await tester.tap(find.text('İstatistik'));
     await tester.pumpAndSettle();
     expect(find.text('sigara\nbugün'), findsOneWidget);
-    expect(find.text('Geçen haftayla karşılaştırma'), findsOneWidget);
+    // En üstte tek bakışta durum: başlangıca göre değişim (0.11.0).
+    expect(find.text('Başladığından beri'), findsOneWidget);
+    expect(find.text('Başlangıçta günde'), findsOneWidget);
+    expect(find.text('Geçen haftayla karşılaştırma'), findsNothing);
     // "Kaybedilen yaşam" yok; aynı kaynak "korunan" tarafta.
     expect(find.textContaining('kaybedilen'), findsNothing);
-    await tester.scrollUntilVisible(
-      find.text('Korunan yaşam süresi'),
-      250,
-      scrollable: find.byType(Scrollable).hitTestable().first,
+    // Demo kullanıcısı azaltıyor ama hiç sigarasız günü yok: korunan
+    // yaşam süresi sadece sigarasız günlerden hesaplanır, kart yerine
+    // nasıl hesaplandığını anlatan bağlantı var.
+    await scrollAndTap(
+      tester,
+      find.text('Korunan yaşam süresi nasıl hesaplanır?'),
     );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('sadece hiç sigara içmediğin'), findsOneWidget);
+    expect(find.textContaining('Hackshaw'), findsOneWidget);
+    await tester.tap(find.text('ANLADIM'));
+    await tester.pumpAndSettle();
     expect(find.text('Kazandıkların'), findsOneWidget);
     expect(find.text('İçmediğin sigara'), findsOneWidget);
   });
@@ -474,8 +496,42 @@ void main() {
       scrollable: find.byType(Scrollable).hitTestable().first,
     );
     expect(find.text('İçmediğin sigara'), findsNothing);
-    // Haftalık karşılaştırma kartı 2 haftalık kayıt olmadan görünmez.
-    expect(find.text('Geçen haftayla karşılaştırma'), findsNothing);
+    // "Başladığından beri" ölçüm haftasından 7 gün sonra açılır.
+    expect(find.text('Başladığından beri'), findsNothing);
+  });
+
+  testApp('kılıfın görmediği sigara elle eklenir, yanlış kayıt silinir', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    // Soruyu "evet" diye cevaplamayan kullanıcıda buton yok.
+    expect(find.text('ELLE SİGARA EKLE'), findsNothing);
+    await state.updateProfile(UserProfile(smokesOutsideCase: true));
+    await tester.pumpAndSettle();
+
+    final soundsBefore = sounds.played.length;
+    await scrollAndTap(tester, find.text('ELLE SİGARA EKLE'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bu sigarayı ne zaman içtin?'), findsOneWidget);
+    await tester.tap(find.text('Tamam'));
+    await tester.pumpAndSettle();
+    expect(state.events.single.source, EventSource.manual);
+    expect(find.textContaining('· elle'), findsOneWidget);
+    // Sigara eklemek ses ya da kutlama tetiklemez.
+    expect(sounds.played.length, soundsBefore);
+    expect(find.text('Görev tamamlandı!'), findsNothing);
+
+    // "Bu sigarayı ben içmedim": onaydan sonra kayıt silinir.
+    await scrollAndTap(tester, find.text('Neden?'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('BU SİGARAYI BEN İÇMEDİM'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bu kaydı silelim mi?'), findsOneWidget);
+    await tester.tap(find.text('SİL'));
+    await tester.pumpAndSettle();
+    expect(state.events, isEmpty);
+    expect(find.text('Kayıt silindi.'), findsOneWidget);
   });
 
   testApp('"Neden?" penceresinde kendi seçtiğin nedenler başta', (
@@ -589,6 +645,8 @@ void main() {
     await tester.tap(find.text('BAŞLAYALIM'));
     await tester.pumpAndSettle();
     await skipOnboarding(tester);
+    // "Elle sigara ekle" butonu da görünsün (taşma kontrolü için).
+    await state.updateProfile(UserProfile(smokesOutsideCase: true));
     await scrollAndTap(tester, find.text('DEMO VERİSİ ÜRET'));
     await tester.pumpAndSettle();
     // Dar bir Android telefon (360 px) ve her sekmeyi sonuna kadar kaydır.

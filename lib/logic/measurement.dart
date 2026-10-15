@@ -5,8 +5,9 @@
 // 1. Kısa bir ÖZET gösterilir: günde ortalama, ilk sigara saati, en yoğun
 //    saat, en sık işaretlenen neden.
 // 2. Bu ortalama "başlangıç noktası" olur. Sonraki günlerde İÇİLMEYEN
-//    sigaralar, cepte kalan para ve korunan yaşam süresi buna göre
-//    hesaplanır ("Kazandıkların").
+//    sigaralar ve cepte kalan para buna göre hesaplanır ("Kazandıkların").
+//    Korunan yaşam süresi ise sadece SİGARASIZ günler için hesaplanır
+//    (0.11.0; gerekçe [Gains.lifeMinutes]).
 //
 // Aynı özet ve kazanç hesapları haftalık raporda da kullanılır (bkz.
 // weekly_report.dart); bu yüzden herhangi bir gün aralığı için yazıldılar.
@@ -159,6 +160,7 @@ class Gains {
     required this.days,
     required this.notSmoked,
     required this.money,
+    this.smokeFreeDays = 0,
   });
 
   /// Başlangıç noktası: ölçüm haftasında günde ortalama sigara.
@@ -174,8 +176,20 @@ class Gains {
   /// Cepte kalan para (₺, en az 0). Paket fiyatı hiç girilmediyse null.
   final double? money;
 
-  /// Korunan tahmini yaşam süresi (dakika, ortalama tahmin).
-  int get lifeMinutes => lifeMinutesFor(notSmoked);
+  /// Hiç sigara içilmeyen (tamamlanmış) gün sayısı.
+  final int smokeFreeDays;
+
+  /// Korunan tahmini yaşam süresi (dakika, ortalama tahmin): SADECE
+  /// sigarasız günler için. Her sigarasız gün, başlangıç noktası kadar
+  /// sigara × ~20 dk sayılır.
+  ///
+  /// Neden azaltılan günler sayılmıyor? UCL'nin "sigara başına ~20 dk"
+  /// tahmini bırakmak için yapılmış bir ortalama. Azaltmanın etkisi sigara
+  /// sayısıyla orantılı değil: günde 1 sigara bile kalp hastalığı riskinin
+  /// yaklaşık yarısını taşıyor (Hackshaw ve ark., BMJ 2018); azaltmanın
+  /// sağlık kazancı belirsiz (Pisinger ve Godtfredsen, 2007). Azaltılan
+  /// günlerde içilmeyen sigaralar ve para yine [notSmoked] ve [money]'de.
+  int get lifeMinutes => lifeMinutesFor((baseline * smokeFreeDays).round());
 }
 
 /// Ölçüm haftasından sonraki tamamlanmış günlerin kazancı.
@@ -238,8 +252,11 @@ Gains gainsBetween({
   var net = 0.0; // içilmeyen sigara (kesirli: ortalama 17,3 olabilir)
   var money = 0.0;
   var days = 0;
+  var smokeFree = 0;
   for (var day = start; day.isBefore(end); day = addDays(day, 1)) {
-    final difference = baseline - (perDay[day] ?? 0);
+    final count = perDay[day] ?? 0;
+    if (count == 0) smokeFree++;
+    final difference = baseline - count;
     net += difference;
     // Para, o GÜNÜN fiyatıyla hesaplanır: zam gelince geçmişte biriken
     // para değişmesin.
@@ -257,5 +274,6 @@ Gains gainsBetween({
         ? null
         // İçilmeyen sigara yoksa para da yok (yuvarlama farkı kalmasın).
         : (notSmoked == 0 || money < 0 ? 0 : money),
+    smokeFreeDays: smokeFree,
   );
 }

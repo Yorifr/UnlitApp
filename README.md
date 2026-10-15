@@ -27,8 +27,9 @@ suçlamaz:
 - **Nefes'in dolabı:** puanlar harcanmaz; belli puanlarda ve anlamlı
   anlarda gözlük, atkı, kep, kulaklık, taç, bere açılır ve Nefes'e
   takılabilir. Açılan eşya kaybolmaz.
-- **Sadece 4 kısa soru** (günde kaç sigara, uyanınca ilk sigara, paket
-  fiyatı, tetikleyiciler). Her cevap uygulamada bir şeyi değiştirir.
+- **Sadece 5 kısa soru** (günde kaç sigara, uyanınca ilk sigara, kılıfın
+  göremeyeceği sigaralar, paket fiyatı, tetikleyiciler). Her cevap
+  uygulamada bir şeyi değiştirir.
 - **Günlük 3 görev** (kendini dinle, sigaranın nedenini işaretleme, nefes
   molası, bir isteği 10 dakika erteleme…) → **puan** ve **seri**.
 - **Ölçüm haftası:** ilk 7 gün sadece ölçülür; bitince "Ölçüm haftan
@@ -39,10 +40,14 @@ suçlamaz:
 - Her başarıda **konfetili kutlama ekranı**.
 - **Seri sigara içince bozulmaz**: kendine iyi baktığın günleri sayar,
   haftada bir kaçırılan gün affedilir.
-- **İstatistik:** bugünkü sayı, geçen haftayla karşılaştırma, son 7 günün
+- **İstatistik:** en üstte tek bakışta **"Başladığından beri"** (başlangıca
+  göre yüzde kaç değişti + hafta hafta grafik), bugünkü sayı, son 7 günün
   grafiği, harcanan para ve ölçüm haftasından sonra **"Kazandıkların"**:
-  içmediğin sigaralar, cebinde kalan para, korunan yaşam süresi (ortalama
-  tahmin). Sürekli büyüyen bir "kaybedilen yaşam" sayısı bilerek yok.
+  içmediğin sigaralar, cebinde kalan para, sigarasız günlerde korunan
+  yaşam süresi (ortalama tahmin). Sürekli büyüyen bir "kaybedilen yaşam"
+  sayısı bilerek yok.
+- **Kılıf yanılırsa düzelt:** kılıfın görmediği sigarayı elle ekle, yanlış
+  sayılanı "Bu sigarayı ben içmedim" ile sil.
 - **Paket fiyatı:** Zam gelince İstatistik → "Paket fiyatı" kartından
   güncelle; eski günlerin harcaması eski fiyatla kalır.
 - **Ses ve titreşim:** görev "ding-ding"i, büyük başarıda fanfar, nefes
@@ -116,6 +121,9 @@ docs/SPEC.md               Şartname + aşama planı
 
 - İçilmeyen sigara başına korunan yaşam süresi tahmini: Jackson SE, Jarvis MJ, West R.
   *"The price of a cigarette: 20 minutes of life?"* Addiction, 2024 (UCL).
+  Sadece sigarasız günler için kullanılır; neden: Hackshaw A ve ark., BMJ, 2018.
+- İsteği 10 dakika ertelemek: Mayo Clinic, *"Quitting smoking: 10 ways to
+  resist tobacco cravings"*.
 - Uyanınca ilk sigara sorusu: Fagerström Nikotin Bağımlılığı Testi
   (Heatherton ve ark., 1991).
 - Yazı tipi: Nunito, SIL Open Font License 1.1 (`assets/fonts/OFL.txt`).
