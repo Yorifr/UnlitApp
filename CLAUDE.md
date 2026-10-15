@@ -96,7 +96,8 @@ flutter build web --release --no-web-resources-cdn --base-href /UnlitApp/
 - `lib/widgets/`: `chunky.dart` (tok buton/kart/çubuk), `mascot.dart`
   (+ `mascot_painter.dart`, `svg_path.dart`), `confetti.dart`,
   `pickers.dart`, `reason_note.dart` (kendine not), `change_chip.dart`
-  (fark rozeti: azalma nane, artış nötr), ...
+  (fark rozeti: azalma nane, artış nötr), `since_last_counter.dart`
+  ("Son sigarandan beri" sayacı; seri değil, sessizce sıfırlanır), ...
 
 ## Tasarım dili (Duolingo tarzı)
 - **Sade ve anlaşılır:** Her işin TEK giriş noktası olsun (aynı şeyi iki
@@ -168,6 +169,9 @@ paketsiz yazıldı.
   testlerinde test bitmeden `disconnect()` çağır (bkz.
   `test/app_flow_test.dart` → `testApp`). Erteleme ekranında saniyelik
   sayaç var: o ekran açıkken `pumpAndSettle()` bitmez, `pump()` kullan.
+  Bugün'deki "Son sigarandan beri" sayacı da saniyelik ama animasyonsuz;
+  `pumpAndSettle()` çalışır. İlerlemesini test etmek için sahte saat +
+  `pump(const Duration(seconds: 1))` (bkz. `test/since_last_counter_test.dart`).
 - **Kullanıcının yazdığı metin (TextField):** Kullanıcı emoji vb. yazarsa
   aynı yedek font sorunu olur. Serbest yazı alanlarında
   `noteInputFormatter` (`widgets/reason_note.dart`) gibi, sadece Nunito'da

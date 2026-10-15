@@ -438,7 +438,6 @@ class _TodayCard extends StatelessWidget {
     final c = AppColors.of(context);
     final today = countToday(events, now);
     final first = firstEventOfDay(events, now);
-    final last = events.isEmpty ? null : events.last.time;
     final weekAgo = addDays(now, -7);
     final canCompare = hasDataSince(events, weekAgo);
     final lastWeekSameTime = countSameDayLastWeek(events, now);
@@ -494,13 +493,12 @@ class _TodayCard extends StatelessWidget {
               'burada görünecek.',
               style: theme.textTheme.bodyMedium?.copyWith(color: c.textMuted),
             ),
-          if (last != null) ...[
+          // "Son sigaradan beri geçen süre" burada değil, Bugün sekmesindeki
+          // sayaçta (aynı bilgi iki yerde olmasın).
+          if (first != null) ...[
             const SizedBox(height: 10),
             Text(
-              [
-                if (first != null) 'Bugünkü ilk sigara: ${formatClock(first)}',
-                'Son: ${formatTimeAgo(last, now)}',
-              ].join('  ·  '),
+              'Bugünkü ilk sigara: ${formatClock(first)}',
               style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
             ),
           ],

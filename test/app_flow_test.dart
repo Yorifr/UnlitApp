@@ -86,6 +86,26 @@ void main() {
     expect(state.streak.current, 1);
   });
 
+  testApp('"Son sigarandan beri" sayacı ilk kayıtla görünür', (
+    tester,
+    state,
+  ) async {
+    await skipOnboarding(tester);
+    // Henüz kayıt yok: sayacak bir şey yok, sayaç da yok.
+    expect(find.text('Son sigarandan beri'), findsNothing);
+
+    // Kılıftan bir sigara gelir: sayaç sıfırdan (saat/dakika/saniye) başlar,
+    // ama hiçbir ses ya da kutlama tetiklenmez.
+    final soundsBefore = sounds.played.length;
+    await tester.tap(find.text('+1 sigara'));
+    await tester.pumpAndSettle();
+    expect(find.text('Son sigarandan beri'), findsOneWidget);
+    expect(find.text('saat'), findsOneWidget);
+    expect(find.text('saniye'), findsOneWidget);
+    expect(find.text('gün'), findsNothing);
+    expect(sounds.played.length, soundsBefore);
+  });
+
   testApp('sorular cevaplanınca profile kaydedilir', (tester, state) async {
     await tester.tap(find.text('BAŞLAYALIM'));
     await tester.pumpAndSettle();
