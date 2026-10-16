@@ -240,7 +240,9 @@ void main() {
     });
 
     test('gün gün ilerletince ölçüm özeti ve haftalık rapor çıkar', () async {
-      for (var i = 0; i < 7; i++) {
+      // Onboarding 15:00'te bitti: bugün hazırlık günü, sonra 7 tam gün.
+      expect(state.trackingDay, 0);
+      for (var i = 0; i < 8; i++) {
         expect(state.measurementSummaryPending, isFalse, reason: 'gün $i');
         await addDemoDay(state, demo, random: Random(i));
       }

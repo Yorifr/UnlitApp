@@ -36,6 +36,7 @@ MascotLine mascotGreeting({
   required bool delayActive,
   bool measurementSummaryPending = false,
   int? weeklyReportWeek,
+  int? daysToQuit,
 }) {
   if (delayActive) {
     return const MascotLine(
@@ -57,6 +58,22 @@ MascotLine mascotGreeting({
       MascotMood.cheer,
     );
   }
+  // Bırakma günü: bugün ya da yarın. (Hedef yoksa ya da bırakma hedefi
+  // değilse null.) Gün bazlı bir cümle; sigara içmek bunu değiştirmez.
+  if (daysToQuit == 0) {
+    return const MascotLine(
+      'Bugün bırakma günün! Ben yanındayım; zorlandığında “CANIM SİGARA '
+      'İSTİYOR” butonu ve ALO 171 hep burada.',
+      MascotMood.cheer,
+    );
+  }
+  if (daysToQuit == 1) {
+    return const MascotLine(
+      'Yarın bırakma günün! İstersen bugün evdeki sigaraları, çakmakları ve '
+      'küllükleri kaldır; yarın birlikte başlarız.',
+      MascotMood.happy,
+    );
+  }
   if (questsTotal > 0 && questsDone == questsTotal) {
     return const MascotLine(
       'Bugünün tüm görevlerini bitirdin. Harikasın!',
@@ -67,6 +84,14 @@ MascotLine mascotGreeting({
     return const MascotLine(
       'Zor bir gün gibi. Küçük adımlar da sayılır; ben buradayım.',
       MascotMood.calm,
+    );
+  }
+  if (measurementDay == 0) {
+    return const MascotLine(
+      // Kısa tutuldu: büyük yazıda erteleme butonunu aşağı itmesin.
+      'Ölçüm haftan yarın başlıyor. Bugün kılıfını tanı; bugünkü sigaralar '
+      'başlangıç noktana sayılmaz.',
+      MascotMood.happy,
     );
   }
   if (measurementDay != null) {
@@ -167,6 +192,7 @@ int? typicalDelayMinutes(List<DelayAttempt> successes) {
 /// Sınırın üstüne çıkılan günlerden hiç bahsedilmez; süre dolduysa
 /// suçlamadan yeni bir süre önerilir.
 MascotLine goalLine(GoalStatus status) {
+  if (status.goal.isQuit) return _quitLine(status);
   final limit = status.limit;
   if (status.daysSinceStart == 0) {
     return MascotLine(
@@ -213,6 +239,68 @@ MascotLine goalLine(GoalStatus status) {
     'Her hafta küçük bir adım. Bu hafta günde en fazla $limit sigara; '
     'zorlandığında “CANIM SİGARA İSTİYOR” butonu hep yanında.',
     MascotMood.happy,
+  );
+}
+
+/// Bırakma hedefinde Nefes'in cümlesi. Sıra: hedef yeni kondu → bugün
+/// bırakma günü → bırakma gününe kaç gün → bıraktıktan sonra (önce olumlu
+/// olan: son 7 gün sigarasız → sigarasız günler → kaldığın yerden devam).
+/// Bırakma gününden sonra sigara içildiyse suçlama yok (perhiz ihlali
+/// etkisine karşı "kaldığın yerden devam" dili; bkz. SPEC Bölüm 3).
+MascotLine _quitLine(GoalStatus status) {
+  final days = status.daysToQuit ?? 0;
+  final limit = status.limit;
+  final dayText = formatLongDate(quitDayOf(status.goal));
+  final limitText = limit == null
+      ? ''
+      : ' Bu hafta günde en fazla $limit sigara.';
+  if (days == 0) {
+    return const MascotLine(
+      'Bugün bırakma günün! Ben yanındayım; zorlandığında “CANIM SİGARA '
+      'İSTİYOR” butonu ve ALO 171 hep burada.',
+      MascotMood.cheer,
+    );
+  }
+  if (days > 0) {
+    if (status.daysSinceStart == 0) {
+      return MascotLine(
+        'Bırakma günün: $dayText. O güne kadar birlikte hazırlanacağız.'
+        '$limitText',
+        MascotMood.cheer,
+      );
+    }
+    if (days == 1) {
+      return MascotLine('Yarın bırakma günün!$limitText', MascotMood.happy);
+    }
+    if (limit == null) {
+      return MascotLine(
+        'Bırakma gününe $days gün kaldı. O güne kadar bir sınır yok; '
+        'istersen şimdiden bir isteği ertelemeyi dene.',
+        MascotMood.happy,
+      );
+    }
+    return MascotLine(
+      'Bırakma gününe $days gün kaldı.$limitText',
+      MascotMood.happy,
+    );
+  }
+  if (status.reached) {
+    return const MascotLine(
+      'Son 7 günde kılıf hiç sigara saymadı. Bu senin emeğin!',
+      MascotMood.cheer,
+    );
+  }
+  if (status.smokeFreeDays > 0) {
+    return MascotLine(
+      'Bırakma gününden beri ${status.smokeFreeDays} gün sigarasız geçti. '
+      'Her biri senin emeğin!',
+      MascotMood.cheer,
+    );
+  }
+  return const MascotLine(
+    'Bırakma yolu herkes için düz değil. Kaldığın yerden devam: her '
+    'sigarasız gün burada sayılır.',
+    MascotMood.calm,
   );
 }
 

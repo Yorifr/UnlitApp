@@ -76,18 +76,23 @@ class QuestStatus {
 
 /// Verilen gün ölçüm haftasında mı?
 /// Takip başlangıcı bilinmiyorsa (onboarding öncesi) ölçüm haftası sayılır.
+/// Ölçümden önceki hazırlık günü de ölçüm haftası gibidir (azaltma görevi
+/// yok).
 bool isMeasurementDay(DateTime day, DateTime? trackingStart) {
   if (trackingStart == null) return true;
   return startOfDay(day)
       .isBefore(addDays(startOfDay(trackingStart), measurementDays));
 }
 
-/// Ölçüm haftasının kaçıncı günü? (1–7; ölçüm bittiyse null)
+/// Ölçüm haftasının kaçıncı günü? (1–7; ölçüm bittiyse null.)
+/// 0 = hazırlık günü: onboarding gün ortasında bitti, ölçüm yarın başlıyor
+/// (bkz. measurement.dart → trackingStartFor).
 int? measurementDayNumber(DateTime day, DateTime? trackingStart) {
   if (trackingStart == null || !isMeasurementDay(day, trackingStart)) {
     return null;
   }
-  return daysBetween(trackingStart, day) + 1;
+  final number = daysBetween(trackingStart, day) + 1;
+  return number < 0 ? 0 : number;
 }
 
 /// O günün 3 görevi.

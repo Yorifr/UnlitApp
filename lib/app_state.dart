@@ -100,7 +100,8 @@ class AppState extends ChangeNotifier {
     activity: _activity,
   );
 
-  /// Ölçüm haftasının kaçıncı günü (bittiyse null).
+  /// Ölçüm haftasının kaçıncı günü (bittiyse null; 0 = hazırlık günü,
+  /// ölçüm yarın başlıyor).
   int? get measurementDay => measurementDayNumber(now, _trackingStartedAt);
 
   /// Ölçüm haftasının özeti (takip başlamadıysa null).
@@ -219,20 +220,35 @@ class AppState extends ChangeNotifier {
   /// Yeni hedefi kaydet (varsa eskisinin yerine; hedef bugünden başlar).
   /// İLK hedef bir kez +10 puan kazandırır; hedefi değiştirmek puan
   /// kazandırmaz (değiştirip durarak puan toplanmasın).
+  ///
+  /// Azaltma hedefinde [amount] ve [unit] (süre); bırakma hedefinde
+  /// (percent 100) [quitDay] ve [quitMethod] verilir. Bırakma günü bugünden
+  /// önce olamaz; bugünse yol fark etmez ("birden" sayılır).
   Future<Reward> setGoal({
     required int percent,
-    required int amount,
-    required GoalUnit unit,
+    int amount = 0,
+    GoalUnit unit = GoalUnit.week,
+    DateTime? quitDay,
+    QuitMethod? quitMethod,
   }) async {
     final start = baseline;
     if (start == null) return Reward.none;
+    final today = startOfDay(now);
+    DateTime? day;
+    if (percent == 100 && quitDay != null) {
+      day = startOfDay(quitDay).isBefore(today) ? today : startOfDay(quitDay);
+    }
     _goal = Goal(
-      start: startOfDay(now),
+      start: today,
       baseline: start,
       from: recentLevel,
       percent: percent,
       amount: amount,
       unit: unit,
+      quitDay: day,
+      quitMethod: day == null
+          ? null
+          : (day == today ? QuitMethod.abrupt : quitMethod),
     );
     await storage.saveGoal(_goal);
     final first = !_activity.xp.any((x) => x.reason == XpReason.goalSet);
@@ -387,7 +403,9 @@ class AppState extends ChangeNotifier {
   Future<Reward> completeOnboarding(UserProfile profile) async {
     _profile = profile;
     _onboardingDone = true;
-    _trackingStartedAt ??= now;
+    // Ölçüm haftası 7 TAM gün: gün ortasında bittiyse yarın 00:00'da başlar
+    // (bugün hazırlık günü). Bkz. logic/measurement.dart.
+    _trackingStartedAt ??= trackingStartFor(now);
     await storage.saveProfile(profile);
     await storage.setOnboardingDone(true);
     await storage.setTrackingStartedAt(_trackingStartedAt!);
@@ -629,7 +647,7 @@ class AppState extends ChangeNotifier {
   }
 
   /// Sigara kayıtlarını ve tüm ilerlemeyi siler; profil (cevaplar) kalır.
-  /// Takip bugünden yeniden başlar.
+  /// Takip yeniden başlar (gün ortasındaysa yarın; bugün hazırlık günü).
   /// Puanlar sıfırlandığı için Nefes'in dolabı ve filiz de baştan başlar.
   Future<void> resetEventsAndProgress() async {
     _outfit = {};
@@ -637,7 +655,7 @@ class AppState extends ChangeNotifier {
     await replaceAll(
       events: [],
       activity: ActivityLog(),
-      trackingStartedAt: now,
+      trackingStartedAt: trackingStartFor(now),
     );
   }
 

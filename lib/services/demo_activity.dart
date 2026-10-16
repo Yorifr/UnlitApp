@@ -233,7 +233,11 @@ Future<void> addDemoDay(
     activity: activity,
     trackingStartedAt: start,
     // Hedef de bir gün geriye kayar; yoksa haftaları bir gün kayardı.
-    goal: goal?.copyWith(start: back(goal.start)),
+    // (Bırakma günü de: "yarın" bırakacaksan bir gün sonra "bugün" olur.)
+    goal: goal?.copyWith(
+      start: back(goal.start),
+      quitDay: goal.quitDay == null ? null : back(goal.quitDay!),
+    ),
     prices: prices.isEmpty
         ? null
         : PriceHistory([

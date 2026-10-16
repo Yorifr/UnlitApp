@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unlit/app_state.dart';
+import 'package:unlit/logic/quests.dart';
 import 'package:unlit/logic/rewards.dart';
 import 'package:unlit/models/activity_log.dart';
 import 'package:unlit/models/goal.dart';
@@ -58,8 +59,17 @@ void main() {
     expect(reward.totalXp, xpWelcome);
     expect(reward.streakExtended, isTrue);
     expect(state.streak.current, 1);
-    expect(state.trackingStartedAt, now);
-    expect(state.measurementDay, 1);
+    // Saat 10:00: günün bir kısmı geçti. Ölçüm haftası 7 TAM gün olsun diye
+    // yarın 00:00'da başlar; bugün hazırlık günü (0).
+    expect(state.trackingStartedAt, DateTime(2026, 10, 11));
+    expect(state.measurementDay, 0);
+    expect(state.trackingDay, 0);
+    expect(state.completedWeeks, 0);
+    // Hazırlık günü ölçüm haftası gibidir: azaltma (erteleme) görevi yok.
+    expect(
+      state.todayQuests.map((q) => q.type),
+      isNot(contains(QuestType.delay)),
+    );
 
     // İkinci kez (ör. veri silmeden tekrar) hoş geldin XP'si verilmez.
     final again = await state.completeOnboarding(UserProfile());
@@ -188,15 +198,30 @@ void main() {
     expect(reloaded.totalXp, state.totalXp);
   });
 
+  test('gece 04:00\'ten önce başlanırsa ölçüm aynı gün başlar', () async {
+    now = DateTime(2026, 10, 10, 2, 30);
+    await state.completeOnboarding(UserProfile());
+    expect(state.trackingStartedAt, DateTime(2026, 10, 10));
+    expect(state.measurementDay, 1);
+  });
+
   group('ölçüm haftası özeti', () {
     test('hafta bitince bir kez çıkar, görülünce kaybolur', () async {
-      await state.completeOnboarding(UserProfile());
+      await state.completeOnboarding(UserProfile()); // 10 Ekim 10:00
+      // Hazırlık günündeki sigara kaydedilir ama başlangıç noktasına
+      // sayılmaz (günün bir kısmı ölçülemedi).
       device.emit(DateTime(2026, 10, 10, 11));
+      device.emit(DateTime(2026, 10, 11, 9)); // ölçümün 1. günü
       await Future<void>.delayed(Duration.zero);
+      expect(state.events.length, 2);
       expect(state.measurementSummaryPending, isFalse); // hafta sürüyor
       expect(state.gains, isNull);
 
-      now = DateTime(2026, 10, 17, 9); // 8. gün
+      now = DateTime(2026, 10, 17, 9); // ölçümün 7. günü: hafta sürüyor
+      expect(state.measurementDay, 7);
+      expect(state.measurementSummaryPending, isFalse);
+
+      now = DateTime(2026, 10, 18, 9); // 7 tam gün bitti
       expect(state.measurementDay, isNull);
       expect(state.measurementSummaryPending, isTrue);
       expect(state.measurementSummary!.total, 1);
@@ -214,11 +239,13 @@ void main() {
       await reloaded.start();
       expect(reloaded.measurementSummaryPending, isFalse);
 
-      // Takip sıfırlanınca yeni ölçüm haftasının özeti yeniden çıkar.
+      // Takip sıfırlanınca yeni ölçüm haftasının özeti yeniden çıkar. (Saat
+      // 09:00: yeni ölçüm yarın başlar, bugün yine hazırlık günü.)
       await state.resetEventsAndProgress();
-      device.emit(now);
+      expect(state.trackingStartedAt, DateTime(2026, 10, 19));
+      device.emit(DateTime(2026, 10, 19, 9));
       await Future<void>.delayed(Duration.zero);
-      now = DateTime(2026, 10, 25, 9);
+      now = DateTime(2026, 10, 26, 9);
       expect(state.measurementSummaryPending, isTrue);
     });
 
@@ -345,7 +372,8 @@ void main() {
         await state.logMood(Mood.good);
       }
       expect(state.mascotLook.wears(Accessory.tac), isTrue); // 7 günlük seri
-      now = DateTime(2026, 10, 17, 9);
+      // Ölçüm 11 Ekim'de başladı (10 Ekim hazırlık günü): 18 Ekim'de biter.
+      now = DateTime(2026, 10, 18, 9);
       expect(state.measurementSummaryPending, isTrue);
       await state.markMeasurementSummarySeen();
       expect(state.mascotLook.wears(Accessory.kep), isTrue);

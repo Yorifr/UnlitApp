@@ -36,6 +36,23 @@ bool measurementOver(DateTime now, DateTime? trackingStart) =>
 /// bir önceki gecenin devamıdır (ör. 00:40'ta yatmadan önce içilen).
 const int dayStartsAtHour = 4;
 
+/// Onboarding [onboardedAt] anında bitti: ölçüm haftası (takip) ne zaman
+/// başlasın? (0.12.0)
+///
+/// Ölçüm haftası 7 TAM günden oluşur. Onboarding gün ortasında biterse o
+/// günün bir kısmı ölçülemez; o gün sayılsaydı başlangıç noktası (günde
+/// ortalama) olduğundan düşük, günün ilk sigarası da olduğundan geç
+/// çıkardı. Bu yüzden:
+/// - gece [dayStartsAtHour]'ten (04:00) önce bittiyse: gün henüz
+///   başlamamış sayılır, ölçüm BUGÜN 00:00'dan başlar;
+/// - sonra bittiyse: bugün "hazırlık günü" olur, ölçüm YARIN 00:00'da
+///   başlar. Hazırlık günündeki sigaralar da kaydedilir (Bugün ve
+///   İstatistik'te görünür) ama başlangıç noktasına sayılmaz.
+DateTime trackingStartFor(DateTime onboardedAt) {
+  final today = startOfDay(onboardedAt);
+  return onboardedAt.hour < dayStartsAtHour ? today : addDays(today, 1);
+}
+
 /// Birkaç günün (ör. bir haftanın) özeti: toplam, en yoğun saat, en sık
 /// neden, günün ilk sigarasının ortalama saati.
 class PeriodSummary {

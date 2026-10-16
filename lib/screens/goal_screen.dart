@@ -15,7 +15,10 @@ import 'goal_setup_screen.dart';
 /// 1. Yol: başlangıç → şimdi → hedef ve ilerleme çubuğu.
 /// 2. Bu hafta: günlük sınır ve haftanın günleri (hedefinde kaldığın günler
 ///    nane renkli ve onaylı; diğerleri nötr gri, kırmızı ya da yorum yok).
-/// Bırakma hedefinde ayrıca ALO 171 ve poliklinik bilgisi.
+/// Bırakma hedefinde: bırakma gününe geri sayım, o günden sonra sigarasız
+/// günler, ALO 171 ve poliklinik bilgisi. Azaltma hedefi tamamlanınca ya da
+/// süresi dolunca nazik bir "bir sonraki adım: bırakma günü" önerisi (baskı
+/// değil; seçmek isteğe bağlı).
 ///
 /// Tek giriş noktası: Bugün sekmesindeki "Hedefim" kartı.
 class GoalScreen extends StatelessWidget {
@@ -48,6 +51,9 @@ class GoalScreen extends StatelessWidget {
 
   Widget _content(BuildContext context, GoalStatus status) {
     final line = goalLine(status);
+    // Azaltma hedefi tamamlandı ya da süresi doldu: azaltma son durak
+    // olmasın diye bırakma günü önerilir (bkz. SPEC Bölüm 11).
+    final suggestQuit = !status.goal.isQuit && (status.reached || status.ended);
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       children: [
@@ -60,12 +66,22 @@ class GoalScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const _SupportCard(),
         ],
+        if (suggestQuit) ...[
+          const SizedBox(height: 12),
+          _NextStepCard(
+            onChoose: () => GoalSetupScreen.open(context, state, quit: true),
+          ),
+        ],
         const SizedBox(height: 20),
-        // Süre dolduysa yeni hedef ana eylem; değilse sakin bir bağlantı.
+        // Süre dolduysa yeni hedef ana eylem (bırakma önerisi varsa ikinci
+        // planda); değilse sakin bir bağlantı.
         if (status.ended)
           ChunkyButton(
             label: 'YENİ HEDEF SEÇ',
             icon: Icons.flag_outlined,
+            variant: suggestQuit
+                ? ChunkyVariant.secondary
+                : ChunkyVariant.primary,
             onPressed: () => GoalSetupScreen.open(context, state),
           )
         else
@@ -101,8 +117,11 @@ class _PathCard extends StatelessWidget {
             style: theme.textTheme.titleLarge,
           ),
           Text(
-            '${goal.amount} ${goal.unit.label} · Bitiş: '
-            '${formatDayMonth(status.end)}',
+            goal.isQuit
+                ? '${quitMethodOf(goal).label} · Bırakma günü: '
+                      '${formatLongDate(status.end)}'
+                : '${goal.amount} ${goal.unit.label} · Bitiş: '
+                      '${formatDayMonth(status.end)}',
             style: theme.textTheme.bodySmall?.copyWith(color: c.textMuted),
           ),
           const SizedBox(height: 14),
@@ -176,6 +195,12 @@ class _Figure extends StatelessWidget {
 }
 
 /// Bu haftanın günlük sınırı ve 7 günlük şerit.
+///
+/// Bırakma hedefinde üç hâl var:
+/// - bırakma gününden önce, "azaltarak": bu haftanın sınırı + şerit,
+/// - bırakma gününden önce, "birden": sınır yok; sadece geri sayım,
+/// - bırakma günü ve sonrası: sigarasız gün sayısı (sadece artar) + şerit
+///   (sigarasız gün nane + onay; diğerleri nötr gri).
 class _WeekCard extends StatelessWidget {
   const _WeekCard({required this.status});
   final GoalStatus status;
@@ -184,27 +209,72 @@ class _WeekCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final theme = Theme.of(context);
+    final quit = status.goal.isQuit;
+    final daysToQuit = status.daysToQuit ?? 0;
+    final limit = status.limit;
+
+    // "O gün birden": bırakma gününe kadar sınır yok, şerit de yok.
+    if (quit && limit == null) {
+      return ChunkyCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Bırakma gününe kadar',
+              style: theme.textTheme.labelMedium?.copyWith(color: c.textMuted),
+            ),
+            Text(
+              daysToQuit == 1 ? 'Yarın' : '$daysToQuit gün kaldı',
+              style: theme.textTheme.titleLarge,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'O güne kadar bir sınır yok. İstersen şimdiden bir isteği '
+              'ertelemeyi dene.',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final String header;
+    final String title;
+    if (quit && status.quitStarted) {
+      header = daysToQuit == 0
+          ? 'Bugün bırakma günün'
+          : 'Bırakma gününden beri';
+      title = 'Sigarasız gün: ${status.smokeFreeDays}';
+    } else if (status.ended) {
+      header = 'Hedef süren doldu';
+      title = 'Günde en fazla $limit sigara';
+    } else if (quit) {
+      header =
+          'Bırakma gününe $daysToQuit gün · ${status.week}. hafta / '
+          '${status.steps}';
+      title = 'Günde en fazla $limit sigara';
+    } else {
+      header = 'Bu hafta · ${status.week}. hafta / ${status.steps}';
+      title = 'Günde en fazla $limit sigara';
+    }
+
     return ChunkyCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            status.ended
-                ? 'Hedef süren doldu'
-                : 'Bu hafta · ${status.week}. hafta / ${status.steps}',
+            header,
             style: theme.textTheme.labelMedium?.copyWith(color: c.textMuted),
           ),
-          Text(
-            'Günde en fazla ${status.limit} sigara',
-            style: theme.textTheme.titleLarge,
-          ),
+          Text(title, style: theme.textTheme.titleLarge),
           const SizedBox(height: 14),
           Row(
             children: [
               for (final day in status.days) Expanded(child: _DayDot(day)),
             ],
           ),
-          if (status.daysOnTarget > 0) ...[
+          // Bıraktıktan sonra sayı zaten başlıkta (sigarasız gün).
+          if (status.daysOnTarget > 0 && !(quit && status.quitStarted)) ...[
             const SizedBox(height: 14),
             Row(
               children: [
@@ -263,6 +333,11 @@ class _DayDot extends StatelessWidget {
         fill = c.surface;
         border = c.border;
         meaning = 'henüz gelmedi';
+      case GoalDayState.noLimit:
+        // Sınırsız hazırlık günü: nötr, yorum yok.
+        fill = c.surfaceAlt;
+        border = c.border;
+        meaning = 'hazırlık günü';
     }
 
     return Semantics(
@@ -330,6 +405,53 @@ class _SupportCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Azaltma hedefi tamamlanınca ya da süresi dolunca: "bir sonraki adım"
+/// olarak bırakma günü önerisi. Bilerek nazik: açılır pencere ya da
+/// bildirim değil, Hedefim sayfasında bir kart; seçmek isteğe bağlı.
+class _NextStepCard extends StatelessWidget {
+  const _NextStepCard({required this.onChoose});
+  final VoidCallback onChoose;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final theme = Theme.of(context);
+    return ChunkyCard(
+      color: c.mintLight,
+      borderColor: c.mint,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.flag, color: c.mintText, size: 26),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Bir sonraki adım: bırakma günü',
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Azaltmak, bırakmaya giden yolun bir parçası olabilir. İstersen '
+            'bir bırakma günü seç; o güne kadar azaltarak ya da o gün birden.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          ChunkyButton(
+            label: 'BIRAKMA GÜNÜ SEÇ',
+            icon: Icons.flag_outlined,
+            onPressed: onChoose,
           ),
         ],
       ),

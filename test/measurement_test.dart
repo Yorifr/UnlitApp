@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unlit/logic/measurement.dart';
+import 'package:unlit/logic/quests.dart';
 import 'package:unlit/models/pack_price.dart';
 import 'package:unlit/models/smoking_event.dart';
 import 'package:unlit/models/user_profile.dart';
@@ -69,6 +70,45 @@ void main() {
       expect(summary.peakHour, isNull);
       expect(summary.topTrigger, isNull);
       expect(summary.averageFirstMinute, isNull);
+    });
+  });
+
+  group('ölçüm haftası 7 tam gün', () {
+    test('gün ortasında başlanırsa ölçüm yarın 00:00\'da başlar', () {
+      expect(
+        trackingStartFor(DateTime(2026, 10, 10, 15, 30)),
+        DateTime(2026, 10, 11),
+      );
+      expect(
+        trackingStartFor(DateTime(2026, 10, 10, 4)),
+        DateTime(2026, 10, 11),
+      );
+    });
+
+    test('gece 04:00\'ten önce başlanırsa aynı gün başlar', () {
+      expect(
+        trackingStartFor(DateTime(2026, 10, 10, 1, 15)),
+        DateTime(2026, 10, 10),
+      );
+    });
+
+    test('hazırlık günündeki sigaralar başlangıç noktasına sayılmaz', () {
+      final trackingStart = trackingStartFor(DateTime(2026, 10, 10, 15));
+      final events = [
+        ...onDay(DateTime(2026, 10, 10), [16, 17, 18]), // hazırlık günü
+        ...daysWith(DateTime(2026, 10, 11), List.filled(7, 10)),
+      ];
+      final summary = summarizeMeasurementWeek(events, trackingStart);
+      expect(summary.days, 7);
+      expect(summary.total, 70);
+      expect(summary.dailyAverage, 10);
+      // Hazırlık günündeki 16:15 "günün ilk sigarası" ortalamasını kaydırmaz.
+      expect(summary.averageFirstMinute, 8 * 60 + 15);
+      expect(
+        measurementDayNumber(DateTime(2026, 10, 10, 20), trackingStart),
+        0,
+      );
+      expect(measurementDayNumber(DateTime(2026, 10, 11, 9), trackingStart), 1);
     });
   });
 
